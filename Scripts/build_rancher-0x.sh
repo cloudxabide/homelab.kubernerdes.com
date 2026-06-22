@@ -1,119 +1,132 @@
-# This "script" was not intended to be run as a script, and instead cut-and-paste the pieces (hence no #!/bin/sh at the top ;-_
-
-# Reference: https://ranchermanager.docs.rancher.com/how-to-guides/new-user-guides/kubernetes-cluster-setup/k3s-for-rancher
-
-# Create 2 x VM with (4 vCPU, 16GB, 50GB HDD)
-# Install SLE 15 text mode
-# Enable Base + Containers Modules
-# Add mansible user
-# open SSH port
-
-# ssh-key for rancher should exist (if you deployed VM on Harvester)
+# Cut-and-paste reference — not designed for unattended execution.
+#
+# Reference: https://docs.rke2.io/install/quickstart
+#            https://ranchermanager.docs.rancher.com/how-to-guides/new-user-guides/kubernetes-cluster-setup/rke2-for-rancher
+#
+# Topology:
+#   3 x SL-Micro 6.2 VMs (rancher-01/02/03) on Harvester, DHCP-assigned IPs
+#   Harvester load balancer: lb-rancher  VIP=10.10.14.30  ports 80,443,6443,9345
+#   Backend selector: harvesterhci.io/vmNamePrefix: rancher
+#   Rancher hostname: rancher.community.kubernerdes.com
 
 # SU to root
 sudo su -
 
-# Remove any existing host entry
-sudo sed -i -e '/rancher/d' /etc/hosts
-# Add all the Rancher Nodes to /etc/hosts
-cat << EOF | tee -a  /etc/hosts
+# ── Variables ────────────────────────────────────────────────────────────────
+#export MY_RKE2_VERSION=v1.32.5+rke2r1
+export MY_RKE2_VERSION=v1.35.5+rke2r2 # June 2026
+export MY_RKE2_TOKEN=Waggoner
+export MY_RKE2_VIP=10.10.14.30
+export MY_RANCHER_HOSTNAME=rancher.community.kubernerdes.com
 
-# Rancher Nodes
-10.10.12.211    rancher-01.homelab.kubernerdes.com rancher-01
-10.10.12.212    rancher-02.homelab.kubernerdes.com rancher-02
-10.10.12.213    rancher-03.homelab.kubernerdes.com rancher-03
+# ── RKE2 install ─────────────────────────────────────────────────────────────
+# Run on ALL nodes (rancher-01, rancher-02, rancher-03)
+
+curl -sfL https://get.rke2.io | INSTALL_RKE2_VERSION=${MY_RKE2_VERSION} sh -
+
+mkdir -p /etc/rancher/rke2
+
+# ── Node-specific config ──────────────────────────────────────────────────────
+# Choose the correct block for each node:
+
+## rancher-01 (first server — cluster-init)
+cat << EOF > /etc/rancher/rke2/config.yaml
+token: ${MY_RKE2_TOKEN}
+tls-san:
+  - ${MY_RKE2_VIP}
+  - ${MY_RANCHER_HOSTNAME}
 EOF
 
-# Set some variables
-export MY_K3S_VERSION=v1.32.6+k3s1
-export MY_K3S_INSTALL_CHANNEL=v1.32
-export MY_K3S_TOKEN=Waggoner
-export MY_K3S_ENDPOINT=10.10.12.210
-export MY_K3S_HOSTNAME=rancher.homelab.kubernerdes.com
+## rancher-02 and rancher-03 (additional servers — join via VIP:9345)
+cat << EOF > /etc/rancher/rke2/config.yaml
+server: https://${MY_RKE2_VIP}:9345
+token: ${MY_RKE2_TOKEN}
+tls-san:
+  - ${MY_RKE2_VIP}
+  - ${MY_RANCHER_HOSTNAME}
+EOF
 
-# Make sure the proxy allows port 6443
-# TODO write a test for this?
+# ── Start RKE2 ───────────────────────────────────────────────────────────────
+systemctl enable rke2-server.service
+systemctl start rke2-server.service
 
-# Run the install process
-case $(uname -n) in
-  rancher-01)
-    echo "curl -sfL https://get.k3s.io | INSTALL_K3S_CHANNEL=${MY_K3S_INSTALL_CHANNEL} sh -s - server --cluster-init --token ${MY_K3S_TOKEN} --tls-san ${MY_K3S_ENDPOINT},${MY_K3S_HOSTNAME}"
-    curl -sfL https://get.k3s.io | INSTALL_K3S_CHANNEL=${MY_K3S_INSTALL_CHANNEL} sh -s - server --cluster-init --token ${MY_K3S_TOKEN} --tls-san ${MY_K3S_ENDPOINT},${MY_K3S_HOSTNAME}
-  ;;
-  *)
-    sleep 120 # allow time for the first node to complete install
-    echo "curl -sfL https://get.k3s.io | INSTALL_K3S_CHANNEL=${MY_K3S_INSTALL_CHANNEL} sh -s - --server https://${MY_K3S_ENDPOINT}:6443 --token ${MY_K3S_TOKEN}"
-    curl -sfL https://get.k3s.io | INSTALL_K3S_CHANNEL=${MY_K3S_INSTALL_CHANNEL} sh -s - --server https://${MY_K3S_ENDPOINT}:6443 --token ${MY_K3S_TOKEN}
-  ;;
-esac
+# Watch progress (takes ~2-3 min on first node)
+journalctl -u rke2-server -f
 
-# Make a copy of the KUBECONFIG for non-root use
-# TODO:  I need to 1/ decide if this script should run as root (probably: yes), figure out what user to store the kubeconfig with (probably: sles)
-mkdir ~/.kube; sudo cp /etc/rancher/k3s/k3s.yaml ~/.kube/config; sudo chown $(whoami) ~/.kube/config
-mkdir ~sles/.kube; sudo cp /etc/rancher/k3s/k3s.yaml ~sles/.kube/config; sudo chown -R sles ~sles/.kube/config
+# ── Kubeconfig (run on rancher-01 after RKE2 is up) ──────────────────────────
+mkdir -p ~/.kube
+cp /etc/rancher/rke2/rke2.yaml ~/.kube/config
+sed -i "s/127.0.0.1/${MY_RKE2_VIP}/g" ~/.kube/config
+chown $(whoami) ~/.kube/config
 export KUBECONFIG=~/.kube/config
-openssl s_client -connect 127.0.0.1:6443 -showcerts </dev/null | openssl x509 -noout -text > cert.0
-grep DNS cert.0
+export PATH=$PATH:/var/lib/rancher/rke2/bin
 
-# Replace localhost IP with the HAproxy endpoint
-sed -i -e "s/127.0.0.1/${MY_K3S_ENDPOINT}/g" $KUBECONFIG
-openssl s_client -connect 127.0.0.1:6443 -showcerts </dev/null | openssl x509 -noout -text > cert.1
+# Verify all 3 nodes are Ready before proceeding
+kubectl get nodes -o wide
 
-. /etc/*release*
-case $VARIANT in 
-  Micro)
-    echo "Shutting down to ensure transactional update is committed"
-    shutdown now -r
-  ;;
-esac
+# Verify TLS SANs include the VIP and hostname
+openssl s_client -connect 127.0.0.1:6443 -showcerts </dev/null 2>/dev/null | openssl x509 -noout -text | grep -A1 "Subject Alternative"
 
-## RANCHER FOooo
-# Run this from kubernerd
-helm repo add rancher-latest https://releases.rancher.com/server-charts/latest
+# ── Helm + Rancher (run from rancher-01 or your local machine with kubeconfig) ─
+# Requires: helm, kubectl with kubeconfig pointing at 10.10.14.30
 
-kubectl create namespace cattle-system
+export KUBECONFIG=~/.kube/config
+export PATH=$PATH:/var/lib/rancher/rke2/bin
 
-CERTMGR_VERSION=v1.18.0
-kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/${CERTMGR_VERSION}/cert-manager.crds.yaml
+CERTMGR_VERSION=v1.20.0
+RANCHER_HOSTNAME=rancher.community.kubernerdes.com
+
+#helm repo add rancher-latest https://releases.rancher.com/server-charts/latest
+helm repo add rancher-stable https://releases.rancher.com/server-charts/stable
+helm repo update
 
 helm repo add jetstack https://charts.jetstack.io
 helm repo update
 
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/${CERTMGR_VERSION}/cert-manager.crds.yaml
+
 helm install cert-manager jetstack/cert-manager \
   --namespace cert-manager \
-  --create-namespace
+  --create-namespace \
+  --version ${CERTMGR_VERSION}
 
-helm install rancher rancher-latest/rancher \
+# Wait for cert-manager to be ready
+kubectl rollout status deploy/cert-manager -n cert-manager
+kubectl rollout status deploy/cert-manager-webhook -n cert-manager
+
+# TODO: make the search retrieve teh version programatically
+helm search repo rancher-stable/rancher --versions
+kubectl create namespace cattle-system
+helm install rancher rancher-stable/rancher \
   --namespace cattle-system \
-  --set hostname=rancher.homelab.kubernerdes.com \
-  --set replicas=1 \
-  --set bootstrapPassword=mypasswordis3l33t
+  --set hostname=${RANCHER_HOSTNAME} \
+  --set replicas=3 \
+  --version=2.14.2 \
+  --set bootstrapPassword='Passw0rd01##'
 
-echo https://rancher.homelab.kubernerdes.com/dashboard/?setup=$(kubectl get secret --namespace cattle-system bootstrap-secret -o go-template='{{.data.bootstrapPassword|base64decode}}')
-BOOTSTRAP_PASSWORD=$(kubectl get secret --namespace cattle-system bootstrap-secret -o go-template='{{.data.bootstrapPassword|base64decode}}{{ "\n" }}')
+# Watch rollout
+kubectl rollout status deploy/rancher -n cattle-system
 
-exit 
-## Troubleshooting
-kubectl -n cattle-system get pods -l app=rancher -o wide
-kubectl -n cattle-system logs -l app=cattle-agent
-kubectl -n cattle-system logs -l app=cattle-cluster-agentA
-kubectl -n cattle-system get deployment
-kubectl -n cattle-system rollout status deploy/rancher
-kubectl -n cattle-system rollout status deploy/rancher-webhook
+# Print the setup URL with bootstrap password
+echo "https://${RANCHER_HOSTNAME}/dashboard/?setup=$(kubectl get secret --namespace cattle-system bootstrap-secret -o go-template='{{.data.bootstrapPassword|base64decode}}')"
 
-See "systemctl status k3s.service" and "journalctl -xeu k3s.service" for details.
-openssl s_client -connect 127.0.0.1:6443 -showcerts </dev/null | openssl x509 -noout -text > cert.0
-openssl s_client -connect 10.10.12.121:6443 -showcerts </dev/null | openssl x509 -noout -text > cert.1
-openssl s_client -connect 10.10.12.120:6443 -showcerts </dev/null | openssl x509 -noout -text > cert.2
+## ── Troubleshooting ──────────────────────────────────────────────────────────
+# RKE2 service logs
+# journalctl -xeu rke2-server.service
 
-# service ClusterIP CIDR
-echo '{"apiVersion":"v1","kind":"Service","metadata":{"name":"tst"},"spec":{"clusterIP":"1.1.1.1","ports":[{"port":443}]}}' | kubectl apply -f - 2>&1 | sed 's/.*valid IPs is //'
-# Pod CIDR
-kubectl get nodes -o jsonpath='{.items[*].spec.podCIDR}'
+# Rancher pod status
+# kubectl -n cattle-system get pods -l app=rancher -o wide
+# kubectl -n cattle-system logs -l app=rancher --tail=50
 
-##
-kubectl get pods -n kube-system -l k8s-app=kube-dns -o wide
-kubectl run -i --tty --rm debug --image=busybox --restart=Never -- sh
+# Cluster health
+# kubectl get nodes -o wide
+# kubectl get pods -A | grep -v Running | grep -v Completed
 
-kubectl apply -f https://k8s.io/examples/admin/dns/dnsutils.yaml
-kubectl exec -i -t dnsutils -- nslookup kubernetes.default
+# Verify LB endpoint is reachable on all ports
+# for port in 80 443 6443 9345; do
+#   nc -zv ${MY_RKE2_VIP} $port && echo "port $port OK" || echo "port $port FAIL"
+# done
+
+# Service/pod CIDRs
+# echo '{"apiVersion":"v1","kind":"Service","metadata":{"name":"tst"},"spec":{"clusterIP":"1.1.1.1","ports":[{"port":443}]}}' | kubectl apply -f - 2>&1 | sed 's/.*valid IPs is //'
+# kubectl get nodes -o jsonpath='{.items[*].spec.podCIDR}'
