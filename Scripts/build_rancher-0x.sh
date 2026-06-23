@@ -61,6 +61,11 @@ chown $(whoami) ~/.kube/config
 export KUBECONFIG=~/.kube/config
 export PATH=$PATH:/var/lib/rancher/rke2/bin
 
+mkdir ~sles/.kube
+cp ~/.kube/config ~sles/.kube/community-rancher.kubeconfig
+
+chown -R sles:sles ~sles/.kube
+
 # Verify all 3 nodes are Ready before proceeding
 kubectl get nodes -o wide
 
