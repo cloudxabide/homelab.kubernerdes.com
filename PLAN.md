@@ -51,6 +51,7 @@ Credentials NEVER go in this repo.  I will utilize the strategy I have documente
 
 ## Day 2
 - [ ] Configure Backups to utilize TrueNAS
+- [ ] Run SUSE Security (NeuVector) demo walkthrough — see [Security_Demo.md](Security_Demo.md)
 
 ## Futures/Unknowns
 - [ ] CA for Homelab
