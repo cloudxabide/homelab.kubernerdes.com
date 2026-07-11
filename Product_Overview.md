@@ -15,9 +15,7 @@ This is a great way to get expose to the feature-functionality without any burde
 
 ## SUSE Virtualization (Harvester)
 
-> [!TIP]
 > [Harvester OSS Project - Github](https://github.com/harvester/harvester)  
-
 > [Harvester Homepage](https://harvesterhci.io/)  
 > [SUSE Virtualization Homepage](https://www.suse.com/products/rancher/virtualization/)
 
@@ -27,9 +25,46 @@ Harvester is essentially the foundation of this homelab and demo environment.  I
 [Clemenko -  Kubernetes Firefighter](https://www.youtube.com/@clemenko) - Andy does a great job explaining many facets of SUSE Products and specifically Harvester.  (He worked at RGS previously)
 
 ## SUSE Rancher Manager
+
+> [Rancher OSS Project - Github](https://github.com/rancher/rancher)  
+> [Rancher Homepage](https://rancher.com/)  
+> [SUSE Rancher Prime Homepage](https://www.suse.com/products/rancher/)
+
 ## SUSE Security (NeuVector)
+
+> [NeuVector OSS Project - Github](https://github.com/neuvector/neuvector)  
+> [NeuVector Open Source Docs](https://open-docs.neuvector.com/)  
+> [SUSE Security Homepage](https://www.suse.com/products/neuvector/)
+
 ## SUSE Observability (StackState)
+
+> [StackState - Github](https://github.com/StackVista)  
+> [StackState Homepage](https://www.stackstate.com/)  
+> [SUSE Observability Homepage](https://www.suse.com/products/rancher/observability/)
+
 ## SUSE Linux Enterprise (SLE/SLES) / SUSE Linux Enterprise Micro (SL-micro)
+
+> [openSUSE OSS Project - Github](https://github.com/openSUSE)  
+> [openSUSE Homepage](https://www.opensuse.org/)  
+> [SUSE Linux Enterprise Server Homepage](https://www.suse.com/products/server/)  
+> [SUSE Linux Micro Homepage](https://www.suse.com/products/micro/)
+
 ## SUSE RKE2 (K3s when needed)
+
+> [RKE2 OSS Project - Github](https://github.com/rancher/rke2)  
+> [RKE2 Homepage](https://docs.rke2.io/)  
+> [K3s OSS Project - Github](https://github.com/k3s-io/k3s)  
+> [K3s Homepage](https://k3s.io/)  
+> [SUSE Rancher Prime: RKE2 Homepage](https://www.suse.com/products/rancher-kubernetes-engine/)
+
 ## RGS Hauler
+
+> [Hauler OSS Project - Github](https://github.com/hauler-dev/hauler)  
+> [Hauler Homepage](https://hauler.dev/)  
+> [Rancher Government Solutions Hauler Product Page](https://ranchergovernment.com/products/hauler)
+
 ## Harbor
+
+> [Harbor OSS Project - Github](https://github.com/goharbor/harbor)  
+> [Harbor Homepage](https://goharbor.io/)  
+> [SUSE Private Registry (powered by Harbor)](https://www.suse.com/c/suse-private-registry-harbor/)
