@@ -30,6 +30,8 @@ Harvester is essentially the foundation of this homelab and demo environment.  I
 > [Rancher Homepage](https://rancher.com/)  
 > [SUSE Rancher Prime Homepage](https://www.suse.com/products/rancher/)
 
+Rancher Manager is central point of administration (single pane of glass) for Virtual Machines, Kubernetes and Containers, configuration management, RBAC throughout the environment.  It allows you to manage multiple Kubernetes clusters...
+
 ## SUSE Security (NeuVector)
 
 > [NeuVector OSS Project - Github](https://github.com/neuvector/neuvector)  
