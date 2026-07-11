@@ -1,6 +1,6 @@
 # homelab.kubernerdes.com
 
-> [!NOTE} 
+> [!NOTE] 
 > If you were looking for content on deploying RGS bits, that has been moved to
 > https://docs.carbide-enclave.kubernerdes.com/
 
