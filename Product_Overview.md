@@ -15,7 +15,7 @@ This is a great way to get expose to the feature-functionality without any burde
 
 ## SUSE Virtualization (Harvester)
 
-> [!Tips]
+> [!TIP]
 > [Harvester OSS Project - Github](https://github.com/harvester/harvester)  
 
 > [Harvester Homepage](https://harvesterhci.io/)  
