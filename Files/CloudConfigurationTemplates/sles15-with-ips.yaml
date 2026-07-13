@@ -1,0 +1,81 @@
+#cloud-config
+---
+# SLES 15 / OpenSUSE Leap cloud-init template
+#
+# Assigns static IPs based on hostname at first boot.
+# Used for rancher-*, observability-*, and apps-* VMs deployed on Harvester.
+#
+# Variables are resolved by envsubst when this template is served from
+# http://${ADMIN_IP}/${BASE_DOMAIN}/Files/CloudConfigurationTemplates/
+
+users:
+  - name: sles
+    passwd: $6$jzXjealo/tBAK5SQ$pe.GNKlS8QwjBEH/qffIGe5THP36AGLtyaZDLFohjCrFiu2bhHWU2PmGDL4MS4ZJPANfEDNlE9kJAsFXy8Na/0
+    lock_passwd: false
+    groups: users
+    shell: /bin/bash
+    ssh_authorized_keys:
+      - ${MANSIBLE_SSH_KEY}
+
+runcmd:
+  - - systemctl
+    - enable
+    - --now
+    - qemu-guest-agent.service
+
+  # DNS search domain and servers
+  - sed -i 's/^NETCONFIG_DNS_STATIC_SEARCHLIST=.*/NETCONFIG_DNS_STATIC_SEARCHLIST="${BASE_DOMAIN}"/' /etc/sysconfig/network/config
+  - sed -i 's/^NETCONFIG_DNS_STATIC_SERVERS=.*/NETCONFIG_DNS_STATIC_SERVERS="${DNS1_IP} ${DNS2_IP} 8.8.8.8"/' /etc/sysconfig/network/config
+  - netconfig update -f
+
+  # Assign static IP based on hostname
+  - |
+    #!/bin/bash
+    HOSTNAME=$(hostname)
+    GATEWAY="${GATEWAY}"
+
+    case "$HOSTNAME" in
+      librenms)           IPADDR="${IP_PREFIX}.12/22" ;;
+      rancher-01)         IPADDR="${RANCHER_NODE_01}/22" ;;
+      rancher-02)         IPADDR="${RANCHER_NODE_02}/22" ;;
+      rancher-03)         IPADDR="${RANCHER_NODE_03}/22" ;;
+      observability-01)   IPADDR="${OBS_NODE_01}/22" ;;
+      observability-02)   IPADDR="${OBS_NODE_02}/22" ;;
+      observability-03)   IPADDR="${OBS_NODE_03}/22" ;;
+      apps-01)            IPADDR="${APPS_NODE_01}/22" ;;
+      apps-02)            IPADDR="${APPS_NODE_02}/22" ;;
+      apps-03)            IPADDR="${APPS_NODE_03}/22" ;;
+      *)
+        echo "Unknown hostname: $HOSTNAME — skipping static IP config"
+        exit 0
+        ;;
+    esac
+
+    IFACE=$(ip route | grep default | awk '{print $5}' | head -n1)
+    [ -z "$IFACE" ] && { echo "No default interface found"; exit 1; }
+
+    cat > /etc/sysconfig/network/ifcfg-$IFACE <<EOF
+    BOOTPROTO='static'
+    STARTMODE='auto'
+    IPADDR='${IPADDR%/*}'
+    NETMASK='${SUBNET_MASK}'
+    GATEWAY='$GATEWAY'
+    EOF
+
+    wicked ifdown $IFACE
+    wicked ifup $IFACE
+    echo "Configured $IFACE with $IPADDR"
+
+ntp:
+  enabled: true
+  servers:
+    - 0.pool.suse.ntp.org
+    - 1.pool.suse.ntp.org
+    - 2.pool.suse.ntp.org
+
+write_files:
+  - path: /etc/sudoers.d/sles
+    content: |
+      sles ALL=(ALL) NOPASSWD:ALL
+    owner: root:root
+    permissions: '0440'

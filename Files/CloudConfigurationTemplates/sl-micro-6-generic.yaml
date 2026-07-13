@@ -1,0 +1,34 @@
+#cloud-config
+---
+package_update: true
+packages:
+  - qemu-guest-agent
+write_files:
+  - path: /etc/sudoers.d/sles
+    content: "sles ALL=(ALL) NOPASSWD:ALL\n"
+    permissions: '0440'
+    owner: root:root
+
+runcmd:
+  - - systemctl
+    - enable
+    - '--now'
+    - qemu-guest-agent.service
+
+# Create user accounts with their configuration
+users:
+  - name: sles
+    # Password hash for user authentication (generated with mkpasswd or similar)
+    passwd: $6$jzXjealo/tBAK5SQ$pe.GNKlS8QwjBEH/qffIGe5THP36AGLtyaZDLFohjCrFiu2bhHWU2PmGDL4MS4ZJPANfEDNlE9kJAsFXy8Na/0
+    # Allow password authentication (false = unlocked)
+    lock_passwd: false
+    # Assign user to groups
+    groups: users,wheel
+    # Set default shell
+    shell: /bin/bash
+    # Add SSH public keys for passwordless authentication
+    ssh_authorized_keys:
+      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCozGnmSeEzFQovxzvwgLaQmfE5/eGDfzKHMwofs1rvdef6WD89ubQjh2bFDe69IPGh0kV93QraLUXL1hDa3J+k9LIhr7HqAg365bm3UtY7jIDADmAjDo8yVJ5oiSMvmgUlaw3REFjaMXwQXCddDVWhoWFk/gE1w/14/EbFfSJni9iohl+A76s5GRlVZXSTVb/zYxeQFAlstUaxQVFD8EGNcWI5Ptydgil+hlrA7k16qrkj+5l5muDkRLndcsR/zrpLy2cdNWmI6s/aGQ/IHpUmLf92AAIbzMskK4Asdno1RiuNFybfjoPomo1NlYh6J/VS2uEq4Zg4zWuVbl7yjTRx mansible@kubernerd
+      - ecdsa-sha2-nistp521 AAAAE2VjZHNhLXNoYTItbmlzdHA1MjEAAAAIbmlzdHA1MjEAAACFBADUeWpBo8XY3ePFn/vX2yMjx8MfC3ZO1Jl6t5jZ0hCHwcc9x4Yp4ASXn1epmfEFqmhTJkEKunJafpKnQ0lm1yW/KgA+ew7t+dq2l0yck6/X3cPZlxf8nYIvTXmHf6DYhJ54U26bTaB8iSaXkhRt2RiKWDeqbFp6oJkiWQMtppJuHJlIbA== mansible@nuc-00-02
+      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCwB0CvPtoLP8S3T9RFUpQPGQ9Pxjym39Negeh9C7JmZb45mVEMy462t0l+TY9d5E4NmOI4DJkOPaj9V2u+YcLSRpmyCow030RN4pkoYBfjSbZC0Nb417G0KcQM6nRXZEbzl+R5DRxvg4k2SDa3G+i8V5bExYcfLakxW7uKRP2iEdunLxJXVzgKcjgG3jWD3pY+uhSxXsOxFFq2R94vQ2lc/P6R8Fz/7mWiXC3flCtRNEXrnni5M2CUlAj31xyFOC2YE2krjRFvcxI8JLXp0qabGftcWf24ZhOBmqsIVTK+o6MyQJxBRA6VWNbXSrv5bz2tJqbZBA+rs95IMHj28+k7 mansible@nuc-00
+      - ecdsa-sha2-nistp521 AAAAE2VjZHNhLXNoYTItbmlzdHA1MjEAAAAIbmlzdHA1MjEAAACFBABZ7vctl6viLsGcGmaLcZ1aGFoRtfAU4DKd7r7XZD5WMXSi9/nh0W3xngBwK6gpE3qHUj8noB7OzpfkE0aE937SuwEmeOPtIK2VhSuG3oAxmCz9ohqLtC9jRkXapddvTYCPG3KLsgJlueCRI6iZlZ6FVGOHeGOgw1KXOzbi4Ye5pJV+dg== mansible@nuc-00

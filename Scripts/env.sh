@@ -100,13 +100,16 @@ export DNS_HOST="nuc-00"
 # see Scripts/nuc-00-03/ and Files/nuc-00-03/ for HAProxy config and setup script.
 export LB_HOST="nuc-00-03"
 
-# Infrastructure IPs — DNS is shared across all environments (supernet address)
+# Infrastructure IPs — nuc-00 is a single shared host on the homelab supernet;
+# these are fixed supernet addresses, not per-environment (see Hardware.md).
 export DNS1_IP="${SUPERNET_PREFIX}.10"
-export ADMIN_IP="${IP_PREFIX}.10"
-export LB_IP="${IP_PREFIX}.93"  # retired; kept for reference
+export ADMIN_IP="${SUPERNET_PREFIX}.10"
+export LB_IP="${SUPERNET_PREFIX}.93"  # retired; kept for reference
 
-# Admin web/repo server — repo is cloned to Apache web root and served here
-export REPO_BASE="http://${ADMIN_IP}/${BASE_DOMAIN}"
+# Admin web/repo server — this repo is a single shared checkout at
+# /srv/www/htdocs/homelab.kubernerdes.com on nuc-00, serving all environments.
+# There is no per-environment (${BASE_DOMAIN}) checkout.
+export REPO_BASE="http://${ADMIN_IP}/homelab.kubernerdes.com"
 
 # ---------------------------------------------------------------------------
 # Harvester cluster

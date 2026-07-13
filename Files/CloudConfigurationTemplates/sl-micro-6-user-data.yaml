@@ -1,0 +1,46 @@
+#cloud-config
+---
+# SL-Micro 6.x cloud-init user-data template
+#
+# Used for apps-* and observability-* nodes deployed on Harvester
+# when running SL-Micro as the OS (immutable, transactional-update based).
+#
+# Note: SL-Micro uses systemd-timesyncd (not chrony/ntpd).
+# Note: Static IP is set via Harvester VM network config, not cloud-init.
+
+users:
+  - name: sles
+    passwd: $6$jzXjealo/tBAK5SQ$pe.GNKlS8QwjBEH/qffIGe5THP36AGLtyaZDLFohjCrFiu2bhHWU2PmGDL4MS4ZJPANfEDNlE9kJAsFXy8Na/0
+    lock_passwd: false
+    groups: users
+    shell: /bin/bash
+    ssh_authorized_keys:
+      - ${MANSIBLE_SSH_KEY}
+
+runcmd:
+  - - systemctl
+    - enable
+    - --now
+    - qemu-guest-agent.service
+
+ntp:
+  enabled: true
+  servers:
+    - 0.pool.suse.ntp.org
+    - 1.pool.suse.ntp.org
+    - 2.pool.suse.ntp.org
+
+write_files:
+  - path: /etc/sudoers.d/sles
+    content: |
+      sles ALL=(ALL) NOPASSWD:ALL
+    owner: root:root
+    permissions: '0440'
+
+  - path: /etc/systemd/timesyncd.conf.d/suse-ntp.conf
+    content: |
+      [Time]
+      NTP=0.pool.suse.ntp.org 1.pool.suse.ntp.org 2.pool.suse.ntp.org
+      FallbackNTP=time.cloudflare.com
+    owner: root:root
+    permissions: '0644'
