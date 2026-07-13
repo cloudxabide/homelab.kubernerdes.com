@@ -45,9 +45,20 @@ sudo systemctl enable apache2 --now
 
 # ---------------------------------------------------------------------------
 # TFTP — serves ipxe.efi for the initial UEFI PXE handoff
+#
+# Do NOT fetch this from https://boot.netboot.xyz/ipxe/netboot.xyz.efi — that
+# build does not re-DHCP with User-Class "iPXE" after loading, so it never
+# picks up the HTTP filename from the dhcpd host-block conditional. It falls
+# back to looking for autoexec.ipxe over TFTP instead, which silently breaks
+# the PXE menu handoff (see git history for the incident this came from).
+#
+# Files/nuc-00/srv/tftpboot/ipxe.efi is a known-good build (verified against
+# this repo's dhcpd.conf host-block iPXE re-chain) with unknown upstream
+# provenance — treat replacing it as high-risk and re-verify PXE end-to-end
+# if it's ever swapped.
 # ---------------------------------------------------------------------------
 sudo mkdir -p /srv/tftpboot
-sudo wget -O /srv/tftpboot/ipxe.efi https://boot.netboot.xyz/ipxe/netboot.xyz.efi
+sudo cp "${FILES_DIR}/srv/tftpboot/ipxe.efi" /srv/tftpboot/ipxe.efi
 
 # ---------------------------------------------------------------------------
 # BIND configuration — copied from this repo's Files/nuc-00/ tree
