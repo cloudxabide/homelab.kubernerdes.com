@@ -1,30 +1,8 @@
 # homelab.kubernerdes.com
 
-> [!NOTE] 
-> If you were looking for content on deploying RGS bits, that has been moved to
-> https://docs.carbide-enclave.kubernerdes.com/
+Free, as-in beer, software to run infrastructure by SUSE.
 
-I am rebuilding my homelab content applying some "lessons learned" from previous attempts.
-
-The Narrative form guide for this repo is located at https://docs.homelab.kubernerdes.com/
-
-What we are working with:
-- start with vanilla installation of all the projects using "community bits"
-- then shift focus to doing the same but using SUSE Prime which involves some slight modifications
-- then.. using the established connection/relationship to the SUSE Prime source, we will create an "air-gapped" installation
-
-
-> A single-codebase deployment framework for building a Kubernetes homelab using SUSE Rancher, Harvester, and related tooling — across Community, Prime, and Enclave environments.
-
-This repository contains the scripts, configuration files, and documentation for deploying the full SUSE/RGS stack on small form-factor hardware (Intel NUCs). It is designed to be run against three distinct deployment environments using a shared codebase, with environment-specific behavior driven entirely by configuration.
-
-> **Note:** This is not an official SUSE or RGS repository. It is a personal lab environment designed to explore and demonstrate the platform using straightforward, repeatable methods.
-
-**Associated Documentation Site:** [docs.homelab.kubernerdes.com](https://cloudxabide.github.io/docs.homelab.kubernerdes.com/)
-
-**Note:** RGS Carbide content will migrate to https://github.com/jradtke-rgs/carbide-enclave.kubernerdes.com
-
-<table style="background-color: lightblue;">
+<table style="background-color: white;">
 <tr>
 <img src="Images/harvester_logo_horizontal.svg" width=150>
 <img src="Images/rancher-suse-logo-horizontal-color.svg" width=150>
@@ -36,6 +14,23 @@ This repository contains the scripts, configuration files, and documentation for
 <img src="Images/rgs-hauler-logo.png" width=150>
 </tr>
 </table>
+
+I am currently (summer 2026) rebuilding my homelab content applying some "lessons learned" from previous attempts.
+
+**Associated Documentation Site:** The Narrative form guide for this repo is located at https://docs.homelab.kubernerdes.com/
+
+What we are working with:
+- start with vanilla installation of all the projects using "community bits"
+- then shift focus to doing the same but using SUSE Prime which involves some slight modifications
+- then.. using the established connection/relationship to the SUSE Prime source, we will create an "air-gapped" installation
+
+> A single-codebase deployment framework for building a Kubernetes homelab using SUSE Rancher, Harvester, and related tooling — across Community, Prime, and Enclave environments.
+
+This repository contains the scripts, configuration files, and documentation for deploying the full SUSE/RGS stack on small form-factor hardware (Intel NUCs). It is designed to be run against three distinct deployment environments using a shared codebase, with environment-specific behavior driven entirely by configuration.
+
+> **Tip:** This is not an official SUSE or RGS repository. It is a personal lab environment designed to explore and demonstrate the platform using straightforward, repeatable methods.
+
+> **Note:** RGS Carbide content will migrate to https://github.com/jradtke-rgs/carbide-enclave.kubernerdes.com
 
 ---
 
