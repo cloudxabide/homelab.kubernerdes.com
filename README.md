@@ -28,9 +28,9 @@ What we are working with:
 
 This repository contains the scripts, configuration files, and documentation for deploying the full SUSE/RGS stack on small form-factor hardware (Intel NUCs). It is designed to be run against three distinct deployment environments using a shared codebase, with environment-specific behavior driven entirely by configuration.
 
-> **Tip:** This is not an official SUSE or RGS repository. It is a personal lab environment designed to explore and demonstrate the platform using straightforward, repeatable methods.
+> [!TIP] This is not an official SUSE or RGS repository. It is a personal lab environment designed to explore and demonstrate the platform using straightforward, repeatable methods.
 
-> **Note:** RGS Carbide content will migrate to https://github.com/jradtke-rgs/carbide-enclave.kubernerdes.com
+> [!NOTE] RGS Carbide content will migrate to https://github.com/jradtke-rgs/carbide-enclave.kubernerdes.com
 
 ---
 
