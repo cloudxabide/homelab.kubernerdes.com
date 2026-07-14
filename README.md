@@ -24,6 +24,8 @@ This repository contains the scripts, configuration files, and documentation for
 
 **Note:** RGS Carbide content will migrate to https://github.com/jradtke-rgs/carbide-enclave.kubernerdes.com
 
+<img src="Images/harvester_logo_horizontal.svg" width=100>
+
 ![Harvester](Images/harvester_logo_horizontal.svg)
 ![Rancher](Images/rancher-suse-logo-horizontal-color.svg)
 ![Neuvector](Images/neuvectorlogo.svg)
