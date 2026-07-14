@@ -24,13 +24,18 @@ This repository contains the scripts, configuration files, and documentation for
 
 **Note:** RGS Carbide content will migrate to https://github.com/jradtke-rgs/carbide-enclave.kubernerdes.com
 
+<table style="background-color: lightblue;">
+<tr>
 <img src="Images/harvester_logo_horizontal.svg" width=150>
 <img src="Images/rancher-suse-logo-horizontal-color.svg" width=150>
 <img src="Images/SUSE_Linux_ES16_pos-green-stacked-1202x450-6f6d51d-1.webp" width=150>
-<BR>
+</tr>
+<tr>
 <img src="Images/neuvectorlogo.svg" width=150>
 <img src="Images/StackState-Color-padding.png" width=150>
 <img src="Images/rgs-hauler-logo.png" width=150>
+</tr>
+</table>
 
 ---
 
