@@ -1,0 +1,33 @@
+#!ipxe
+#
+:prime_start
+menu prime Installer
+item --gap --                   ------------Community Bits ----------------
+item --key 4 nuc-01-prime   Deploy Harvester to nuc-01 (create cluster)
+item --key 5 nuc-02-prime   Deploy Harvester to nuc-02 (join cluster)
+item --key 6 nuc-03-prime   Deploy Harvester to nuc-03 (join cluster)
+item back			Return to Main Menu
+choose target && goto ${target}
+
+#
+# Node-specific parameters (prime)
+:nuc-01-prime
+echo Deploying Harvester to nuc-01 - Community (create mode)... static boot
+kernel http://10.10.12.10/harvester/v1.8.1/harvester-v1.8.1-vmlinuz-amd64 root=live:http://10.10.12.10/harvester/v1.8.1/harvester-v1.8.1-rootfs-amd64.squashfs console=tty1 harvester.install.automatic=true harvester.install.skipchecks=true ip=dhcp rd.cos.disable rd.net.dhcp.retry=3 rd.noverifyssl net.ifnames=1 harvester.install.config_url=http://10.10.12.10/harvester/harvester/config-create-nuc-01-prime-v1.8.1.yaml
+initrd http://10.10.12.10/harvester/v1.8.1/harvester-v1.8.1-initrd-amd64
+boot
+
+:nuc-02-prime
+echo Deploying Harvester to nuc-02 - Community (join mode)...
+kernel http://10.10.12.10/harvester/v1.8.1/harvester-v1.8.1-vmlinuz-amd64 root=live:http://10.10.12.10/harvester/v1.8.1/harvester-v1.8.1-rootfs-amd64.squashfs console=tty1 harvester.install.automatic=true harvester.install.skipchecks=true ip=dhcp rd.cos.disable rd.net.dhcp.retry=3 rd.noverifyssl net.ifnames=1 harvester.install.config_url=http://10.10.12.10/harvester/harvester/config-join-nuc-02-prime-v1.8.1.yaml
+initrd http://10.10.12.10/harvester/v1.8.1/harvester-v1.8.1-initrd-amd64
+boot
+
+:nuc-03-prime
+echo Deploying Harvester to nuc-03 - Community (join mode)...
+kernel http://10.10.12.10/harvester/v1.8.1/harvester-v1.8.1-vmlinuz-amd64 root=live:http://10.10.12.10/harvester/v1.8.1/harvester-v1.8.1-rootfs-amd64.squashfs console=tty1 harvester.install.automatic=true harvester.install.skipchecks=true ip=dhcp rd.cos.disable rd.net.dhcp.retry=3 rd.noverifyssl net.ifnames=1 harvester.install.config_url=http://10.10.12.10/harvester/harvester/config-join-nuc-03-prime-v1.8.1.yaml
+initrd http://10.10.12.10/harvester/v1.8.1/harvester-v1.8.1-initrd-amd64
+boot
+
+:back
+exit

@@ -1,0 +1,89 @@
+#!ipxe
+###############################################################################
+# Harvester HCI iPXE Network Boot Menu
+###############################################################################
+#
+# OVERVIEW:
+# This iPXE script provides an interactive boot menu for deploying Harvester
+# Hyperconverged Infrastructure across multiple nodes. It automatically boots
+# from local disk after 5 seconds if no user input is detected.
+#
+# HOW IT WORKS:
+# 1. The system PXE boots and loads this iPXE script from the network
+# 2. A menu is displayed with deployment options for each node
+# 3. After timeout or selection, the appropriate boot action occurs:
+#    - Local boot: boots from the system's internal disk
+#    - Node deployment: downloads kernel, initrd, and rootfs from HTTP server
+#                       and boots with node-specific configuration
+#
+# BOOT FLOW FOR HARVESTER DEPLOYMENT:
+# 1. Load Linux kernel (vmlinuz) with boot parameters
+# 2. Load initial ramdisk (initrd) containing installation tools
+# 3. Kernel boots and fetches root filesystem (squashfs) via HTTP
+# 4. Harvester installer reads node-specific config from HTTP server
+# 5. Automated installation proceeds based on configuration (create/join)
+#
+# CONFIGURATION:
+# - Node configs specify whether to create new cluster or join existing
+# - Base URLs point to HTTP server hosting Harvester installation files
+# - Kernel parameters control console, network, and installation behavior
+#
+# REFERENCE:
+# Based on SUSE documentation:
+# https://docs.harvesterhci.io/v1.6/install/pxe-boot-install#the-ipxe-script-for-uefi-boot
+#
+###############################################################################
+
+# Common parameters for all nodes in the Harvester installations
+set base_url http://10.10.12.10/harvester/
+set config_url http://10.10.12.10/harvester/harvester
+
+:start
+# Display menu with 5 second timeout (50 x 100ms)
+menu Harvester Deployment Menu 
+item --gap --                   --------------------------------------------
+item --key l local                 Boot from local disk (default in 5s)
+item --gap --                   --------------Carbide Bits------------------
+item enclave_menu		Deploy Harvester for Enclave
+item prime_menu			Deploy Harvester for SUSE Prime 
+item community_menu		Deploy Harvester for Community 
+item --gap --                   -------------------------------------------
+item --key r reboot             Reboot system
+item --key s shell              Drop to iPXE shell
+choose --timeout 5000 --default local target && goto ${target}
+
+# This references and executes the external Enclave submenu script
+:enclave_menu
+chain ${config_url}/enclave.ipxe || goto start
+goto start
+
+# This references and executes the external Prime submenu script
+:prime_menu
+chain ${config_url}/prime.ipxe || goto start
+goto start
+
+# This references and executes the external Community submenu script
+:community_menu
+chain ${config_url}/community.ipxe || goto start
+goto start
+
+## 
+# Local and error-handling follows...
+:local
+echo Booting from local disk...
+sanboot --no-describe --drive 0x80 || goto failed
+
+:reboot
+echo Rebooting in 2 seconds...
+sleep 2
+reboot
+
+:shell
+echo Dropping to iPXE shell...
+shell
+
+:failed
+echo Boot failed! Dropping to shell for debugging...
+echo Press any key to continue...
+prompt
+shell
