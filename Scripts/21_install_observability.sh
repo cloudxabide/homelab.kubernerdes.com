@@ -110,7 +110,11 @@ helm upgrade --install suse-observability \
   --values "${VALUES_DIR}/suse-observability-values/templates/sizing_values.yaml" \
   --values "${VALUES_DIR}/suse-observability-values/templates/affinity_values.yaml"
 
-echo "NOTE: Observability takes 15-20 minutes to fully stabilize."
+if REVISIT_TIME=$(date -d '+20 minutes' '+%H:%M %Z' 2>/dev/null) || REVISIT_TIME=$(date -v+20M '+%H:%M %Z' 2>/dev/null); then
+  echo "NOTE: Observability takes 15-20 minutes to fully stabilize. Revisit around ${REVISIT_TIME}."
+else
+  echo "NOTE: Observability takes 15-20 minutes to fully stabilize."
+fi
 
 # ---------------------------------------------------------------------------
 # Ingress
