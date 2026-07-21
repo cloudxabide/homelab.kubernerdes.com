@@ -19,7 +19,7 @@ For VMs deployed using Rancher Manager with multiple machine pool, I will use:
 harvesterhci.io/machineSetName	vms-apps-apps-workers  
 harvesterhci.io/machineSetName	vms-apps-apps-control-plane  
 
-I will have the following DNS entries:  
+Create the following DNS entries:  
 infra.kubernerdes.com         IN A 10.10.14.50   # K8s endpoint  
 *.apps.infra.kubernerdes.com  IN A 10.10.14.51   # Applications endpoint
 
