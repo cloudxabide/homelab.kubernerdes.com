@@ -10,7 +10,7 @@ For this example, my "Infra Cluster" provides 2 functions: firstly, it is a Kube
 
 Also - regarding the "Backend Server Selector": this is an area that will be highly dependent on how you create your systems and what standards you utilize.  The selector can use existing Harvester or Rancher labels, or you can create your own.
 
-For VMs deplyed using Harvester (i.e. my Rancher Manager VMs) I will use:
+For VMs deplyed using Harvester (i.e. the first 3 VMs for Rancher Manager) I will use:
 
 For VMs deploy using Rancher Manager that only have a single machine pool, I will use:
 guestcluster.harvesterhci.io/name: vms-observability
