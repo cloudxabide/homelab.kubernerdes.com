@@ -14,7 +14,7 @@ helm repo update
 # bail if the SERVICE_TOKEN is not set
 [ -z $SERVICE_TOKEN ] && { echo "Error: you need to set SERVICE_TOKEN before you can proceed"; break; }
 
-hel upgrade --install \
+helm upgrade --install \
 --namespace suse-observability \
 --create-namespace \
 --set-string 'stackstate.apiKey'=$SERVICE_TOKEN \
