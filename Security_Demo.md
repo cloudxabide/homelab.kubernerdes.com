@@ -166,6 +166,15 @@ Back in the NeuVector console, navigate to **Notifications** → **Security Even
 - Action: **Denied / Blocked**
 - Timestamp matching your attempt
 
+This is yet another subtle incident.  You can rewrite the rule to allow curl to run "Process profile rule violation by process "curl", and attempt the curl again
+```
+~ # curl google.com
+curl: (56) Recv failure: Connection reset by peer
+```
+Refresh your Security Events and you will now see "Implicit deny rule was violated" - you will need to rewrite that rule, as well.
+
+> You can start to see how granular and subesequently powerful this tool can be.
+
 ### Step 9 — Attempt a Second Unauthorized Connection (wget to fastly.com)
 
 Still inside the container, run:
@@ -184,7 +193,13 @@ You should see a second violation event in the NeuVector console for this attemp
 
 Lets Rewrite Rule for wget and try again.  It still fails (refresh NeuVector and you'll see why: grep was not allow-listed).  Go ahead and rewrite for grep.  
 
-> You should start to recognize how granular the controls can be - which is effective in mitigating the "unknown" vulnerabilities that might be attempted.
+> Again, you should start to recognize how granular the controls can be - which is effective in mitigating the "unknown" vulnerabilities that might be attempted.
+
+Go ahead and exit the container
+```
+~ # exit
+command terminated with exit code 1
+```
 
 ---
 
