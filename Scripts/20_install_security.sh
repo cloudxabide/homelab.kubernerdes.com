@@ -32,6 +32,24 @@ echo "==> Apps cluster nodes:"
 kubectl get nodes
 
 # ---------------------------------------------------------------------------
+# Distro check — this script assumes RKE2 (ingress-nginx, containerd socket
+# paths). K3s support is not yet implemented (default Traefik ingress and
+# k3s containerd socket paths require separate handling).
+# ---------------------------------------------------------------------------
+NODE_VERSION="$(kubectl get nodes -o jsonpath='{.items[0].status.nodeInfo.kubeletVersion}')"
+case "${NODE_VERSION}" in
+  *+rke2*) ;;
+  *+k3s*)
+    echo "ERROR: Detected K3s (kubelet ${NODE_VERSION}) — this script only supports RKE2." >&2
+    echo "       K3s is not yet implemented for SUSE Security (see ingress + containerd socket differences)." >&2
+    exit 1
+    ;;
+  *)
+    echo "WARNING: Unrecognized Kubernetes distro (kubelet ${NODE_VERSION}) — proceeding, but this script assumes RKE2." >&2
+    ;;
+esac
+
+# ---------------------------------------------------------------------------
 # NeuVector
 # ---------------------------------------------------------------------------
 echo "==> Adding NeuVector helm repo (${NEUVECTOR_CHART_REPO})..."
