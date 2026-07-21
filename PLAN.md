@@ -24,7 +24,7 @@ Credentials NEVER go in this repo.  I will utilize the strategy I have documente
     - name: lb-rancher
     - backend-server-selector: Key=harvesterhci.io/vmNamePrefix,Value=rancher
     - ports: rancher-http:80,  rancher-https:443, rancher-k8s-api:6443, rancher-rke2:9345
-    - health-check: TBD
+    - health-check: port=6443, period=5s, timeout=3s, success-threshold=1, failure-threshold=3
   - [ ] Install RKE2 on 3 nodes, gather KUBECONFIG
   - [ ] Install Rancher Manager on rancher-manager K8s cluster
 - [ ] Add Harvester to Rancher Manager
@@ -37,7 +37,7 @@ Credentials NEVER go in this repo.  I will utilize the strategy I have documente
     - name: lb-rancher
     - backend-server-selector: Key=guestcluster.harvesterhci.io/name,Value=observability
     - ports: observability-http:80,  observability-https:443, observability-k8s-api:6443, observability-rke2:9345
-    - health-check: TBD
+    - health-check: port=6443, period=5s, timeout=3s, success-threshold=1, failure-threshold=3
   - [ ] Create 3 x VMs using Rancher Manager and Harvester provider
     - cluster name: observability
     - pool name: control-plane
