@@ -16,7 +16,7 @@ This walkthrough guides you through a live demonstration of SUSE Security (NeuVe
 
 Before you begin, confirm the test container is running and active. The `chell-test` container in the `aperture-sci` namespace is continuously making outbound HTTPS requests every 5 seconds:
 
-See [Scripts/30_deploy_random_apps.sh](Scripts/30_deploy_random_apps.sh) for deploying the simple container for this demo.
+See [Scripts/30_deploy_apps.sh](Scripts/30_deploy_apps.sh) for deploying the simple container for this demo.
 
 ```bash
 kubectl get pods -n aperture-sci
