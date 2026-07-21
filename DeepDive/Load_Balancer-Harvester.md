@@ -15,9 +15,9 @@ For VMs deplyed using Harvester (i.e. my Rancher Manager VMs) I will use:
 For VMs deploy using Rancher Manager that only have a single machine pool, I will use:
 guestcluster.harvesterhci.io/name: vms-observability
 
-For VMs deployed using Rancher Manager with multiple machine pool, I will use:
-harvesterhci.io/machineSetName	vms-apps-apps-workers
-harvesterhci.io/machineSetName	vms-apps-apps-control-plane
+For VMs deployed using Rancher Manager with multiple machine pool, I will use:  
+harvesterhci.io/machineSetName	vms-apps-apps-workers  
+harvesterhci.io/machineSetName	vms-apps-apps-control-plane  
 
 I will have the following DNS entries:  
 infra.kubernerdes.com         IN A 10.10.14.50   # K8s endpoint  
