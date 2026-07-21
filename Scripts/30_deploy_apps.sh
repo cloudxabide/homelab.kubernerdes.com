@@ -27,15 +27,23 @@ fi
 # HexGL — futuristic WebGL racing game
 # Demonstrates: app ingress, wildcard DNS (*.apps.${BASE_DOMAIN})
 # ---------------------------------------------------------------------------
-echo "=== Deploying HexGL ==="
+DEPLOY_HEXGL="no"
+read -r -t 5 -p "Deploy HexGL demo? [y/N] (5s timeout, default No): " HEXGL_ANSWER || true
+echo
+case "${HEXGL_ANSWER:-}" in
+  y|Y|yes|Yes|YES) DEPLOY_HEXGL="yes" ;;
+esac
 
-HEXGL_TMP="$(mktemp -d)"
-trap 'rm -rf "$HEXGL_TMP"' EXIT
+if [[ "${DEPLOY_HEXGL}" == "yes" ]]; then
+  echo "=== Deploying HexGL ==="
 
-git clone --depth=1 https://github.com/jradtke-rgs/HexGL "$HEXGL_TMP"
+  HEXGL_TMP="$(mktemp -d)"
+  trap 'rm -rf "$HEXGL_TMP"' EXIT
 
-mkdir -p "$HEXGL_TMP/k8s/overlays/${ENVIRONMENT}"
-cat > "$HEXGL_TMP/k8s/overlays/${ENVIRONMENT}/kustomization.yaml" <<EOF
+  git clone --depth=1 https://github.com/jradtke-rgs/HexGL "$HEXGL_TMP"
+
+  mkdir -p "$HEXGL_TMP/k8s/overlays/${ENVIRONMENT}"
+  cat > "$HEXGL_TMP/k8s/overlays/${ENVIRONMENT}/kustomization.yaml" <<EOF
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
@@ -59,8 +67,11 @@ images:
     newTag: latest
 EOF
 
-bash "$HEXGL_TMP/scripts/deploy.sh" -k "$KUBECONFIG" -o "${ENVIRONMENT}"
-echo "    HexGL deployed: https://hexgl.${APPS_HOSTNAME}"
+  bash "$HEXGL_TMP/scripts/deploy.sh" -k "$KUBECONFIG" -o "${ENVIRONMENT}"
+  echo "    HexGL deployed: https://hexgl.${APPS_HOSTNAME}"
+else
+  echo "=== Skipping HexGL deployment ==="
+fi
 
 # ---------------------------------------------------------------------------
 # chell-test — periodic network probe
@@ -109,11 +120,15 @@ echo "    chell-test deployed to namespace aperture-sci"
 echo
 echo "========================================"
 echo " Sample workloads deployed!"
-echo " HexGL:      https://hexgl.${APPS_HOSTNAME}"
+if [[ "${DEPLOY_HEXGL}" == "yes" ]]; then
+  echo " HexGL:      https://hexgl.${APPS_HOSTNAME}"
+fi
 echo " NeuVector:  https://neuvector.${APPS_HOSTNAME}"
 echo
 echo " To clean up:"
-echo "   kubectl delete namespace hexgl"
+if [[ "${DEPLOY_HEXGL}" == "yes" ]]; then
+  echo "   kubectl delete namespace hexgl"
+fi
 echo "   kubectl delete namespace aperture-sci"
 echo "========================================"
 echo
