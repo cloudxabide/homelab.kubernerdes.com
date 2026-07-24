@@ -30,7 +30,13 @@ Harvester is essentially the foundation of this homelab and demo environment.  I
 > [Rancher Homepage](https://rancher.com/)  
 > [SUSE Rancher Prime Homepage](https://www.suse.com/products/rancher/)
 
-Rancher Manager is central point of administration (single pane of glass) for Virtual Machines, Kubernetes and Containers, configuration management, RBAC throughout the environment.  It allows you to manage multiple Kubernetes clusters...
+Rancher Manager is central point of administration (single pane of glass) for Virtual Machines, Kubernetes and Containers, configuration management, RBAC throughout the environment.  It allows you to manage multiple Kubernetes clusters.  Beyond the obvious value of multi-cluster management, Rancher differentiates itself in the space with:
+
+- Rancher Projects: A unique capability that allows grouping multiple Kubernetes namespaces into a single "Project" for unified RBAC and resource quota management.
+- Unified Governance: Centralizes authentication and security policies (including AD/LDAP/SAML integration) at the hub level, automatically enforcing them across all managed clusters.
+- Fleet GitOps Integration: Provides a powerful GitOps engine designed to manage and deploy applications to thousands of clusters simultaneously with consistent, repeatable rollouts.
+- Hardened Security: Features DISA STIG validation and a hardened supply chain with signed images and automated SBOM generation through Carbide integration.
+
 
 ### Product Content
 
@@ -61,9 +67,10 @@ https://www.youtube.com/@stackstate8010 (publishing migrated in 2024 over to SUS
 channels post-acquisition)
 https://www.youtube.com/@SUSE/search?query=observability
 
-You can visit the [SUSE Observability Product Page](https://observability.suse.com/#/welcome) which will provide 3 items to focus on:
+[SUSE Observability Product Page](https://observability.suse.com/#/welcome) provides 3 focus-area to review:
 * Live “demo” environment you can explore the product
 * 7.5 minute video which gives an overview
+* Troubleshooting walk-through of an actual K8s environment
 
 ## SUSE Linux Enterprise (SLE/SLES) / SUSE Linux Enterprise Micro (SL-micro)
 
