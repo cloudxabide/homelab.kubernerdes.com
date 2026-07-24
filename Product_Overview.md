@@ -1,7 +1,6 @@
 # Product Overview
 
-This doc will provide a quick synopsis of the products available from SUSE (both Infra and Cloud-Native) as well as references to provide an overview
-
+Here is a quick synopsis of the products available from SUSE/RGS (both Infra and Cloud-Native) as well as references to provide an overview
 
 ## Rancher Rodeo
 Check out the [SUSE Events page](https://www.rancher.com/events) and search for "Rancher Rodeo - North America".
@@ -21,7 +20,8 @@ This is a great way to get expose to the feature-functionality without any burde
 
 Harvester is essentially the foundation of this homelab and demo environment.  I have complete confidence in proclaiming that Harvester, by far, is the easiest way to deploy a resilient, highly-available, fault tolerant compute platform for hosting Virtual Machines and Kubernetes.  There are some nuance, like any platform, but this repo will address the essentials and leave folks in a good place to explore further.
 
-[HarvesterHCI YouTube](https://www.youtube.com/@HarvesterHCI) - SUSE produces a Harvester specific channel showcasiing the features and updates for Harvester.  
+### Product Content
+[HarvesterHCI YouTube](https://www.youtube.com/@HarvesterHCI) - SUSE produces a Harvester specific channel showcasing the features and updates for Harvester.  
 [Clemenko -  Kubernetes Firefighter](https://www.youtube.com/@clemenko) - Andy does a great job explaining many facets of SUSE Products and specifically Harvester.  (He worked at RGS previously)
 
 ## SUSE Rancher Manager
@@ -32,6 +32,8 @@ Harvester is essentially the foundation of this homelab and demo environment.  I
 
 Rancher Manager is central point of administration (single pane of glass) for Virtual Machines, Kubernetes and Containers, configuration management, RBAC throughout the environment.  It allows you to manage multiple Kubernetes clusters...
 
+### Product Content
+
 ## SUSE Security (NeuVector)
 
 > [NeuVector OSS Project - Github](https://github.com/neuvector/neuvector)  
@@ -40,6 +42,12 @@ Rancher Manager is central point of administration (single pane of glass) for Vi
 
 NeuVector provides full lifecycle container security, including image vulnerability scanning, runtime threat detection, and a Kubernetes-native firewall that automatically learns and enforces network segmentation between workloads.
 
+### Product Content
+Jorn Knutilla (SUSE DSA) does a great job walking through NeuVector use-case and functionality.
+[Get true zero-trust runtime security in Kubernetes with SUSE NeuVector | ODFP222](https://www.youtube.com/watch?v=4I5_bFBplHE)
+[Demo: SUSE’s NeuVector, Zero Trust Security for Containers](https://www.youtube.com/watch?v=nAyWDhfU97w)
+[SUSE YouTube - Security](https://www.youtube.com/playlist?list=PL6sYHytyKN2_lssVVBF8PzTYANmn_ngCa)
+
 ## SUSE Observability (StackState)
 
 > [StackState - Github](https://github.com/StackVista)  
@@ -47,6 +55,15 @@ NeuVector provides full lifecycle container security, including image vulnerabil
 > [SUSE Observability Homepage](https://www.suse.com/products/rancher/observability/)
 
 StackState delivers topology-driven observability, correlating metrics, traces, and events across the full stack so teams can quickly pinpoint root cause rather than sifting through disconnected dashboards and alerts.
+
+### Product Content
+https://www.youtube.com/@stackstate8010 (publishing migrated in 2024 over to SUSE
+channels post-acquisition)
+https://www.youtube.com/@SUSE/search?query=observability
+
+You can visit the [SUSE Observability Product Page](https://observability.suse.com/#/welcome) which will provide 3 items to focus on:
+* Live “demo” environment you can explore the product
+* 7.5 minute video which gives an overview
 
 ## SUSE Linux Enterprise (SLE/SLES) / SUSE Linux Enterprise Micro (SL-micro)
 
@@ -82,3 +99,7 @@ Hauler is an air-gap tool that packages, transports, and unpacks container image
 > [SUSE Private Registry (powered by Harbor)](https://www.suse.com/c/suse-private-registry-harbor/)
 
 Harbor is an open-source container image registry that secures artifacts with vulnerability scanning, image signing, and role-based access control, and it serves as the backbone for SUSE Private Registry.
+
+
+[SUSE](https://www.suse.com)  
+[RGS - Rancher Government Systems](https://ranchergovernment.com/)  
