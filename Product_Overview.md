@@ -37,7 +37,6 @@ Rancher Manager is central point of administration (single pane of glass) for Vi
 - Fleet GitOps Integration: Provides a powerful GitOps engine designed to manage and deploy applications to thousands of clusters simultaneously with consistent, repeatable rollouts.
 - Hardened Security: Features DISA STIG validation and a hardened supply chain with signed images and automated SBOM generation through Carbide integration.
 
-
 ### Product Content
 
 ## SUSE Security (NeuVector)
@@ -107,6 +106,16 @@ Hauler is an air-gap tool that packages, transports, and unpacks container image
 
 Harbor is an open-source container image registry that secures artifacts with vulnerability scanning, image signing, and role-based access control, and it serves as the backbone for SUSE Private Registry.
 
+## Application Collection (AppCo)
+> [SUSE AppCo](https://apps.rancher.io)
+> [RGS Carbide App Portal](https://portal.ranchercarbide.dev/apps)
+
+SUSE’s Rancher Application Collection is a curated catalog of pre-packaged, enterprise-ready applications and services designed to deploy on Kubernetes clusters managed by Rancher. It provides one-click or streamlined Helm-based deployments with built-in governance, security, and standard templates to simplify app provisioning and lifecycle management across clusters.
+
+You will notice the catalog, the inventory (SBOM) of packages/binaries that are part of the
+package.
+
+Rancher AppCo is part of a subscription which does look essentially the same as SUSE Application Collection  
 
 [SUSE](https://www.suse.com)  
 [RGS - Rancher Government Systems](https://ranchergovernment.com/)  
