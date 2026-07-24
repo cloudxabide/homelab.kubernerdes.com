@@ -90,22 +90,6 @@ SLE/SLES is SUSE's enterprise-grade, general-purpose Linux distribution, while S
 
 RKE2 is a security-hardened, CIS-benchmark-compliant Kubernetes distribution built for government and enterprise workloads, while K3s is its lightweight sibling, optimized for edge, IoT, and resource-constrained environments.
 
-## RGS Hauler
-
-> [Hauler OSS Project - Github](https://github.com/hauler-dev/hauler)  
-> [Hauler Homepage](https://hauler.dev/)  
-> [Rancher Government Solutions Hauler Product Page](https://ranchergovernment.com/products/hauler)
-
-Hauler is an air-gap tool that packages, transports, and unpacks container images, Helm charts, and files as OCI artifacts, making it well suited for populating registries and Kubernetes clusters in disconnected (enclave) environments.
-
-## Harbor
-
-> [Harbor OSS Project - Github](https://github.com/goharbor/harbor)  
-> [Harbor Homepage](https://goharbor.io/)  
-> [SUSE Private Registry (powered by Harbor)](https://www.suse.com/c/suse-private-registry-harbor/)
-
-Harbor is an open-source container image registry that secures artifacts with vulnerability scanning, image signing, and role-based access control, and it serves as the backbone for SUSE Private Registry.
-
 ## Application Collection (AppCo)
 > [SUSE AppCo](https://apps.rancher.io)
 > [RGS Carbide App Portal](https://portal.ranchercarbide.dev/apps)
@@ -115,7 +99,26 @@ SUSE’s Rancher Application Collection is a curated catalog of pre-packaged, en
 You will notice the catalog, the inventory (SBOM) of packages/binaries that are part of the
 package.
 
-Rancher AppCo is part of a subscription which does look essentially the same as SUSE Application Collection  
+Rancher AppCo is part of a subscription which does look essentially the same as SUSE Application Collection
 
+# FOSS Tools
+
+## RGS Hauler
+
+> [Hauler OSS Project - Github](https://github.com/hauler-dev/hauler)  
+> [Hauler Homepage](https://hauler.dev/)  
+> [Rancher Government Solutions Hauler Product Page](https://ranchergovernment.com/products/hauler)
+
+Hauler is an air-gap tool created and maintained by RGS that packages, transports, and unpacks container images, Helm charts, and files as OCI artifacts, making it well suited for populating registries and Kubernetes clusters in disconnected (enclave) environments.
+
+## Harbor
+
+> [Harbor OSS Project - Github](https://github.com/goharbor/harbor)  
+> [Harbor Homepage](https://goharbor.io/)  
+> [SUSE Private Registry (powered by Harbor)](https://www.suse.com/c/suse-private-registry-harbor/)
+
+Harbor is an open-source container image registry that secures artifacts with vulnerability scanning, image signing, and role-based access control, and it serves as the backbone for SUSE Private Registry.
+
+## Company Homepage
 [SUSE](https://www.suse.com)  
 [RGS - Rancher Government Systems](https://ranchergovernment.com/)  
