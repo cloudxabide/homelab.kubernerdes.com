@@ -25,7 +25,9 @@ Common approaches
 - Registry-to-registry copy with open tools (skopeo, crane, regsync):
   - Example (conceptual):
 
+```
 skopeo copy --all docker://docker.io/library/nginx:1.23 docker://harbor.internal/project/nginx:1.23
+```
 
 Important details
 
@@ -47,12 +49,16 @@ How to mirror
 
 - Pull chart from upstream:
 
+```
 helm pull / --version x.y.z --destination ./charts
+```
 
 - Push to Harbor (chart repo): upload the `.tgz` and update `index.yaml` (via ChartMuseum API or CI script), or for OCI charts:
 
+```
 helm chart save ./charts/mychart-1.2.3.tgz harbor.internal/library/mychart:1.2.3
 helm chart push harbor.internal/library/mychart:1.2.3
+```
 
 - Mirror chart dependencies: if Chart.yaml lists dependencies with `repository` URLs, mirror those dependent charts as well and either update Chart.yaml references or make the internal repo available to `helm` before running `helm dependency update`.
 
@@ -66,9 +72,11 @@ Options to point images at internal registry
 
 - Helm values override at install/upgrade:
 
+```
 helm upgrade --install myapp ./chart \
   --set image.repository=harbor.internal/project/nginx \
   --set image.tag=1.23
+```
 
 - Use a values file for air‑gapped deployments (a maintained `airgap-values.yaml`) and pass it with `-f`.
 - CI/CD render step: rewrite image repositories during a templating/render stage (Helmfile, jsonnet, templating scripts).
@@ -128,19 +136,25 @@ Details:
 
 - Mirror single image with skopeo:
 
+```
 skopeo copy --all docker://docker.io/library/nginx:1.23 docker://harbor.internal/library/nginx:1.23
+```
 
 - Mirror chart as OCI and push to Harbor:
 
+```
 helm pull stable/mychart --version 1.2.3 --destination ./charts
 helm chart save ./charts/mychart-1.2.3.tgz harbor.internal/library/mychart:1.2.3
 helm chart push harbor.internal/library/mychart:1.2.3
+```
 
 - Deploy using internal image via Helm values override:
 
+```
 helm upgrade --install myapp ./chart \
   --set image.repository=harbor.internal/library/nginx \
   --set image.tag=1.23
+```
 
 - If a chart hardcodes an image, approach options:
   - Fork the chart and update templates to read images from values.
