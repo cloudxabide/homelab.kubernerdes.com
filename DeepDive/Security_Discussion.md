@@ -7,7 +7,7 @@ During a discussion with a customer new to Kubernetes (and somewhat new to conta
 customer: "Distroless remove the ability for someone to hack in since there is no shell"  
 me: ...nods head, while thinking... "well, not exactly"  
 
-But.. I did not have a narrative to explain why I was not (entirely) in agreement.  
+But.. I did not have a narrative to explain why I was not (entirely) in agreement and that there still is a concern that needs to be addressed (attackers could still exploit vulnerabilities in the container and gain control).  
 
 ### Narrative around Distroless containers and NeuVector (SUSE Security) 
 
