@@ -25,7 +25,7 @@ infra.kubernerdes.com         IN A 10.10.14.50   # K8s endpoint
 
 ## Technical Details
 
-ClusterName: infra
+ClusterName: infra  
 Machine Pools: 
 - Pool Name: control-plane, workers
 
