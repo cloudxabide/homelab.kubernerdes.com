@@ -14,7 +14,7 @@ This walkthrough uses a minimal, distroless "small web server" workload (`wheatl
 2. Why `kubectl exec` straight into it fails outright — there is no shell to run — and how you actually get a foothold anyway (`kubectl debug` ephemeral container), which is the real-world technique attackers and admins both use against shell-less images.
 3. Pulling a resource from the internet that resembles malware/a vulnerability payload, first in **Monitor** mode (logged, not blocked), then in **Protect** mode (blocked/killed).
 
-The point for the audience: distroless removes the *easy* attack surface (no shell, no tools to abuse), but it doesn't remove risk entirely — someone can still attach tooling alongside the pod. SUSE Security is the layer that catches what image hardening alone can't: unrecognized processes and unrecognized network egress, enforced at runtime, regardless of how minimal or hardened the image is.
+The conceptual "why" — how attackers pivot inside a shell-less container and where runtime enforcement fits — lives in [`Security_Discussion.md`](./Security_Discussion.md). This doc is the hands-on counterpart: it walks through one such path (attach tooling via `kubectl debug`, then reach out to the internet) and shows SUSE Security catching it at runtime, regardless of how minimal the image is.
 
 ---
 
@@ -239,10 +239,6 @@ If you want to echo the original demo's granularity beat, click **Rewrite Rule**
 
 ## Key Takeaways for Your Audience
 
-**Image hardening and runtime security solve different problems.** Distroless closes off the "exec in and use built-in tools" path entirely. It does nothing about someone attaching new tooling to the pod via Kubernetes itself. You need both layers.
+Distroless closed the "exec in and use built-in tools" path — that's why `kubectl exec` failed outright. It did nothing to stop tooling being *attached* to the pod via Kubernetes itself, and nothing to patch the app. SUSE Security is what caught the attached tooling and its egress at runtime, using the same Discover → Monitor → Protect behavioral model as the `chell-test` demo — proving the control is about *behavior*, not about trusting the image to police itself. And keep the two questions separate: whether `kubectl debug` should be allowed against production pods at all is cluster RBAC's job; what that debug session is allowed to *do* once attached is SUSE Security's — it's the sophisticated point that separates this demo from a simple "look, it blocks stuff" pitch.
 
-**The behavioral baseline scales down as well as up.** A single-binary, single-process, no-egress workload gets an extremely tight learned baseline — which makes anomalies (a shell, a new process, any egress at all) trivially obvious to detect and enforce against.
-
-**Enforcement doesn't care what image you used.** The same Discover → Monitor → Protect model, the same process- and network-level kill/deny behavior from the `chell-test` demo applies here — proving the control is about *behavior*, not about trusting the image to police itself.
-
-**RBAC and runtime security are complementary, not redundant.** Whether `kubectl debug` should be allowed against production pods at all is a cluster access-control question. What that debug session is allowed to *do* once attached is a SUSE Security question. Say this explicitly — it's the sophisticated point that separates this demo from a simple "look, it blocks stuff" pitch.
+For the broader threat picture behind this demo — the full set of pivots a shell-less container is still exposed to — see [`Security_Discussion.md`](./Security_Discussion.md).
