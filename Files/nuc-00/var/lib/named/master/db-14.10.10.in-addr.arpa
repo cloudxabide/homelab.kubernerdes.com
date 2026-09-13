@@ -1,12 +1,13 @@
 $TTL 2D
 14.10.10.in-addr.arpa.   IN SOA dns.community.kubernerdes.com. root.community.kubernerdes.com. (
-                        2026071201	; serial
+                        2026091301	; serial
                         1D              ; refresh
                         2H              ; retry
                         1W              ; expiry
                         2D )            ; minimum
 
                         IN NS           nuc-00.homelab.kubernerdes.com.
+                        IN NS           nuc-00-02.homelab.kubernerdes.com.
 
 ; Rancher Manager Cluster
 30     IN      PTR     rancher.community.kubernerdes.com.
@@ -164,4 +165,3 @@ $TTL 2D
 252     IN      PTR     vpn-dhcp-252.community.kubernerdes.com.
 253     IN      PTR     vpn-dhcp-253.community.kubernerdes.com.
 254     IN      PTR     vpn-dhcp-254.community.kubernerdes.com.
-

@@ -1,13 +1,14 @@
-$TTL 604800
-$ORIGIN homelab.kubernerdes.com.
-@	IN SOA      nuc-00.homelab.kubernerdes.com.  root.kubernerdes.com. (
-            2026071201 ; Serial
+$TTL 604800 
+$ORIGIN homelab.kubernerdes.com. 
+@	IN SOA      nuc-00.homelab.kubernerdes.com.  root.kubernerdes.com. ( 
+            2026091301 ; Serial
             604800     ; Refresh
             86400      ; Retry
             2419200    ; Expire
             604800 )   ; Negative Cache TTL
 
              IN NS       nuc-00.homelab.kubernerdes.com.
+             IN NS       nuc-00-02.homelab.kubernerdes.com.
 
 ; Infra Hardware devices
 sophos-xgs88 	IN 	A	10.10.12.1
@@ -18,13 +19,13 @@ airport-extreme IN 	A	10.10.12.3
 truenas		 IN 	A	10.10.12.7
 
 ; Infra Hosts
-; NOTE: nuc-00-01 (DNS/DHCP/TFTP) and nuc-00-02 (DNS secondary) are retired —
-; nuc-00 now runs all infra services directly. See PLAN.md.
+nuc-00-01	IN	A	10.10.12.8
+nuc-00-02	IN	A	10.10.12.9
 nuc-00		IN	A	10.10.12.10
 truenas		IN	A	10.10.12.11
 glkvm		IN	A	10.10.12.20
 
-; Load Balancer for Harvester Cluster(s) - one LB per K8s Cluster (sometimes paired)
+; Load Balancer for Harvester Cluster(s) - one LB per Harvester Cluster
 ; These are the Host Address - define VIP elsewhere
 nuc-00-03	IN	A	10.10.12.93
 
@@ -37,6 +38,7 @@ spark-e		IN 	A	10.10.12.251
 los-alamos	IN 	A	10.10.12.252
 
 docs            IN      CNAME   cloudxabide.github.io.
+
 
 ; DHCP Hosts
 dhcp-128    IN      A       10.10.12.128

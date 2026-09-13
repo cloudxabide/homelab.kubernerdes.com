@@ -1,13 +1,14 @@
 $TTL 604800 
 $ORIGIN prime.kubernerdes.com. 
 @	IN SOA      nuc-00.homelab.kubernerdes.com.  root.kubernerdes.com. ( 
-            2026071201 ; Serial
+            2026091302 ; Serial
             604800     ; Refresh
             86400      ; Retry
             2419200    ; Expire
             604800 )   ; Negative Cache TTL
 
              IN NS       nuc-00.homelab.kubernerdes.com.
+             IN NS       nuc-00-02.homelab.kubernerdes.com.
 
 ; Rancher Cluster
 rancher         IN      A       10.10.15.30
@@ -173,8 +174,7 @@ dhcp-254	 IN	 A	 10.10.15.254
 *.apps.prime.kubernerdes.com. 	IN 	A 	10.10.15.40
 
 ; Docs hosted at github pages
-docs.prime.kubernerdes.com.   IN      CNAME   jradtke-rgs.github.io.
+docs.prime.kubernerdes.com.   IN      CNAME   cloudxabide.github.io.
 
 ; Harbor CNAME
 harbor.prime.kubernerdes.com.	IN	CNAME nuc-00.prime.kubernerdes.com.
-

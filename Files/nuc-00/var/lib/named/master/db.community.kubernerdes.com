@@ -1,17 +1,19 @@
 $TTL 604800 
 $ORIGIN community.kubernerdes.com. 
 @	IN SOA      nuc-00.homelab.kubernerdes.com.  root.kubernerdes.com. ( 
-            2026071201 ; Serial
+            2026091301 ; Serial
             604800     ; Refresh
             86400      ; Retry
             2419200    ; Expire
             604800 )   ; Negative Cache TTL
 
              IN NS       nuc-00.homelab.kubernerdes.com.
+             IN NS       nuc-00-02.homelab.kubernerdes.com.
 
 ; NOTE: I no longer have static IPs for the VMs
 ; Rancher Cluster
 rancher         IN      A       10.10.14.30
+rancher-test	IN	A 	10.10.12.185
 
 ; Observability Cluster
 observability   IN      A       10.10.14.40
@@ -167,8 +169,7 @@ dhcp-254	 IN	 A	 10.10.14.254
 *.apps.community.kubernerdes.com. 	IN 	A 	10.10.14.51
 
 ; Docs hosted at github pages
-docs.community.kubernerdes.com.   IN      CNAME   jradtke-rgs.github.io.
+docs.community.kubernerdes.com.   IN      CNAME   cloudxabide.github.io.
 
 ; Harbor CNAME
 harbor.community.kubernerdes.com.	IN	CNAME nuc-00.community.kubernerdes.com.
-

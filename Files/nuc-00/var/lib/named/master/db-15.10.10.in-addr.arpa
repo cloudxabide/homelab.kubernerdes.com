@@ -1,12 +1,13 @@
 $TTL 2D
 15.10.10.in-addr.arpa.   IN SOA dns.prime.kubernerdes.com. root.prime.kubernerdes.com. (
-                        2026071201	; serial
+                        2026091301	; serial
                         1D              ; refresh
                         2H              ; retry
                         1W              ; expiry
                         2D )            ; minimum
 
                         IN NS           nuc-00.homelab.kubernerdes.com.
+                        IN NS           nuc-00-02.homelab.kubernerdes.com.
 
 ; Rancher Manager Cluster
 30     IN      PTR     rancher.prime.kubernerdes.com.
@@ -164,4 +165,3 @@ $TTL 2D
 252     IN      PTR     vpn-dhcp-252.prime.kubernerdes.com.
 253     IN      PTR     vpn-dhcp-253.prime.kubernerdes.com.
 254     IN      PTR     vpn-dhcp-254.prime.kubernerdes.com.
-

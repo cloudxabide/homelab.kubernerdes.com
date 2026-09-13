@@ -1,0 +1,2 @@
+#!ipxe
+chain http://10.10.12.10/harvester/harvester/ipxe-menu

@@ -1,0 +1,6 @@
+sudo wget -O /srv/tftpboot/ipxe.efi https://boot.netboot.xyz/ipxe/netboot.xyz.efi
+
+I am currently using some bizarre ipxe.efi file 
+
+At some point, I want to shift to a more "standardized" or "vanilla" IPXE setup - using netboot.xyz.efi
+
