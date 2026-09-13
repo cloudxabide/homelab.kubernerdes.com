@@ -80,21 +80,25 @@ else
   fi
 fi
 
-for REL_PATH in "${DIR_TARGETS[@]}"; do
-  DEST_DIR="${FILES_DIR}/${REL_PATH}"
-  mkdir -p "${DEST_DIR}"
-  echo "==> Pulling ${ADMIN_USER}@${ADMIN_HOST}:/${REL_PATH}/ -> ${DEST_DIR}/"
-  rsync -avz "${ADMIN_USER}@${ADMIN_HOST}:/${REL_PATH}/" "${DEST_DIR}/"
-  echo
-done
+if [[ "${#DIR_TARGETS[@]}" -gt 0 ]]; then
+  for REL_PATH in "${DIR_TARGETS[@]}"; do
+    DEST_DIR="${FILES_DIR}/${REL_PATH}"
+    mkdir -p "${DEST_DIR}"
+    echo "==> Pulling ${ADMIN_USER}@${ADMIN_HOST}:/${REL_PATH}/ -> ${DEST_DIR}/"
+    rsync -avz "${ADMIN_USER}@${ADMIN_HOST}:/${REL_PATH}/" "${DEST_DIR}/"
+    echo
+  done
+fi
 
-for REL_PATH in "${FILE_TARGETS[@]}"; do
-  DEST_FILE="${FILES_DIR}/${REL_PATH}"
-  mkdir -p "$(dirname "${DEST_FILE}")"
-  echo "==> Pulling ${ADMIN_USER}@${ADMIN_HOST}:/${REL_PATH} -> ${DEST_FILE}"
-  rsync -avz "${ADMIN_USER}@${ADMIN_HOST}:/${REL_PATH}" "${DEST_FILE}"
-  echo
-done
+if [[ "${#FILE_TARGETS[@]}" -gt 0 ]]; then
+  for REL_PATH in "${FILE_TARGETS[@]}"; do
+    DEST_FILE="${FILES_DIR}/${REL_PATH}"
+    mkdir -p "$(dirname "${DEST_FILE}")"
+    echo "==> Pulling ${ADMIN_USER}@${ADMIN_HOST}:/${REL_PATH} -> ${DEST_FILE}"
+    rsync -avz "${ADMIN_USER}@${ADMIN_HOST}:/${REL_PATH}" "${DEST_FILE}"
+    echo
+  done
+fi
 
 echo "==> Done. Review changes with:"
 echo "    git -C \"${REPO_ROOT}\" status Files/nuc-00"
