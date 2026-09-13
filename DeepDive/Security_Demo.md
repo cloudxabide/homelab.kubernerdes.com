@@ -420,3 +420,14 @@ Return to **Network Activity**. The attempted (blocked) connections may appear a
 **Full audit trail.** Every allowed and blocked connection is logged with enough context to reconstruct what happened, when, and from where — directly satisfying audit and compliance requirements for IL4/IL5 environments.
 
 **Layer 7 WAF built in.** NeuVector's WAF engine inspects HTTP payload content — URL parameters, headers, and body — for attack patterns like SQL injection, XSS, and path traversal. This is application-layer protection without a separate appliance, operating inside the cluster on a per-workload basis.
+
+---
+
+## References
+
+- SUSE — [SUSE Security (NeuVector) documentation hub](https://documentation.suse.com/cloudnative/security/)
+- NeuVector Docs — [Modes: Discover, Monitor, Protect](https://open-docs.neuvector.com/policy/modes/) — the mode model this walkthrough steps through.
+- NeuVector Docs — [Network Rules](https://open-docs.neuvector.com/policy/networkrules/) and [DLP & WAF Sensors](https://open-docs.neuvector.com/policy/dlp/) — the L7 rule and WAF behavior shown in Parts 3–5.
+- SUSE Communities — [Zero Trust Runtime Container Security](https://www.suse.com/c/zero-trust-runtime-container-security/) — the "behavioral baseline, not signatures" idea behind the demo.
+- Video — [Demo: SUSE's NeuVector — Zero Trust Security for Containers](https://www.youtube.com/watch?v=nAyWDhfU97w) · [NeuVector Security Policy Automation for Zero Trust Segmentation and Zero Day Attack Prevention](https://www.youtube.com/watch?v=XMtHWJ3Tv_k)
+- Companion doc: [`Security_Demo_Distroless.md`](./Security_Demo_Distroless.md) · concept notes: [`Security_Discussion.md`](./Security_Discussion.md)

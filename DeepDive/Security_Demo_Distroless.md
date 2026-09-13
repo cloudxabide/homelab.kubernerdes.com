@@ -242,3 +242,14 @@ If you want to echo the original demo's granularity beat, click **Rewrite Rule**
 Distroless closed the "exec in and use built-in tools" path — that's why `kubectl exec` failed outright. It did nothing to stop tooling being *attached* to the pod via Kubernetes itself, and nothing to patch the app. SUSE Security is what caught the attached tooling and its egress at runtime, using the same Discover → Monitor → Protect behavioral model as the `chell-test` demo — proving the control is about *behavior*, not about trusting the image to police itself. And keep the two questions separate: whether `kubectl debug` should be allowed against production pods at all is cluster RBAC's job; what that debug session is allowed to *do* once attached is SUSE Security's — it's the sophisticated point that separates this demo from a simple "look, it blocks stuff" pitch.
 
 For the broader threat picture behind this demo — the full set of pivots a shell-less container is still exposed to — see [`Security_Discussion.md`](./Security_Discussion.md).
+
+---
+
+## References
+
+- Kubernetes — [Debug Running Pods](https://kubernetes.io/docs/tasks/debug/debug-application/debug-running-pod/) — `kubectl debug`, ephemeral containers, and `--target` (the foothold technique in Part 1).
+- GoogleContainerTools — [distroless](https://github.com/GoogleContainerTools/distroless) — the base-image family used for `wheatley` (`gcr.io/distroless/static-debian12:nonroot`), plus the `:debug` shell variants.
+- NeuVector Docs — [Modes: Discover, Monitor, Protect](https://open-docs.neuvector.com/policy/modes/) and [Process Profile Rules](https://open-docs.neuvector.com/policy/processrules/) — the runtime enforcement that still catches the attached tooling.
+- EICAR — [Download Anti-Malware Testfile](https://www.eicar.org/download-anti-malware-testfile/) — the harmless standard test payload pulled in Step 4.
+- SUSE Communities — [Zero Trust Runtime Container Security](https://www.suse.com/c/zero-trust-runtime-container-security/)
+- Related: [`Security_Demo.md`](./Security_Demo.md) (the `chell-test` walkthrough) · [`Security_Discussion.md`](./Security_Discussion.md)

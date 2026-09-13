@@ -371,4 +371,6 @@ This is the concept end-to-end; the full lab (cluster labels, GitHub repo creati
 - [podinfo chart](https://github.com/stefanprodan/podinfo)
 - [OpenGitOps — principles](https://opengitops.dev/)
 - [Argo CD](https://argo-cd.readthedocs.io/) · [Flux](https://fluxcd.io/)
+- SUSE Communities — [Scaling Kubernetes GitOps with Fleet: Experiment Results and Lessons Learnt](https://www.suse.com/c/rancher_blog/scaling-kubernetes-gitops-with-fleet-experiment-results-and-lessons-learnt/)
+- SUSE Communities — [Optimizing Rancher Continuous Delivery with Fleet Benchmarks](https://www.suse.com/c/rancher_blog/optimizing-rancher-continuous-delivery-with-benchmarks/)
 - Related in this repo: [`Airgap_Overview.md`](./Airgap_Overview.md)

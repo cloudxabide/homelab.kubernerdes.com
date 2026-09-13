@@ -77,12 +77,6 @@ When configuring this in the Harvester UI, you will navigate to the **Backend Se
 
 Ultimately, the most effective backend server selector values are the ones that perfectly align with your organization's internal infrastructure tagging strategy. Using simple, descriptive, and consistent key-value pairs ensures that your network routing remains predictable as your Harvester cluster grows. 
 
-## References
-[SUSE Harvester | Load Balancer](https://docs.harvesterhci.io/v1.8/networking/loadbalancer/)   
-[Harvester GitHub Repository](https://github.com/harvester/harvester)  
-[Baytech Consulting Architectural Overview](https://www.baytechconsulting.com/blog/harvesters-disruption-of-the-hci-space)  
-[How to Configure Harvester Load Balancer](https://oneuptime.com/blog/post/2026-03-20-harvester-load-balancer/view)
-
 ## Example Commands
 ```
 mansible@nuc-00 [homelab] ~> kubectl get crd loadbalancers.loadbalancer.harvesterhci.io
@@ -181,3 +175,13 @@ mansible@nuc-00 [homelab] ~> kubectl get loadbalancer lb-observability -n vms-ob
 mansible@nuc-00 [homelab] ~> kubectl get events -n vms-observability     --field-selector involvedObject.kind=LoadBalancer,involvedObject.name=lb-observability
 No resources found in vms-observability namespace.
 ```
+
+---
+
+## References
+
+- Harvester Docs — [Load Balancer](https://docs.harvesterhci.io/v1.8/networking/loadbalancer/) — IP pools, listeners, backend server selector, and health checks.
+- Harvester Docs — [Harvester Cloud Provider](https://docs.harvesterhci.io/v1.8/rancher/cloud-provider/) — how guest RKE2 clusters get built-in load balancer support from Harvester.
+- Rancher Manager — [Harvester integration overview](https://ranchermanager.docs.rancher.com/integrations-in-rancher/harvester/overview) — the node driver that creates machine pools and the `harvesterhci.io/machineSetName` label the backend selector matches on.
+- [`harvester/load-balancer-harvester`](https://github.com/harvester/load-balancer-harvester) — source for the `loadbalancer.harvesterhci.io` controller and CRDs shown in Example Commands (works with kube-vip + Harvester CCM).
+- Baytech Consulting — [Harvester's Disruption of the HCI Space](https://www.baytechconsulting.com/blog/harvesters-disruption-of-the-hci-space) — third-party architectural overview.

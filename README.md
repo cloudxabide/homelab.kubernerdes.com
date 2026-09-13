@@ -1,6 +1,8 @@
 # homelab.kubernerdes.com
 
-Free, as-in beer, software to run infrastructure by SUSE.
+Free, as-in beer, software to run infrastructure by SUSE. (*)
+
+(*) StackState (aka SUSE Observability) does require a license key.
 
 <table style="background-color: white;">
 <tr>

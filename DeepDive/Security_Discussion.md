@@ -33,3 +33,14 @@ Removing shells is solid defense-in-depth, not a silver bullet. A complete postu
 SUSE Security (NeuVector) is that layer. It learns a workload's normal process, network, and file behavior in **Discover** mode, then blocks anything outside that baseline in **Protect** mode, using a Zero-Trust model that operates independently of the container's OS or available utilities. The image can be as minimal or as fat as you like — the behavioral control is the same.
 
 See [`Security_Demo_Distroless.md`](./Security_Demo_Distroless.md) for a hands-on demo of this against a distroless workload.
+
+---
+
+## References
+
+- GoogleContainerTools — [distroless](https://github.com/GoogleContainerTools/distroless) — what "distroless" actually removes (shell, package manager, coreutils) and what it leaves behind.
+- Kubernetes — [Debug Running Pods](https://kubernetes.io/docs/tasks/debug/debug-application/debug-running-pod/) — how `kubectl debug` attaches tooling to a shell-less pod regardless of image contents.
+- [GTFOBins](https://gtfobins.github.io/) — catalogue of "living off the land" techniques that abuse interpreters/binaries already present, no `sh` required.
+- MITRE ATT&CK — [T1059 Command and Scripting Interpreter](https://attack.mitre.org/techniques/T1059/) · [T1105 Ingress Tool Transfer](https://attack.mitre.org/techniques/T1105/) — the interpreter-abuse and "bring your own land" pivots in the table.
+- SUSE Communities — [Zero Trust Runtime Container Security](https://www.suse.com/c/zero-trust-runtime-container-security/) — where NeuVector's behavioral model fits.
+- SUSE — [SUSE Security (NeuVector) documentation hub](https://documentation.suse.com/cloudnative/security/)
