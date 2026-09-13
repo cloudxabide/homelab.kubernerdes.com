@@ -1,0 +1,32 @@
+---
+scheme_version: 1
+server_url: https://10.10.14.100
+token: KentuckyHarvester
+os:
+  hostname: nuc-02
+  ssh_authorized_keys:
+    - ecdsa-sha2-nistp521 AAAAE2VjZHNhLXNoYTItbmlzdHA1MjEAAAAIbmlzdHA1MjEAAACFBABZ7vctl6viLsGcGmaLcZ1aGFoRtfAU4DKd7r7XZD5WMXSi9/nh0W3xngBwK6gpE3qHUj8noB7OzpfkE0aE937SuwEmeOPtIK2VhSuG3oAxmCz9ohqLtC9jRkXapddvTYCPG3KLsgJlueCRI6iZlZ6FVGOHeGOgw1KXOzbi4Ye5pJV+dg== mansible@nuc-00
+    - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCwB0CvPtoLP8S3T9RFUpQPGQ9Pxjym39Negeh9C7JmZb45mVEMy462t0l+TY9d5E4NmOI4DJkOPaj9V2u+YcLSRpmyCow030RN4pkoYBfjSbZC0Nb417G0KcQM6nRXZEbzl+R5DRxvg4k2SDa3G+i8V5bExYcfLakxW7uKRP2iEdunLxJXVzgKcjgG3jWD3pY+uhSxXsOxFFq2R94vQ2lc/P6R8Fz/7mWiXC3flCtRNEXrnni5M2CUlAj31xyFOC2YE2krjRFvcxI8JLXp0qabGftcWf24ZhOBmqsIVTK+o6MyQJxBRA6VWNbXSrv5bz2tJqbZBA+rs95IMHj28+k7 mansible@nuc-00
+  password: Passw0rd01
+  ntp_servers:
+    - 0.suse.pool.ntp.org
+    - 1.suse.pool.ntp.org
+    - 2.suse.pool.ntp.org
+  dns_nameservers:
+    - 10.10.12.10
+    - 8.8.8.8
+install:
+  skipchecks: true
+  mode: join
+  management_interface:
+    interfaces:
+      - name: enp86s0 # gen13 NUC
+    default_route: true
+    method: static
+    ip: 10.10.14.102
+    subnet_mask: 255.255.252.0
+    gateway: 10.10.12.1
+  device: /dev/sda
+  data_disk: /dev/nvme0n1
+  iso_url: http://10.10.12.10/harvester/v1.8.2/harvester-v1.8.2-amd64.iso
+  #iso_url: http://10.10.12.10/harvester/v1.8.0/harvester-v1.8.0-amd64.iso

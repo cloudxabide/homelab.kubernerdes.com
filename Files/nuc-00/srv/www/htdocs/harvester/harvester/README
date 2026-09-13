@@ -1,0 +1,12 @@
+# iPXE setup
+
+ipxe-menu
+- now references and does an "include" of 
+  - community.ipxe
+  - prime.ipxe
+  - enclave.ipxe
+Allowing for testing of a single deployments without breaking ALL the deployments
+
+# the environment is based on 
+ENV = community, prime, enclave
+VERSION = 1.7.1, 1.8.2, etc..

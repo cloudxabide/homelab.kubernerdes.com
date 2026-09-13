@@ -13,20 +13,20 @@ choose target && goto ${target}
 # Node-specific parameters (community)
 :nuc-01-community
 echo Deploying Harvester to nuc-01 - Community (create mode)... static boot
-kernel http://10.10.12.10/harvester/v1.8.1/harvester-v1.8.1-vmlinuz-amd64 root=live:http://10.10.12.10/harvester/v1.8.1/harvester-v1.8.1-rootfs-amd64.squashfs console=tty1 harvester.install.automatic=true harvester.install.skipchecks=true ip=dhcp rd.cos.disable rd.net.dhcp.retry=3 rd.noverifyssl net.ifnames=1 harvester.install.config_url=http://10.10.12.10/harvester/harvester/config-create-nuc-01-community-v1.8.1.yaml
-initrd http://10.10.12.10/harvester/v1.8.1/harvester-v1.8.1-initrd-amd64
+kernel http://10.10.12.10/harvester/v1.8.2/harvester-v1.8.2-vmlinuz-amd64 root=live:http://10.10.12.10/harvester/v1.8.2/harvester-v1.8.2-rootfs-amd64.squashfs console=tty1 harvester.install.automatic=true harvester.install.skipchecks=true ip=dhcp rd.cos.disable rd.net.dhcp.retry=3 rd.noverifyssl net.ifnames=1 harvester.install.config_url=http://10.10.12.10/harvester/harvester/config-create-nuc-01-community-v1.8.2.yaml
+initrd http://10.10.12.10/harvester/v1.8.2/harvester-v1.8.2-initrd-amd64
 boot
 
 :nuc-02-community
 echo Deploying Harvester to nuc-02 - Community (join mode)...
-kernel http://10.10.12.10/harvester/v1.8.1/harvester-v1.8.1-vmlinuz-amd64 root=live:http://10.10.12.10/harvester/v1.8.1/harvester-v1.8.1-rootfs-amd64.squashfs console=tty1 harvester.install.automatic=true harvester.install.skipchecks=true ip=dhcp rd.cos.disable rd.net.dhcp.retry=3 rd.noverifyssl net.ifnames=1 harvester.install.config_url=http://10.10.12.10/harvester/harvester/config-join-nuc-02-community-v1.8.1.yaml
-initrd http://10.10.12.10/harvester/v1.8.1/harvester-v1.8.1-initrd-amd64
+kernel http://10.10.12.10/harvester/v1.8.2/harvester-v1.8.2-vmlinuz-amd64 root=live:http://10.10.12.10/harvester/v1.8.2/harvester-v1.8.2-rootfs-amd64.squashfs console=tty1 harvester.install.automatic=true harvester.install.skipchecks=true ip=dhcp rd.cos.disable rd.net.dhcp.retry=3 rd.noverifyssl net.ifnames=1 harvester.install.config_url=http://10.10.12.10/harvester/harvester/config-join-nuc-02-community-v1.8.2.yaml
+initrd http://10.10.12.10/harvester/v1.8.2/harvester-v1.8.2-initrd-amd64
 boot
 
 :nuc-03-community
 echo Deploying Harvester to nuc-03 - Community (join mode)...
-kernel http://10.10.12.10/harvester/v1.8.1/harvester-v1.8.1-vmlinuz-amd64 root=live:http://10.10.12.10/harvester/v1.8.1/harvester-v1.8.1-rootfs-amd64.squashfs console=tty1 harvester.install.automatic=true harvester.install.skipchecks=true ip=dhcp rd.cos.disable rd.net.dhcp.retry=3 rd.noverifyssl net.ifnames=1 harvester.install.config_url=http://10.10.12.10/harvester/harvester/config-join-nuc-03-community-v1.8.1.yaml
-initrd http://10.10.12.10/harvester/v1.8.1/harvester-v1.8.1-initrd-amd64
+kernel http://10.10.12.10/harvester/v1.8.2/harvester-v1.8.2-vmlinuz-amd64 root=live:http://10.10.12.10/harvester/v1.8.2/harvester-v1.8.2-rootfs-amd64.squashfs console=tty1 harvester.install.automatic=true harvester.install.skipchecks=true ip=dhcp rd.cos.disable rd.net.dhcp.retry=3 rd.noverifyssl net.ifnames=1 harvester.install.config_url=http://10.10.12.10/harvester/harvester/config-join-nuc-03-community-v1.8.2.yaml
+initrd http://10.10.12.10/harvester/v1.8.2/harvester-v1.8.2-initrd-amd64
 boot
 
 :back
