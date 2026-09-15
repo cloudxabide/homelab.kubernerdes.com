@@ -48,3 +48,17 @@ kubectl --context harvester delete upgrades.harvesterhci.io hvst-upgrade-nz6q4 -
 4m25s       Normal    Killing                       pod/importer-prime-926f72f7-080b-4b87-8cd8-f34353123152                                                               Stopping container importer
 29m         Warning   ErrImportFailed               persistentvolumeclaim/prime-14f2f48e-5426-4ec6-a29f-88b8bb7d804d                                                      Unable to process data: Unable to convert source data to target format: virtual image size 8232370176 is larger than the reported available storage 6541017088. A larger PVC is required
 ```
+
+
+  What we proposed but never ran (PVC resize):
+```
+  kubectl --context harvester patch pvc prime-926f72f7-080b-4b87-8cd8-f34353123152 \
+    -n harvester-system \
+    -p '{"spec":{"resources":{"requests":{"storage":"10Gi"}}}}'
+```
+
+  What we actually ran (the fix that worked — raised CDI importer memory from 2G→4G via the harvester ManagedChart, per Harvester's own troubleshooting docs):
+```
+  kubectl --context harvester patch managedchart harvester -n fleet-local --type=merge \
+    -p '{"spec":{"values":{"cdi":{"spec":{"config":{"podResourceRequirements":{"limits":{"memory":"4G"}}}}}}}}'
+```
