@@ -1,5 +1,8 @@
 # Troubleshooting Upgrade
 
+Harvester Upgrade Precheck script  
+https://github.com/harvester/upgrade-helpers/tree/main/pre-check/v1.x
+
 ```
 UPGRADE_NAME=$(kubectl get upgrade.harvesterhci.io -n harvester-system -l harvesterhci.io/latestUpgrade=true -o jsonpath='{.items[0].metadata.name}') && kubectl logs -n harvester-system -l harvesterhci.io/upgrade=$UPGRADE_NAME --follow
 ```

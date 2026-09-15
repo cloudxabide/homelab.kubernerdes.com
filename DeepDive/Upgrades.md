@@ -22,6 +22,9 @@ Recommended order when bumping more than one at a time: **Harvester → RKE2 →
 Run [`harvester/upgrade-helpers`'s `pre-check/v1.x/check.sh`](https://github.com/harvester/upgrade-helpers/tree/main/pre-check) before starting any Harvester upgrade. It checks host/certificate validity, storage space availability, Helm/Harvester bundle status, node health, CAPI cluster state, Longhorn volume and backing-image health, VM live-migration capability, pod status, kubeconfig secrets, and IP availability for storage/RWX — pass/fail/skip per check (`-v` for verbose, `-l` to log to a file). If anything fails, don't proceed.
 
 ```bash
+ssh rancher@nuc-01.$ENVIRONMENT.$DOMAIN
+sudo su -
+mkdir -p ~/Developer/Projects; cd $_
 git clone https://github.com/harvester/upgrade-helpers.git
 cd upgrade-helpers/pre-check/v1.x
 KUBECONFIG="$KUBECONFIG_HARVESTER" ./check.sh -v
