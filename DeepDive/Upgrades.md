@@ -1,4 +1,4 @@
-# Upgrades
+# Upgrades for Community/SUSE/RGS Software
 
 > [!NOTE]
 > Three distinct upgrade paths live in this homelab, and it's easy to conflate them because they stack on top of each other physically. They are **independent** — you can bump one without touching the others — but they are **related**: Harvester is the hypervisor everything else runs as VMs on top of, RKE2 is the Kubernetes distribution those Rancher Manager VMs run, and Rancher Manager is just a Helm release deployed onto that RKE2 cluster.
@@ -21,13 +21,16 @@ Recommended order when bumping more than one at a time: **Harvester → RKE2 →
 
 Run [`harvester/upgrade-helpers`'s `pre-check/v1.x/check.sh`](https://github.com/harvester/upgrade-helpers/tree/main/pre-check) before starting any Harvester upgrade. It checks host/certificate validity, storage space availability, Helm/Harvester bundle status, node health, CAPI cluster state, Longhorn volume and backing-image health, VM live-migration capability, pod status, kubeconfig secrets, and IP availability for storage/RWX — pass/fail/skip per check (`-v` for verbose, `-l` to log to a file). If anything fails, don't proceed.
 
+https://github.com/harvester/upgrade-helpers/tree/main/pre-check/v1.x
+
 ```bash
 ssh rancher@nuc-01.$ENVIRONMENT.$DOMAIN
-sudo su -
+sudo -i
 mkdir -p ~/Developer/Projects; cd $_
-git clone https://github.com/harvester/upgrade-helpers.git
-cd upgrade-helpers/pre-check/v1.x
-KUBECONFIG="$KUBECONFIG_HARVESTER" ./check.sh -v
+curl -sLf https://raw.githubusercontent.com/harvester/upgrade-helpers/main/pre-check/v1.x/check.sh -o check.sh
+chmod +x check.sh
+./check.sh
+
 ```
 
 Note: this checks cluster/storage/node health — it would **not** have caught the CDI importer memory-limit issue below, since that's a resource-limit default rather than a pre-existing cluster condition. Worth running regardless as the first line of defense for everything else.
