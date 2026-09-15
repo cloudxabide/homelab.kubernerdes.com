@@ -10,3 +10,4 @@ This directory will contain a number of "Deep Dive" that will be narrative form 
 | Security_Demo.md | Live SUSE Security (NeuVector) demo walkthrough — observe egress from the `chell-test`/`aperture-sci` workload in Monitor mode, then flip to Protect and watch enforcement block it. |
 | Security_Demo_Distroless.md | Companion NeuVector demo using a true distroless workload (`wheatley`) — `kubectl exec` fails at the image layer, `kubectl debug` gets a foothold anyway, and runtime enforcement still catches it. |
 | Security_Discussion.md | Narrative talking points on why distroless ("no-shell") containers aren't immune — attack pivots that remain, and where SUSE Security's runtime behavioral enforcement fits. |
+| Upgrades.md | Three independent-but-related upgrade paths — Harvester, RKE2 (under Rancher Manager), and Rancher Manager itself — pre-checks, monitoring commands, and a real CDI importer OOM incident with its fix. |
