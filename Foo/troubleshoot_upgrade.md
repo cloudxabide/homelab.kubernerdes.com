@@ -62,3 +62,5 @@ kubectl --context harvester delete upgrades.harvesterhci.io hvst-upgrade-nz6q4 -
   kubectl --context harvester patch managedchart harvester -n fleet-local --type=merge \
     -p '{"spec":{"values":{"cdi":{"spec":{"config":{"podResourceRequirements":{"limits":{"memory":"4G"}}}}}}}}'
 ```
+  That's the one that let the ISO import clear the qemu-img convert OOM/undersizing loop and get us to the current node-upgrade phase. Once this upgrade finishes, we
+  should revert that ManagedChart override back to the 2G default per the doc's cleanup step
