@@ -17,6 +17,9 @@ Recommended order when bumping more than one at a time: **Harvester → RKE2 →
 
 ## 1. Harvester Upgrade
 
+> [!NOTE] 
+> Kubernetes is declarative!  As such, there will almost *always* be a period of time between a command being executed against a cluster and the result being *complete*.   My **advice** - let the Harvester upgrade do its thing.  Ignore the changing colors (green/red/yellow/green) in the UI until the upgrade is complete.
+
 ### Pre-Upgrade Checks
 
 Run [`harvester/upgrade-helpers`'s `pre-check/v1.x/check.sh`](https://github.com/harvester/upgrade-helpers/tree/main/pre-check) before starting any Harvester upgrade. It checks host/certificate validity, storage space availability, Helm/Harvester bundle status, node health, CAPI cluster state, Longhorn volume and backing-image health, VM live-migration capability, pod status, kubeconfig secrets, and IP availability for storage/RWX — pass/fail/skip per check (`-v` for verbose, `-l` to log to a file). If anything fails, don't proceed.
@@ -32,8 +35,6 @@ chmod +x check.sh
 ./check.sh
 
 ```
-
-Note: this checks cluster/storage/node health — it would **not** have caught the CDI importer memory-limit issue below, since that's a resource-limit default rather than a pre-existing cluster condition. Worth running regardless as the first line of defense for everything else.
 
 Also confirm:
 - All nodes `Ready` (`kubectl get nodes`) and no degraded Longhorn volumes (`kubectl get volumes.longhorn.io -A | grep -v healthy`).
