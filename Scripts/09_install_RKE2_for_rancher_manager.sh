@@ -29,7 +29,10 @@ run_this_script() {
 mapfile -t NODES < <(KUBECONFIG="${HOME}/.kube/${ENVIRONMENT}-harvester.kubeconfig" \
   kubectl --context local get virtualmachineinstances -A -o json \
   | jq -r '[.items[] | select(.metadata.name | startswith("rancher")) | {name: .metadata.name, ip: (.status.interfaces[0].ipAddress // "")}] | sort_by(.name)[] | .ip')
-printf '%s\n' "${NODES[@]}"
+
+echo "Discovered rancher node IPs:"
+printf '  %s\n' "${NODES[@]}"
+sleep 5
 
 for NODE in ${NODES[@]}; do ssh-keygen -R $NODE -f /home/mansible/.ssh/known_hosts; done
 for NODE in ${NODES[@]}; do ssh -i ~/.ssh/id_rsa-${ENVIRONMENT} -o StrictHostKeyChecking=accept-new sles@$NODE "uptime"; done
