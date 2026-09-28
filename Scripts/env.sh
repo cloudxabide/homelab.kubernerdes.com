@@ -16,9 +16,9 @@
 #
 # ENVIRONMENTS — all share the 10.10.12.0/22 supernet; each occupies one /24:
 #   homelab    — 10.10.12.0/24 — shared infrastructure (DNS, DHCP, admin, NAS)
-#   enclave    — 10.10.13.0/24 — nuc-01/02/03 — RGS via Hauler + Harbor (air-gap)
+#   enclave    — 10.10.13.0/24 — nuc-01/02/03 — Prime software via Hauler + Harbor (air-gap)
 #   community  — 10.10.14.0/24 — nuc-01/02/03 — SUSE/upstream bits, public registries
-#   prime      — 10.10.15.0/24 — nuc-01/02/03 — RGS software from RGS registry
+#   prime      — 10.10.15.0/24 — nuc-01/02/03 — SUSE Prime software from the Prime registry
 # homelab reserves .128-.254 as a dynamic DHCP pool; environment /24s use Harvester DHCP.
 #
 # NUC01_HOST / NUC02_HOST / NUC03_HOST are set per environment in env.d/.

@@ -224,4 +224,4 @@ fi
 echo "   kubectl delete namespace aperture-sci"
 echo "========================================"
 echo
-echo "Next step: Scripts/80_compare_images.sh (community vs Carbide demo)"
+echo "Next step: Scripts/80_compare_images.sh (community vs Prime demo)"

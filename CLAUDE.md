@@ -23,7 +23,7 @@ https://docs.homelab.kubernerdes.com (https://github.com/cloudxabide/docs.homela
   - Prime: use software from SUSE Prime 
   - Enclave: use software from SUSE Prime and air-gapped tooling 
 
-We will use a variable:ENVIRONMENT={community|prime|enclave} for the "homelab" environment. "carbide-enclave" is a separate effort and repo for using RGS bits in an air-gapped deployment.
+We will use a variable:ENVIRONMENT={community|prime|enclave} for the "homelab" environment. A separate effort and repo exists for a government-specific, air-gapped deployment; it is not part of this project's community/prime/enclave scheme.
 Homelab is a supernet (10.10.12.0/22) and each environment has a /24 (as shown in the next table)
 
 | ENVIRONMENT | CIDR | Purpose |
@@ -40,7 +40,7 @@ Homelab is a supernet (10.10.12.0/22) and each environment has a /24 (as shown i
 - SUSE Observability (StackState)
 - SUSE Linux Enterprise (SLE/SLES) / SUSE Linux Enterprise Micro (SL-micro)
 - SUSE RKE2 (K3s when needed)
-- RGS Hauler
+- Hauler
 - Harbor 
 
 # Folder Structure

@@ -4,9 +4,9 @@
 # Sourced automatically by env.sh when ENVIRONMENT=prime.
 # Do not source directly.
 #
-# Prime = RGS software pulled from the RGS registry over the internet.
-# Requires a valid RGS Carbide subscription and registry credentials stored in
-# ~/.config/RGS.creds (RGS_USERNAME and RGS_TOKEN).
+# Prime = SUSE Prime software pulled from the Prime registry over the internet.
+# Requires a valid SUSE Prime subscription and registry credentials stored in
+# ~/.config/prime.creds (PRIME_USERNAME and PRIME_PASSWORD).
 
 # ---------------------------------------------------------------------------
 # Hardware — Gen10 NUCs (nuc-01 / nuc-02 / nuc-03), 10.10.15.0/24
@@ -20,7 +20,7 @@ export NUC02_MAC="1c:69:7a:ab:23:50"
 export NUC03_MAC="88:ae:dd:0b:af:9c"
 
 # ---------------------------------------------------------------------------
-# Software versions (RGS government-hardened builds)
+# Software versions (Prime government-hardened builds)
 # ---------------------------------------------------------------------------
 export SL_MICRO_VERSION="6.1"
 export HARVESTER_VERSION="v1.7.1-amd64-govt.1"
@@ -31,20 +31,20 @@ export NEUVECTOR_CHART_VERSION="2.8.11"
 export NEUVECTOR_VERSION="5.4.9"
 
 # ---------------------------------------------------------------------------
-# Registry — RGS Carbide registry
-# Credentials (CARBIDE_USERNAME, CARBIDE_PASSWORD) must be in ~/.config/RGS.creds
+# Registry — SUSE Prime registry
+# Credentials (PRIME_USERNAME, PRIME_PASSWORD) must be in ~/.config/prime.creds
 # ---------------------------------------------------------------------------
-export RGS_REGISTRY="registry.ranchercarbide.dev"
-export REGISTRY_MIRROR="${RGS_REGISTRY}"
+export PRIME_REGISTRY="registry.ranchercarbide.dev"
+export REGISTRY_MIRROR="${PRIME_REGISTRY}"
 
-RGS_CREDS_FILE="${HOME}/.config/RGS.creds"
-if [[ -f "${RGS_CREDS_FILE}" ]]; then
+PRIME_CREDS_FILE="${HOME}/.config/prime.creds"
+if [[ -f "${PRIME_CREDS_FILE}" ]]; then
   # shellcheck source=/dev/null
-  source "${RGS_CREDS_FILE}"
+  source "${PRIME_CREDS_FILE}"
 else
-  echo "WARNING: ${RGS_CREDS_FILE} not found — RGS registry auth will fail" >&2
+  echo "WARNING: ${PRIME_CREDS_FILE} not found — Prime registry auth will fail" >&2
 fi
-unset RGS_CREDS_FILE
+unset PRIME_CREDS_FILE
 
 # ---------------------------------------------------------------------------
 # Chart and image sources

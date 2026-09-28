@@ -52,7 +52,7 @@
 menu Harvester Deployment Menu 
 item --gap --                   --------------------------------------------
 item --key l local                 Boot from local disk (default in 5s)
-item --gap --                   --------------Carbide Bits------------------
+item --gap --                   --------------Enclave Bits------------------
 item --key 1 nuc-01-enclave     Deploy Harvester to nuc-01 (create cluster)
 item --key 2 nuc-02-enclave     Deploy Harvester to nuc-02 (join cluster)
 item --key 3 nuc-03-enclave     Deploy Harvester to nuc-03 (join cluster)

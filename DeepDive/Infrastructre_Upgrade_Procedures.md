@@ -1,4 +1,4 @@
-# Upgrades for Community/SUSE/RGS Software
+# Upgrades for Community/Prime/Enclave Software
 
 > [!NOTE]
 > Three distinct upgrade paths live in this homelab, and it's easy to conflate them because they stack on top of each other physically. They are **independent** — you can bump one without touching the others — but they are **related**: Harvester is the hypervisor everything else runs as VMs on top of, RKE2 is the Kubernetes distribution those Rancher Manager VMs run, and Rancher Manager is just a Helm release deployed onto that RKE2 cluster.
@@ -88,7 +88,7 @@ Filed upstream:
 - [harvester/harvester#11143](https://github.com/harvester/harvester/issues/11143) — v1.8.0→v1.8.1, same symptom
 - [harvester/harvester#10056](https://github.com/harvester/harvester/issues/10056) — v1.7.1→v1.8.0, same symptom (tagged for backport to 1.7.2/1.8.2 — evidently didn't fully close the gap)
 
-This is a general upstream Harvester/CDI bug, not RGS/gov-build specific — confirmed by the `Version` CR's `isoURL` pointing at `releases.rancher.com` (the community release channel), not an RGS-hardened source.
+This is a general upstream Harvester/CDI bug, not Prime/gov-build specific — confirmed by the `Version` CR's `isoURL` pointing at `releases.rancher.com` (the community release channel), not a Prime-hardened source.
 
 **Fix** (per [Harvester's own v1.7.x→v1.8.x upgrade docs](https://docs.harvesterhci.io/v1.8/upgrade/v1-7-x-to-v1-8-x/)):
 

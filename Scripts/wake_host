@@ -5,7 +5,7 @@ Wake-on-LAN script for NUC nodes.
 Usage: ./wake_host <hostname|all|list>
 
 The active host table is selected by the ENVIRONMENT env var
-(community | carbide | enclave).  Defaults to 'community'.
+(community | prime | enclave).  Defaults to 'community'.
 """
 
 import os
@@ -14,11 +14,11 @@ import sys
 import time
 
 # Per-environment hostname → MAC tables.
-# carbide    → nuc-01/02/03 (Gen10 NUCs, 10.10.15.0/24) via RGS registry
+# prime      → nuc-01/02/03 (Gen10 NUCs, 10.10.15.0/24) via Prime registry
 # enclave    → nuc-01/02/03 (10.10.13.0/24) air-gapped via Harbor
 # community  → nuc-01/02/03 (Gen13 NUCs, 10.10.14.0/24) public registries
 HOSTS_BY_ENV = {
-    "carbide": {
+    "prime": {
         "nuc-01": "88:ae:dd:0b:90:70",
         "nuc-02": "1c:69:7a:ab:23:50",
         "nuc-03": "88:ae:dd:0b:af:9c",
@@ -33,11 +33,6 @@ HOSTS_BY_ENV = {
         "nuc-01": "48:21:0b:65:ce:e5",
         "nuc-02": "48:21:0b:65:c2:c7",
         "nuc-03": "48:21:0b:5d:7a:e6",
-    },
-    "forager": {
-        "nuc-01": "88:ae:dd:0b:90:70",
-        "nuc-02": "1c:69:7a:ab:23:50",
-        "nuc-03": "88:ae:dd:0b:af:9c",
     },
 }
 
@@ -112,7 +107,7 @@ def main() -> None:
         print("  <hostname>  Wake a specific host")
         print("  all         Wake all hosts")
         print("  list        List available hosts")
-        print("\nSet ENVIRONMENT to select the host table (community|carbide|enclave).")
+        print("\nSet ENVIRONMENT to select the host table (community|prime|enclave).")
         sys.exit(1)
 
     target = sys.argv[1].lower()

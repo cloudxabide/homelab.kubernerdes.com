@@ -133,12 +133,12 @@ echo "==> Installing Rancher ${RANCHER_VERSION}..."
 RANCHER_EXTRA_ARGS=()
 case "${ENVIRONMENT}" in
   prime)
-    # Use the RGS registry as the default for all Rancher-deployed images
-    RANCHER_EXTRA_ARGS+=(--set "systemDefaultRegistry=${RGS_REGISTRY}")
+    # Use the Prime registry as the default for all Rancher-deployed images
+    RANCHER_EXTRA_ARGS+=(--set "systemDefaultRegistry=${PRIME_REGISTRY}")
   ;;
   enclave)
-    # RGS_REGISTRY is only defined for prime — enclave mirrors through its
-    # own local Harbor instead (RGS_REGISTRY would be unbound here).
+    # PRIME_REGISTRY is only defined for prime — enclave mirrors through its
+    # own local Harbor instead (PRIME_REGISTRY would be unbound here).
     RANCHER_EXTRA_ARGS+=(--set "systemDefaultRegistry=${HARBOR_HOSTNAME}")
   ;;
 esac

@@ -13,7 +13,7 @@ Free, as-in beer, software to run infrastructure by SUSE. (*)
 <tr>
 <img src="Images/neuvectorlogo.svg" width=150>
 <img src="Images/StackState-Color-padding.png" width=150>
-<img src="Images/rgs-hauler-logo.png" width=150>
+<img src="Images/hauler-logo.png" width=150>
 </tr>
 </table>
 
@@ -28,13 +28,13 @@ What we are working with:
 
 > A single-codebase deployment framework for building a Kubernetes homelab using SUSE Rancher, Harvester, and related tooling — across Community, Prime, and Enclave environments.
 
-This repository contains the scripts, configuration files, and documentation for deploying the full SUSE/RGS stack on small form-factor hardware (Intel NUCs). It is designed to be run against three distinct deployment environments using a shared codebase, with environment-specific behavior driven entirely by configuration.
+This repository contains the scripts, configuration files, and documentation for deploying the full SUSE stack on small form-factor hardware (Intel NUCs). It is designed to be run against three distinct deployment environments using a shared codebase, with environment-specific behavior driven entirely by configuration.
 
 > [!TIP] 
-> This is not an official SUSE or RGS repository. It is a personal lab environment designed to explore and demonstrate the platform using straightforward, repeatable methods.
+> This is not an official SUSE repository. It is a personal lab environment designed to explore and demonstrate the platform using straightforward, repeatable methods.
 
 > [!NOTE] 
-> RGS Carbide content will migrate to https://github.com/jradtke-rgs/carbide-enclave.kubernerdes.com
+> Government/air-gapped-specific content will migrate to a separate repo: https://github.com/jradtke-rgs/carbide-enclave.kubernerdes.com
 
 ---
 
@@ -59,7 +59,7 @@ This repository contains the scripts, configuration files, and documentation for
 | **Homelab** | Common infrastructure utilized by any of the other Environments | 10.10.12.0/24 | homelab.kubernerdes.com | nuc-00, nuc-00-01/02/03 |
 | **Enclave** | SUSE software synced via Hauler, served from a local Harbor registry (air-gapped) | 10.10.13.0/24 | enclave.kubernerdes.com | nuc-01/02/03 |
 | **Community** | SUSE/upstream bits pulled from public registries | 10.10.14.0/24 | community.kubernerdes.com | nuc-01/02/03 |
-| **Prime** | SUSE software pulled from the RGS registry over the internet | 10.10.15.0/24 | prime.kubernerdes.com | nuc-01/02/03 |
+| **Prime** | SUSE software pulled from the Prime registry over the internet | 10.10.15.0/24 | prime.kubernerdes.com | nuc-01/02/03 |
 
 All three environments share the `10.10.12.0/22` supernet and have dedicated hardware — they can run simultaneously.
 
@@ -188,7 +188,7 @@ Wildcard DNS: `*.apps.${ENVIRONMENT}.kubernerdes.com` → `${IP_PREFIX}.230`
 - Internet connectivity (Community and Prime) or pre-synced Hauler store (Enclave)
 - [Hardware Overview](./Hardware.md)
 
-For Prime and Enclave: SUSE Carbide portal access — request a license from your SUSE Account Team.
+For Prime and Enclave: SUSE Prime portal access — request a license from your SUSE Account Team.
 
 ---
 

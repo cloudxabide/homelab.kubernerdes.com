@@ -12,7 +12,7 @@ set -euo pipefail
 #
 # Chart sources are environment-controlled via env.d/:
 #   community → neuvector/core from neuvector.github.io
-#   prime     → neuvector/core from neuvector.github.io (RGS image override)
+#   prime     → neuvector/core from neuvector.github.io (Prime image override)
 #   enclave   → neuvector/core from local Harbor
 #
 # Reference:
