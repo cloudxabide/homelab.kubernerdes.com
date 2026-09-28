@@ -6,7 +6,7 @@
 #
 # Prime = SUSE Prime software pulled from the Prime registry over the internet.
 # Requires a valid SUSE Prime subscription and registry credentials stored in
-# ~/.config/prime.creds (PRIME_USERNAME and PRIME_PASSWORD).
+# ~/.config/SUSE/creds (PRIME_USERNAME and PRIME_PASSWORD).
 
 # ---------------------------------------------------------------------------
 # Hardware — Gen10 NUCs (nuc-01 / nuc-02 / nuc-03), 10.10.15.0/24
@@ -32,12 +32,12 @@ export NEUVECTOR_VERSION="5.4.9"
 
 # ---------------------------------------------------------------------------
 # Registry — SUSE Prime registry
-# Credentials (PRIME_USERNAME, PRIME_PASSWORD) must be in ~/.config/prime.creds
+# Credentials (PRIME_USERNAME, PRIME_PASSWORD) must be in ~/.config/SUSE/creds
 # ---------------------------------------------------------------------------
 export PRIME_REGISTRY="registry.ranchercarbide.dev"
 export REGISTRY_MIRROR="${PRIME_REGISTRY}"
 
-PRIME_CREDS_FILE="${HOME}/.config/prime.creds"
+PRIME_CREDS_FILE="${HOME}/.config/SUSE/creds"
 if [[ -f "${PRIME_CREDS_FILE}" ]]; then
   # shellcheck source=/dev/null
   source "${PRIME_CREDS_FILE}"
