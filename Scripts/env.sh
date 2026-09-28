@@ -50,11 +50,17 @@ esac
 # Both return empty string (with a stderr warning) when the kubeconfig is
 # absent or kubectl is not installed — callers handle empty values naturally
 # when they try to SSH/scp to an unresolved host.
+#
+# The Harvester kubeconfig carries two contexts: "rancher" (the management
+# API, server URL with no cluster path) and "local" (the Harvester cluster's
+# own API, proxied at /k8s/clusters/local) — VMIs are a kubevirt CRD that
+# only exists under "local", so it must be selected explicitly rather than
+# relying on the kubeconfig's current-context.
 # ---------------------------------------------------------------------------
 _HARVESTER_KUBECONFIG="${HOME}/.kube/${ENVIRONMENT}-harvester.kubeconfig"
 _HARVESTER_VMI_JSON=""
 if [[ -f "${_HARVESTER_KUBECONFIG}" ]] && command -v kubectl >/dev/null 2>&1; then
-  _HARVESTER_VMI_JSON="$(kubectl --kubeconfig "${_HARVESTER_KUBECONFIG}" \
+  _HARVESTER_VMI_JSON="$(kubectl --kubeconfig "${_HARVESTER_KUBECONFIG}" --context local \
     get virtualmachineinstances -A -o json 2>/dev/null || true)"
 else
   echo "WARN: ${_HARVESTER_KUBECONFIG} not found or kubectl missing — node IPs will be empty" >&2

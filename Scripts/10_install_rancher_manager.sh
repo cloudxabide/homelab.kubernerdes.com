@@ -29,13 +29,16 @@ source "${SCRIPT_DIR}/env.sh"
 # Validate harvester kubeconfig and resolved rancher-01 IP
 # env.sh queries Harvester via kubectl to set RANCHER_NODE_01; without the
 # kubeconfig that lookup returns empty and all subsequent SSH/scp calls fail.
+#
+# The Harvester kubeconfig carries two contexts ("rancher" and "local") —
+# VMIs only exist under "local" (see env.sh), so it's selected explicitly.
 # ---------------------------------------------------------------------------
 if [[ ! -f "${KUBECONFIG_HARVESTER}" ]]; then
   echo "ERROR: Harvester kubeconfig not found: ${KUBECONFIG_HARVESTER}" >&2
   echo "       Create it first, then re-run this script." >&2
   exit 1
 fi
-if ! kubectl --kubeconfig "${KUBECONFIG_HARVESTER}" get virtualmachineinstances -A -o name &>/dev/null; then
+if ! kubectl --kubeconfig "${KUBECONFIG_HARVESTER}" --context local get virtualmachineinstances -A -o name &>/dev/null; then
   echo "ERROR: Cannot connect to Harvester using ${KUBECONFIG_HARVESTER}" >&2
   echo "       Check that the kubeconfig is valid and the cluster is reachable." >&2
   exit 1
