@@ -14,6 +14,6 @@ for NODE in $NODES; do ssh -t  dhcp-$NODE "sudo bash -i ./install_RKE2.sh"; done
 
 for NODE in $NODES; do ssh -t  dhcp-$NODE "sudo shutdown now -r"; done
 # Grab the kubeconfig from the first node in the list
-scp dhcp-${NODES%% *}:.kube/config ~/.kube/community-rancher.kubeconfig
+scp dhcp-${NODES%% *}:.kube/config ~/.kube/${ENVIRONMENT}-rancher.kubeconfig
 config
 }
