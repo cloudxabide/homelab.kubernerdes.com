@@ -1,7 +1,9 @@
 #!/bin/bash
 
 # TODO
-#   get the IPs for the nodes from Harvester API call
+#   [DONE] get the IPs for the nodes from Harvester API call 
+#   test that the current KUBECONFIG scoped in this script works
+#   Automate the reboot of the nodes post-RKE2 install
 
 echo "Read this script - it needs to be done manually still at this time"
 
@@ -11,7 +13,7 @@ ENVIRONMENT="${ENVIRONMENT:-community}"
 # Not currently used — NODES is populated from Harvester via kubectl in
 # run_this_script instead. Left as-is for reference/fallback.
 create_node_array() {
-### BEGIN - REPLACE THIS EVENTUALLY ###
+### BEGIN - THIS HAS BEEN REPLACED ###
 PREFIX="10.10.12"
 HOST_IDS="165 163 164"
 
@@ -20,7 +22,7 @@ for n in $HOST_IDS; do
   NODES+=("${PREFIX}.${n}")
 done
 printf '%s\n' "${NODES[@]}"
-### END - REPLACE THIS EVENTUALLY ###
+### END - THIS HAS BEEN REPLACED ###
 }
 
 run_this_script() {
