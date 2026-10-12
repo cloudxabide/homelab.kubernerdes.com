@@ -27,7 +27,7 @@ export NUC03_MAC="TODO:enclave-nuc-03-mac"
 # Software versions (Prime government-hardened builds)
 # ---------------------------------------------------------------------------
 export HARVESTER_VERSION="v1.7.1-amd64-govt.1"
-export RKE2_VERSION="v1.34.4+rke2r2"
+export RKE2_VERSION="v1.34.12+rke2r1"
 export RANCHER_VERSION="2.13.3"
 export CERTMGR_VERSION="v1.19.2"
 export NEUVECTOR_CHART_VERSION="2.8.11"

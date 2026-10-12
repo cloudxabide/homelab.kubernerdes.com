@@ -22,7 +22,7 @@ export NUC03_MAC="48:21:0b:5d:7a:e6"
 # Software versions
 # ---------------------------------------------------------------------------
 export HARVESTER_VERSION="v1.7.1"
-export RKE2_VERSION="v1.34.4+rke2r1"
+export RKE2_VERSION="v1.34.12+rke2r1"
 export RANCHER_VERSION="2.13.3"
 export CERTMGR_VERSION="v1.19.2"
 export NEUVECTOR_CHART_VERSION="2.8.11"   # chart for NeuVector 5.4.9
