@@ -42,7 +42,8 @@ for NODE in ${NODES[@]}; do ssh -i ~/.ssh/id_rsa-${ENVIRONMENT} -t sles@$NODE "s
 for NODE in $NODES; do ssh -t  $NODE "sudo shutdown now -r"; done
 # Grab the kubeconfig from the first node in the list
 scp -i ~/.ssh/id_rsa-${ENVIRONMENT} sles@${NODES%% *}:.kube/config ~/.kube/${ENVIRONMENT}-rancher.kubeconfig
-config
+export KUBECONFIG=~/.kube/${ENVIRONMENT}-rancher.kubeconfig
+kubectl get nodes
 }
 
 exit 0
