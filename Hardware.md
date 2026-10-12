@@ -11,9 +11,9 @@ Physical hardware, bill of materials, and network switch layout.
 | nuc-01 | Harvester node 1 | prime | NUC10i7FNH | i7-10710U | 12 | 64 | 1843 | 932 |
 | nuc-02 | Harvester node 2 | prime | NUC10i7FNH | i7-10710U | 12 | 64 | 1843 | 932 |
 | nuc-03 | Harvester node 3 | prime | NUC10i7FNH | i7-10710U | 12 | 64 | 1843 | 932 |
-| nuc-01 | Harvester node 1 | enclave | ROG STRIX Z490-E | i9-285K | 24 | TBD | TBD | TBD |
-| nuc-02 | Harvester node 2 | enclave | ROG STRIX Z490-E | i9-285K | 24 | TBD | TBD | TBD |
-| nuc-03 | Harvester node 3 | enclave | ROG STRIX Z490-E | i9-285K | 24 | TBD | TBD | TBD |
+| nuc-01 | Harvester node 1 | enclave | ROG STRIX Z490-E | i9-10850K | 24 | TBD | TBD | TBD |
+| nuc-02 | Harvester node 2 | enclave | ROG STRIX Z490-E | i9-10850K | 24 | TBD | TBD | TBD |
+| nuc-03 | Harvester node 3 | enclave | ROG STRIX Z490-E | i9-10850K | 24 | TBD | TBD | TBD |
 | nuc-01 | Harvester node 1 | community | NUC13ANHi7 | i7-1360P | 16 | 64 | 1843 | 932 |
 | nuc-02 | Harvester node 2 | community | NUC13ANHi7 | i7-1360P | 16 | 64 | 1843 | 932 |
 | nuc-03 | Harvester node 3 | community | NUC13ANHi7 | i7-1360P | 16 | 64 | 1843 | 932 |
@@ -44,9 +44,9 @@ enclave nuc-01/02/03 are full ATX desktop systems; all other nodes are NUC form 
 
 | System | CPU | Idle (W) | Average (W) | Max (W) |
 |:-------|:----|:--------:|:-----------:|:-------:|
-| nuc-01 | i9-285K | 65 | 175 | 320 |
-| nuc-02 | i9-285K | 65 | 175 | 320 |
-| nuc-03 | i9-285K | 65 | 175 | 320 |
+| nuc-01 | i9-10850K | 65 | 175 | 320 |
+| nuc-02 | i9-10850K | 65 | 175 | 320 |
+| nuc-03 | i9-10850K | 65 | 175 | 320 |
 | **Total** | | **195** | **525** | **960** |
 
 **community**
