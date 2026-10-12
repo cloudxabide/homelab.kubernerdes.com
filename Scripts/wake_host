@@ -19,9 +19,9 @@ import time
 # community  → nuc-01/02/03 (Gen13 NUCs, 10.10.14.0/24) public registries
 HOSTS_BY_ENV = {
     "prime": {
-        "nuc-01": "88:ae:dd:0b:90:70",
-        "nuc-02": "1c:69:7a:ab:23:50",
-        "nuc-03": "88:ae:dd:0b:af:9c",
+        "nuc-01": "MOVED:88:ae:dd:0b:90:70",
+        "nuc-02": "MOVED:1c:69:7a:ab:23:50",
+        "nuc-03": "MOVED:88:ae:dd:0b:af:9c",
     },
     "enclave": {
         # TODO: fill in MAC addresses once enclave hardware is provisioned
@@ -30,9 +30,12 @@ HOSTS_BY_ENV = {
         "nuc-03": "TODO:enclave-nuc-03-mac",
     },
     "community": {
-        "nuc-01": "48:21:0b:65:ce:e5",
-        "nuc-02": "48:21:0b:65:c2:c7",
-        "nuc-03": "48:21:0b:5d:7a:e6",
+        "nuc-01": "88:ae:dd:0b:90:70",
+        "nuc-02": "1c:69:7a:ab:23:50",
+        "nuc-03": "88:ae:dd:0b:af:9c",
+        "nuc-04": "48:21:0b:65:ce:e5",
+        "nuc-05": "48:21:0b:65:c2:c7",
+        "nuc-06": "48:21:0b:5d:7a:e6",
     },
 }
 
