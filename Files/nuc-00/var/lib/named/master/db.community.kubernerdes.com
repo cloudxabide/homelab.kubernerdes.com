@@ -31,10 +31,16 @@ harvester	IN	A	10.10.14.100
 nuc-01		IN	A	10.10.14.101
 nuc-02		IN	A	10.10.14.102
 nuc-03		IN	A	10.10.14.103
-
+nuc-04		IN	A	10.10.14.104
+nuc-05		IN	A	10.10.14.105
+nuc-06		IN	A	10.10.14.106
+; KVM for NUCs
 nuc-01-kvm	IN	A	10.10.14.111
 nuc-02-kvm	IN	A	10.10.14.112
 nuc-03-kvm	IN	A	10.10.14.113
+nuc-04-kvm	IN	A	10.10.14.114
+nuc-05-kvm	IN	A	10.10.14.115
+nuc-06-kvm	IN	A	10.10.14.116
 
 ; DHCP CIDR 10.10.14.0/24
 dhcp-128    IN      A       10.10.14.128

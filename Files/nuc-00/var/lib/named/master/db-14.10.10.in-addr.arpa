@@ -33,9 +33,16 @@ $TTL 2D
 101	IN	PTR	nuc-01.community.kubernerdes.com.
 102	IN	PTR	nuc-02.community.kubernerdes.com.
 103	IN	PTR	nuc-03.community.kubernerdes.com.
+104	IN	PTR	nuc-01.community.kubernerdes.com.
+105	IN	PTR	nuc-02.community.kubernerdes.com.
+106	IN	PTR	nuc-03.community.kubernerdes.com.
+; KVMs for NUCs
 111	IN	PTR	nuc-01-kvm.community.kubernerdes.com.
 112	IN	PTR	nuc-02-kvm.community.kubernerdes.com.
 113	IN	PTR	nuc-03-kvm.community.kubernerdes.com.
+114	IN	PTR	nuc-04-kvm.community.kubernerdes.com.
+115	IN	PTR	nuc-05-kvm.community.kubernerdes.com.
+116	IN	PTR	nuc-06-kvm.community.kubernerdes.com.
 
 ; DHCP Pool for this ENVIRONMENT 
 128    IN      PTR     dhcp-128.community.kubernerdes.com.

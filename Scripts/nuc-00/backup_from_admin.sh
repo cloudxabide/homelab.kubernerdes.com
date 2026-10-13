@@ -34,7 +34,8 @@ set -euo pipefail
 #
 # Does NOT pass --delete: files removed on nuc-00 are left alone locally so
 # this can't silently delete uncommitted local work. Review `git status` /
-# `git diff` after running and remove anything stale yourself.
+# `git diff` after running and remove anything stale yourself. Vim swap files
+# (.*.swp) from files open on nuc-00 are skipped.
 
 ADMIN_USER="${ADMIN_USER:-mansible}"
 # "nuc-00" only resolves on-network via the nuc-00-hosted DNS itself; from an
@@ -85,7 +86,7 @@ if [[ "${#DIR_TARGETS[@]}" -gt 0 ]]; then
     DEST_DIR="${FILES_DIR}/${REL_PATH}"
     mkdir -p "${DEST_DIR}"
     echo "==> Pulling ${ADMIN_USER}@${ADMIN_HOST}:/${REL_PATH}/ -> ${DEST_DIR}/"
-    rsync -avz "${ADMIN_USER}@${ADMIN_HOST}:/${REL_PATH}/" "${DEST_DIR}/"
+    rsync -avz --exclude='.*.swp' "${ADMIN_USER}@${ADMIN_HOST}:/${REL_PATH}/" "${DEST_DIR}/"
     echo
   done
 fi

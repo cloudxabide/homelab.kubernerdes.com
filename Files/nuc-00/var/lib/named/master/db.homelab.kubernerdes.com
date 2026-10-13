@@ -1,7 +1,7 @@
 $TTL 604800 
 $ORIGIN homelab.kubernerdes.com. 
 @	IN SOA      nuc-00.homelab.kubernerdes.com.  root.kubernerdes.com. ( 
-            2026091301 ; Serial
+            2026100301 ; Serial
             604800     ; Refresh
             86400      ; Retry
             2419200    ; Expire
@@ -15,7 +15,7 @@ sophos-xgs88 	IN 	A	10.10.12.1
 firewall 	IN	CNAME	sophos-xgs88.homelab.kubernerdes.com.
 gateway		IN	CNAME	sophos-xgs88.homelab.kubernerdes.com.
 cisco-sg300-28	IN 	A	10.10.12.2
-airport-extreme IN 	A	10.10.12.3
+mikrotik-switch	IN 	A	10.10.12.3
 truenas		 IN 	A	10.10.12.7
 
 ; Infra Hosts

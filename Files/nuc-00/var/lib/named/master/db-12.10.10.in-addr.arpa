@@ -1,6 +1,6 @@
 $TTL 2D
 12.10.10.in-addr.arpa.   IN SOA dns.homelab.kubernerdes.com. root.homelab.kubernerdes.com. (
-                        2026091301      ; serial
+                        2026100301      ; serial
                         1D              ; refresh
                         2H              ; retry
                         1W              ; expiry
@@ -11,7 +11,7 @@ $TTL 2D
 
 1	IN	PTR	sophos-xgs88.homelab.kubernerdes.com.
 2	IN	PTR	cisco-sg300-28.homelab.kubernerdes.com.
-3	IN	PTR	airport-extreme.homelab.kubernerdes.com.
+3	IN	PTR	mikrotik-switch.homelab.kubernerdes.com.
 7	IN	PTR	truenas.homelab.kubernerdes.com.
 8	IN	PTR	nuc-00.homelab.kubernerdes.com.
 9	IN	PTR	nuc-00-02.homelab.kubernerdes.com.
