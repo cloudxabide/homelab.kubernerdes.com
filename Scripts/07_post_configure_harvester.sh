@@ -10,9 +10,21 @@ set -euo pipefail
 #   - Run from nuc-00
 #
 # What this does:
-#   1. Imports .qcow2 VM images discovered from the admin node HTTP server
-#   2. Imports cloud-init templates from this repo (served via Apache)
-#   3. Enables the rancher-monitoring add-on
+#   1. Labels nodes by hardware generation (homelab.kubernerdes.com/nuc-gen)
+#   2. Creates the storage ClusterNetwork + one VlanConfig per hardware gen
+#   3. Creates the untagged VM network on the built-in mgmt cluster network
+#   4. Creates the 1-replica, best-effort-locality StorageClass
+#   5. Imports .qcow2 VM images discovered from the admin node HTTP server,
+#      plus a dedicated copy of the Rancher image on the local StorageClass
+#   6. Imports cloud-init templates from this repo (served via Apache)
+#   7. Applies the storage-network setting (rancher-monitoring is disabled
+#      first so no Longhorn volume is attached, as Harvester requires)
+#   8. Enables the rancher-monitoring add-on
+#
+# Steps 1-4 and 7 are skipped when the environment does not define
+# STORAGE_NETWORK_VLAN / VM_NETWORK_NAME / LOCAL_STORAGE_CLASS (see env.d/).
+# Safe to re-run: existing objects are left alone, and the storage network
+# is only re-applied when its value differs from the desired one.
 #
 # For Prime/Enclave: images and templates are served from local Harbor/Hauler
 # rather than downloaded from the internet — controlled by REGISTRY_MIRROR and
@@ -29,6 +41,131 @@ TEMPLATES_BASE_URL="${REPO_BASE}/Files/CloudConfigurationTemplates"
 k8s_name() {
   echo "$1" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9-]/-/g' | sed 's/-\+/-/g' | sed 's/^-//;s/-$//'
 }
+
+# wait_for <description> <timeout-seconds> <command...>
+# Re-runs the command every 5s until it succeeds or the timeout expires.
+wait_for() {
+  local desc="$1" timeout="$2"; shift 2
+  local waited=0
+  until "$@" >/dev/null 2>&1; do
+    if (( waited >= timeout )); then
+      echo "ERROR: timed out after ${timeout}s waiting for: ${desc}" >&2
+      return 1
+    fi
+    sleep 5; waited=$((waited + 5))
+  done
+  echo "    ${desc} — ok"
+}
+
+# ---------------------------------------------------------------------------
+# Node labels (hardware generation)
+# ---------------------------------------------------------------------------
+if [[ -n "${NODE_GENS:-}" ]]; then
+  echo "==> Labeling nodes with homelab.kubernerdes.com/nuc-gen"
+  for gen in ${NODE_GENS}; do
+    nodes_var="NODES_${gen}"
+    for node in ${!nodes_var}; do
+      if kubectl get node "${node}" >/dev/null 2>&1; then
+        kubectl label node "${node}" "homelab.kubernerdes.com/nuc-gen=${gen}" --overwrite >/dev/null
+        echo "    ${node} -> ${gen}"
+      else
+        echo "    WARN: node ${node} not found (not joined yet?) — label it after it joins"
+      fi
+    done
+  done
+fi
+
+# ---------------------------------------------------------------------------
+# Storage ClusterNetwork + per-generation VlanConfigs
+# The storage-network setting itself is applied further down, after
+# rancher-monitoring has been disabled.
+# ---------------------------------------------------------------------------
+if [[ -n "${STORAGE_NETWORK_VLAN:-}" ]]; then
+  echo "==> Creating ClusterNetwork ${STORAGE_CLUSTER_NETWORK} and VlanConfigs"
+  kubectl apply -f - <<EOF
+apiVersion: network.harvesterhci.io/v1beta1
+kind: ClusterNetwork
+metadata:
+  name: ${STORAGE_CLUSTER_NETWORK}
+EOF
+
+  for gen in ${NODE_GENS}; do
+    nic_var="STORAGE_NIC_${gen}"
+    # Name pattern strg-<gen> matches the hand-built cluster (strg-gen10/strg-gen13)
+    kubectl apply -f - <<EOF
+apiVersion: network.harvesterhci.io/v1beta1
+kind: VlanConfig
+metadata:
+  name: strg-${gen}
+spec:
+  clusterNetwork: ${STORAGE_CLUSTER_NETWORK}
+  nodeSelector:
+    homelab.kubernerdes.com/nuc-gen: ${gen}
+  uplink:
+    nics:
+      - ${!nic_var}
+    bondOptions:
+      mode: active-backup
+      miimon: -1
+    linkAttributes:
+      txQLen: -1
+EOF
+  done
+
+  wait_for "ClusterNetwork ${STORAGE_CLUSTER_NETWORK} ready" 300 \
+    sh -c "kubectl get clusternetwork ${STORAGE_CLUSTER_NETWORK} -o jsonpath='{.status.conditions[?(@.type==\"ready\")].status}' | grep -qx True"
+fi
+
+# ---------------------------------------------------------------------------
+# VM network — untagged, on the built-in mgmt cluster network, so it exists
+# on every node regardless of the onboard NIC name (eno1 vs enp86s0)
+# ---------------------------------------------------------------------------
+if [[ -n "${VM_NETWORK_NAME:-}" ]]; then
+  echo "==> Creating VM network ${VM_NETWORK_NAME} (untagged, cluster network mgmt)"
+  kubectl apply -f - <<EOF
+apiVersion: k8s.cni.cncf.io/v1
+kind: NetworkAttachmentDefinition
+metadata:
+  name: ${VM_NETWORK_NAME}
+  namespace: default
+  labels:
+    network.harvesterhci.io/clusternetwork: mgmt
+    network.harvesterhci.io/type: UntaggedNetwork
+  annotations:
+    network.harvesterhci.io/route: '{"mode":"auto","serverIPAddr":"","cidr":"","gateway":""}'
+spec:
+  config: '{"cniVersion":"0.3.1","name":"${VM_NETWORK_NAME}","type":"bridge","bridge":"mgmt-br","promiscMode":true,"ipam":{}}'
+EOF
+fi
+
+# ---------------------------------------------------------------------------
+# Local StorageClass — for workloads that replicate their own data (etcd).
+# StorageClass parameters are immutable, so only create it when missing.
+# ---------------------------------------------------------------------------
+if [[ -n "${LOCAL_STORAGE_CLASS:-}" ]]; then
+  echo "==> Creating StorageClass ${LOCAL_STORAGE_CLASS} (1 replica, best-effort locality)"
+  if kubectl get storageclass "${LOCAL_STORAGE_CLASS}" >/dev/null 2>&1; then
+    echo "    already exists — leaving as-is"
+  else
+    kubectl apply -f - <<EOF
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: ${LOCAL_STORAGE_CLASS}
+provisioner: driver.longhorn.io
+allowVolumeExpansion: true
+reclaimPolicy: Delete
+volumeBindingMode: Immediate
+parameters:
+  numberOfReplicas: "1"
+  dataLocality: "best-effort"
+  staleReplicaTimeout: "30"
+  migratable: "true"
+  encrypted: "false"
+  dataEngine: "v1"
+EOF
+  fi
+fi
 
 # ---------------------------------------------------------------------------
 # VM Images
@@ -61,6 +198,42 @@ spec:
   url: "${image_url}"
 EOF
   done <<< "${IMAGE_FILES}"
+fi
+
+# ---------------------------------------------------------------------------
+# Rancher Manager image on the local StorageClass
+# A VM root disk created from an image uses the image's own lh-<uid>
+# StorageClass, built from storageClassParameters below — NOT the target
+# class's settings. Without these parameters the Rancher VMs land on 3 remote
+# replicas, which is what starved etcd on the previous build.
+# Image specs are largely immutable, so only create it when missing.
+# ---------------------------------------------------------------------------
+if [[ -n "${RANCHER_IMAGE_NAME:-}" && -n "${LOCAL_STORAGE_CLASS:-}" ]]; then
+  echo "==> Importing Rancher image ${RANCHER_IMAGE_DISPLAY_NAME} on ${LOCAL_STORAGE_CLASS}"
+  if kubectl -n default get virtualmachineimage "${RANCHER_IMAGE_NAME}" >/dev/null 2>&1; then
+    echo "    already exists — leaving as-is"
+  else
+    kubectl apply -f - <<EOF
+apiVersion: harvesterhci.io/v1beta1
+kind: VirtualMachineImage
+metadata:
+  name: ${RANCHER_IMAGE_NAME}
+  namespace: default
+  annotations:
+    harvesterhci.io/storageClassName: ${LOCAL_STORAGE_CLASS}
+spec:
+  displayName: "${RANCHER_IMAGE_DISPLAY_NAME}"
+  sourceType: download
+  url: "${IMAGES_BASE_URL}/${RANCHER_IMAGE_FILE}"
+  targetStorageClassName: ${LOCAL_STORAGE_CLASS}
+  storageClassParameters:
+    numberOfReplicas: "1"
+    dataLocality: "best-effort"
+    staleReplicaTimeout: "30"
+    migratable: "true"
+    encrypted: "false"
+EOF
+  fi
 fi
 
 # ---------------------------------------------------------------------------
@@ -97,6 +270,40 @@ EOF
 fi
 
 # ---------------------------------------------------------------------------
+# Storage network setting
+# Harvester only applies it while no Longhorn volume is attached, and
+# rancher-monitoring (enabled by default on v1.8) holds three. So: disable
+# monitoring, wait for every volume to detach, apply, wait for "configured".
+# Monitoring is re-enabled in the next section. Any VM that is running also
+# keeps its volumes attached — stop all VMs before this step on a cluster
+# that already has workloads.
+# ---------------------------------------------------------------------------
+if [[ -n "${STORAGE_NETWORK_VLAN:-}" ]]; then
+  echo "==> Configuring storage-network (VLAN ${STORAGE_NETWORK_VLAN}, ${STORAGE_NETWORK_RANGE})"
+  desired=$(jq -cn --argjson vlan "${STORAGE_NETWORK_VLAN}" \
+    --arg cn "${STORAGE_CLUSTER_NETWORK}" --arg range "${STORAGE_NETWORK_RANGE}" \
+    '{vlan: $vlan, clusterNetwork: $cn, range: $range}')
+  current=$(kubectl get settings.harvesterhci.io storage-network -o jsonpath='{.value}')
+  current_norm=$( [[ -n "${current}" ]] && jq -c '{vlan, clusterNetwork, range}' <<< "${current}" || echo "" )
+
+  if [[ "${current_norm}" == "${desired}" ]]; then
+    echo "    already set to ${desired} — skipping"
+  else
+    echo "    disabling rancher-monitoring so its volumes detach"
+    kubectl patch addon rancher-monitoring -n cattle-monitoring-system \
+      --type merge -p '{"spec":{"enabled":false}}'
+    wait_for "all Longhorn volumes detached" 600 \
+      sh -c "! kubectl -n longhorn-system get volumes.longhorn.io -o jsonpath='{range .items[*]}{.status.state}{\"\\n\"}{end}' | grep -qx attached"
+
+    kubectl patch settings.harvesterhci.io storage-network --type merge \
+      -p "$(jq -cn --arg v "${desired}" '{value: $v}')"
+    sleep 15   # let the controller reset the previous value's "configured" condition
+    wait_for "storage-network configured" 900 \
+      sh -c "kubectl get settings.harvesterhci.io storage-network -o json | jq -e '.status.conditions[]? | select(.type==\"configured\" and .status==\"True\" and .reason==\"Completed\")'"
+  fi
+fi
+
+# ---------------------------------------------------------------------------
 # Rancher Monitoring add-on
 # ---------------------------------------------------------------------------
 echo "==> Enabling rancher-monitoring add-on"
@@ -107,4 +314,4 @@ kubectl patch addon rancher-monitoring \
 echo "    rancher-monitoring enabled — Prometheus/Grafana/Alertmanager deploying"
 
 echo
-echo "==> Done. Next step: Scripts/10_install_rancher_manager.sh"
+echo "==> Done. Next step: Scripts/08_create_rancher_vms.sh"

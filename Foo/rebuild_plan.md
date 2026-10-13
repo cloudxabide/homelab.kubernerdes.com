@@ -63,14 +63,14 @@ Gate: create no VMs, volumes or monitoring add-on until step 12 is finished.
 11. VM network. Create vmnet-mgmt on the built-in mgmt cluster network, untagged.
 12. Storage classes.
     - harvester-longhorn (default): fine for general VMs. You could lower it to 2 replicas.
-    - lh-etcd-local: numberOfReplicas: "1", dataLocality: strict-local. This one is for the Rancher VMs. etcd already keeps 3 copies of the data, so Longhorn copying it 3 more times over the network is pure overhead.
+    - harvester-longhorn-local-1r: numberOfReplicas: "1", dataLocality: best-effort (Harvester's webhook rejects strict-local). Pin the VMs so the single replica stays local. This one is for the Rancher VMs. etcd already keeps 3 copies of the data, so Longhorn copying it 3 more times over the network is pure overhead.
 
-    Watch out for VM images: a root disk created from an image uses the image's storage class (that's why your old disks were on lh-1bf6e526… with 3 replicas). When you upload the SLES 16 image for the Rancher VMs, select lh-etcd-local. You may need a second copy of the image for general VMs that use the default class.
+    Watch out for VM images: a root disk created from an image uses the image's storage class (that's why your old disks were on lh-1bf6e526… with 3 replicas). When you upload the SLES 16 image for the Rancher VMs, select harvester-longhorn-local-1r. You may need a second copy of the image for general VMs that use the default class.
 
 Rancher Manager VMs
 
 13. Create rancher-01, rancher-02 and rancher-03:
-    - One per worker node: pin each VM to nuc-04, nuc-05 and nuc-06. This keeps them away from Harvester's own etcd on 01–03, and a strict-local volume ties each VM to one node anyway.
+    - One per control-plane node: pin rancher-01/02/03 to nuc-01/02/03 (Node Scheduling → run on specific node) so those nodes do useful work. Harvester's OS/etcd is on the SATA SSD and the VM disks are on the NVMe, so they don't share a disk; pinning keeps each VM's single best-effort replica local. Don't take two of nuc-01–03 down at once: that costs quorum for both Harvester and Rancher.
     - 4 vCPU, and 16 GB RAM if you can spare it (they had 8 GB).
     - The fixed MACs from step 6, on vmnet-mgmt.
     - Decide on the VIP explicitly. Last time 10.10.14.30 answered, but nothing in your repo creates it. Either deploy kube-vip in ARP mode from your scripts, or skip the VIP and point the rancher DNS name at all three node IPs. Whichever you pick, add the VIP and hostname as tls-san entries in the RKE2 config.
@@ -87,7 +87,7 @@ Things to avoid
 - Using 3-replica, remote Longhorn volumes for etcd.
 - Enabling add-ons or creating volumes before the storage network is configured.
 - Relying on whatever the DHCP pool hands out for infrastructure VMs.
-- Expecting live migration for the Rancher VMs. With strict-local they can't migrate, so for host maintenance shut down one VM at a time; etcd tolerates losing one member.
+- Moving the Rancher VMs casually. Live migration works with best-effort, but the disk runs over the storage network until Longhorn rebuilds a local replica; migrate one VM at a time.
 - Assuming the USB link is fast. It's still 1 GbE and only keeps storage traffic off the management NIC. The real performance gain comes from data locality.
 
 Do you want me to put this in the repo as DeepDive/Rebuild_From_Scratch.md, along with the VLAN config, storage network and storage class YAML in Files/?
