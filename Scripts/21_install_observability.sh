@@ -96,7 +96,7 @@ helm template \
   --set license="${O11Y_LICENSE}" \
   --set rancherUrl="https://${RANCHER_HOSTNAME}" \
   --set baseUrl="https://${OBS_HOSTNAME}" \
-  --set sizing.profile='10-nonha' \
+  --set sizing.profile='100-nonha' \
   suse-observability-values \
   suse-observability/suse-observability-values \
   --output-dir "${VALUES_DIR}"
