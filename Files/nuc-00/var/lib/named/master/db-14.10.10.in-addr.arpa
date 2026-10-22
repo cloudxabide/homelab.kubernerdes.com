@@ -1,6 +1,6 @@
 $TTL 2D
 14.10.10.in-addr.arpa.   IN SOA dns.community.kubernerdes.com. root.community.kubernerdes.com. (
-                        2026091301	; serial
+                        2026102201	; serial
                         1D              ; refresh
                         2H              ; retry
                         1W              ; expiry
@@ -20,10 +20,10 @@ $TTL 2D
 42     IN      PTR     observability-02.community.kubernerdes.com.
 43     IN      PTR     observability-03.community.kubernerdes.com.
 ; Apps Cluster
-50     IN      PTR     communityapps.community.kubernerdes.com.
-51     IN      PTR     communityapps-01.community.kubernerdes.com.
-52     IN      PTR     communityapps-02.community.kubernerdes.com.
-53     IN      PTR     communityapps-03.community.kubernerdes.com.
+50     IN      PTR     apps.community.kubernerdes.com.
+51     IN      PTR     apps-01.community.kubernerdes.com.
+52     IN      PTR     apps-02.community.kubernerdes.com.
+53     IN      PTR     apps-03.community.kubernerdes.com.
 
 ; Load Balancer for Kubernetes Cluster(s) - one LB per K8s Cluster (sometimes paired)
 93	IN	PTR	nuc-00-03.community.kubernerdes.com.
@@ -33,9 +33,9 @@ $TTL 2D
 101	IN	PTR	nuc-01.community.kubernerdes.com.
 102	IN	PTR	nuc-02.community.kubernerdes.com.
 103	IN	PTR	nuc-03.community.kubernerdes.com.
-104	IN	PTR	nuc-01.community.kubernerdes.com.
-105	IN	PTR	nuc-02.community.kubernerdes.com.
-106	IN	PTR	nuc-03.community.kubernerdes.com.
+104	IN	PTR	nuc-04.community.kubernerdes.com.
+105	IN	PTR	nuc-05.community.kubernerdes.com.
+106	IN	PTR	nuc-06.community.kubernerdes.com.
 ; KVMs for NUCs
 111	IN	PTR	nuc-01-kvm.community.kubernerdes.com.
 112	IN	PTR	nuc-02-kvm.community.kubernerdes.com.

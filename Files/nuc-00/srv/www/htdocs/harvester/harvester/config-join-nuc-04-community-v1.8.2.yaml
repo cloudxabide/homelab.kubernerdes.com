@@ -23,7 +23,7 @@ install:
   management_interface:
     interfaces:
       - name: enp86s0 # gen13 NUC
-      #- name: en01 # gen10 NUC
+      #- name: eno1 # gen10 NUC
     default_route: true
     method: static
     ip: 10.10.14.104

@@ -1,7 +1,7 @@
 $TTL 604800 
 $ORIGIN prime.kubernerdes.com. 
 @	IN SOA      nuc-00.homelab.kubernerdes.com.  root.kubernerdes.com. ( 
-            2026091302 ; Serial
+            2026102201 ; Serial
             604800     ; Refresh
             86400      ; Retry
             2419200    ; Expire
@@ -36,10 +36,17 @@ harvester	IN	A	10.10.15.100
 nuc-01		IN	A	10.10.15.101
 nuc-02		IN	A	10.10.15.102
 nuc-03		IN	A	10.10.15.103
+nuc-04		IN	A	10.10.15.104
+nuc-05		IN	A	10.10.15.105
+nuc-06		IN	A	10.10.15.106
+; KVM for NUCs
 
 nuc-01-kvm	IN	A	10.10.15.111
 nuc-02-kvm	IN	A	10.10.15.112
 nuc-03-kvm	IN	A	10.10.15.113
+nuc-04-kvm	IN	A	10.10.15.114
+nuc-05-kvm	IN	A	10.10.15.115
+nuc-06-kvm	IN	A	10.10.15.116
 
 ; DHCP CIDR 10.10.15.0/24
 dhcp-128    IN      A       10.10.15.128
@@ -171,7 +178,7 @@ dhcp-253	 IN	 A	 10.10.15.253
 dhcp-254	 IN	 A	 10.10.15.254
 
 ; Application Wildcard Endpoints
-*.apps.prime.kubernerdes.com. 	IN 	A 	10.10.15.40
+*.apps.prime.kubernerdes.com. 	IN 	A 	10.10.15.50
 
 ; Docs hosted at github pages
 docs.prime.kubernerdes.com.   IN      CNAME   cloudxabide.github.io.

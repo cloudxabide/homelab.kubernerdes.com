@@ -11,6 +11,7 @@ set -euo pipefail
 #
 # What this does:
 #   1. Labels nodes by hardware generation (homelab.kubernerdes.com/nuc-gen)
+#      and gives Harvester worker nodes the node-role.kubernetes.io/worker label
 #   2. Creates the storage ClusterNetwork + one VlanConfig per hardware gen
 #   3. Creates the untagged VM network on the built-in mgmt cluster network
 #   4. Creates the 1-replica, best-effort-locality StorageClass
@@ -74,6 +75,15 @@ if [[ -n "${NODE_GENS:-}" ]]; then
     done
   done
 fi
+
+# ---------------------------------------------------------------------------
+# Worker role label
+# Nodes installed with "role: worker" get node-role.harvesterhci.io/worker=true
+# but no Kubernetes role label, so `kubectl get nodes` shows ROLES <none>.
+# ---------------------------------------------------------------------------
+echo "==> Labeling Harvester worker nodes with node-role.kubernetes.io/worker"
+kubectl label node -l node-role.harvesterhci.io/worker=true \
+  node-role.kubernetes.io/worker=true --overwrite
 
 # ---------------------------------------------------------------------------
 # Storage ClusterNetwork + per-generation VlanConfigs

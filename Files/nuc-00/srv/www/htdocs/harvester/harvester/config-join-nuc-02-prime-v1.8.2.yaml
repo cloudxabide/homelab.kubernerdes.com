@@ -19,9 +19,10 @@ os:
 install:
   skipchecks: true
   mode: join
+  role: management # gen10 NUCs are the control plane in the 6-node cluster
   management_interface:
     interfaces:
-      - name: en01 # gen10 NUC
+      - name: eno1 # gen10 NUC
     default_route: true
     method: static
     ip: 10.10.15.102

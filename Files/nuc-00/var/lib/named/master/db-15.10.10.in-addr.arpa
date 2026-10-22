@@ -1,6 +1,6 @@
 $TTL 2D
 15.10.10.in-addr.arpa.   IN SOA dns.prime.kubernerdes.com. root.prime.kubernerdes.com. (
-                        2026091301	; serial
+                        2026102201	; serial
                         1D              ; refresh
                         2H              ; retry
                         1W              ; expiry
@@ -20,10 +20,10 @@ $TTL 2D
 42     IN      PTR     observability-02.prime.kubernerdes.com.
 43     IN      PTR     observability-03.prime.kubernerdes.com.
 ; Apps Cluster
-50     IN      PTR     primeapps.prime.kubernerdes.com.
-51     IN      PTR     primeapps-01.prime.kubernerdes.com.
-52     IN      PTR     primeapps-02.prime.kubernerdes.com.
-53     IN      PTR     primeapps-03.prime.kubernerdes.com.
+50     IN      PTR     apps.prime.kubernerdes.com.
+51     IN      PTR     apps-01.prime.kubernerdes.com.
+52     IN      PTR     apps-02.prime.kubernerdes.com.
+53     IN      PTR     apps-03.prime.kubernerdes.com.
 
 ; Load Balancer for Kubernetes Cluster(s) - one LB per K8s Cluster (sometimes paired)
 93	IN	PTR	nuc-00-03.prime.kubernerdes.com.
@@ -33,9 +33,15 @@ $TTL 2D
 101	IN	PTR	nuc-01.prime.kubernerdes.com.
 102	IN	PTR	nuc-02.prime.kubernerdes.com.
 103	IN	PTR	nuc-03.prime.kubernerdes.com.
+104	IN	PTR	nuc-04.prime.kubernerdes.com.
+105	IN	PTR	nuc-05.prime.kubernerdes.com.
+106	IN	PTR	nuc-06.prime.kubernerdes.com.
 111	IN	PTR	nuc-01-kvm.prime.kubernerdes.com.
 112	IN	PTR	nuc-02-kvm.prime.kubernerdes.com.
 113	IN	PTR	nuc-03-kvm.prime.kubernerdes.com.
+114	IN	PTR	nuc-04-kvm.prime.kubernerdes.com.
+115	IN	PTR	nuc-05-kvm.prime.kubernerdes.com.
+116	IN	PTR	nuc-06-kvm.prime.kubernerdes.com.
 
 ; DHCP Pool for this ENVIRONMENT 
 128    IN      PTR     dhcp-128.prime.kubernerdes.com.
