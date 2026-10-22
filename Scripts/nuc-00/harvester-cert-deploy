@@ -1,0 +1,52 @@
+#!/bin/bash
+set -euo pipefail
+
+# harvester-cert-deploy — Push a Let's Encrypt certificate into Harvester's
+# ssl-certificates setting.
+#
+# Installed on nuc-00 as /usr/local/sbin/harvester-cert-deploy by
+# harvester_cert_issue.sh and used as certbot's --deploy-hook, so it runs
+# as root after every successful issue or renewal. Can also be run by hand:
+#
+#   sudo harvester-cert-deploy prime.kubernerdes.com
+#   sudo INSECURE=1 harvester-cert-deploy prime.kubernerdes.com   # first push
+#
+# The certbot cert name is the environment's base domain
+# (<env>.kubernerdes.com). The environment comes from the first label, and
+# the Harvester kubeconfig is /root/.kube/<env>-harvester.kubeconfig.
+#
+# INSECURE=1 skips TLS verification. It's only needed for the first push,
+# while Harvester still serves its self-signed certificate. The kubeconfig
+# carries no certificate-authority-data, so after that the system trust
+# store (which includes Let's Encrypt) is used.
+
+CERT_NAME="${1:-$(basename "${RENEWED_LINEAGE:-}")}"
+if [[ -z "${CERT_NAME}" ]]; then
+  echo "usage: $0 <env>.kubernerdes.com (or run as a certbot deploy hook)" >&2
+  exit 1
+fi
+ENVIRONMENT="${CERT_NAME%%.*}"
+LIVE_DIR="/etc/letsencrypt/live/${CERT_NAME}"
+export KUBECONFIG="${KUBECONFIG:-/root/.kube/${ENVIRONMENT}-harvester.kubeconfig}"
+
+KUBECTL=(kubectl)
+[[ "${INSECURE:-0}" == "1" ]] && KUBECTL+=(--insecure-skip-tls-verify)
+
+for f in "${LIVE_DIR}/fullchain.pem" "${LIVE_DIR}/privkey.pem" "${KUBECONFIG}"; do
+  [[ -r "${f}" ]] || { echo "ERROR: cannot read ${f}" >&2; exit 1; }
+done
+
+echo "==> Pushing ${CERT_NAME} to Harvester (${ENVIRONMENT}) ssl-certificates"
+openssl x509 -in "${LIVE_DIR}/cert.pem" -noout -subject -issuer -enddate | sed 's/^/    /'
+
+# fullchain = leaf + intermediate. "ca" is left empty: the chain is public,
+# so clients verify it against their own trust store.
+value=$(jq -cn \
+  --rawfile cert "${LIVE_DIR}/fullchain.pem" \
+  --rawfile key "${LIVE_DIR}/privkey.pem" \
+  '{ca: "", publicCertificate: $cert, privateKey: $key}')
+
+"${KUBECTL[@]}" patch settings.harvesterhci.io ssl-certificates --type merge \
+  -p "$(jq -cn --arg v "${value}" '{value: $v}')"
+
+echo "    patched — Harvester rolls the new certificate out to its ingress in about a minute"
