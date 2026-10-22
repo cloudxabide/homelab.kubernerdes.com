@@ -320,11 +320,19 @@ fi
 # Rancher Monitoring add-on
 # ---------------------------------------------------------------------------
 echo "==> Enabling rancher-monitoring add-on"
-kubectl patch addon rancher-monitoring \
-  -n cattle-monitoring-system \
-  --type merge \
-  -p '{"spec":{"enabled":true}}'
-echo "    rancher-monitoring enabled — Prometheus/Grafana/Alertmanager deploying"
+# Harvester rejects any change while an add-on operation is still running
+# (e.g. the disable above), so wait for it to settle first.
+wait_for "rancher-monitoring add-on idle" 600 \
+  sh -c "kubectl -n cattle-monitoring-system get addon rancher-monitoring -o jsonpath='{.status.conditions[?(@.type==\"InProgress\")].status}' | grep -qx False"
+if [[ "$(kubectl -n cattle-monitoring-system get addon rancher-monitoring -o jsonpath='{.spec.enabled}')" == "true" ]]; then
+  echo "    already enabled"
+else
+  kubectl patch addon rancher-monitoring \
+    -n cattle-monitoring-system \
+    --type merge \
+    -p '{"spec":{"enabled":true}}'
+  echo "    rancher-monitoring enabled — Prometheus/Grafana/Alertmanager deploying"
+fi
 
 # ---------------------------------------------------------------------------
 # Let's Encrypt certificate (HARVESTER_CERT=letsencrypt)
