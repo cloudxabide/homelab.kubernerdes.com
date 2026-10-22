@@ -1,6 +1,6 @@
 $TTL 2D
 14.10.10.in-addr.arpa.   IN SOA dns.community.kubernerdes.com. root.community.kubernerdes.com. (
-                        2026102201	; serial
+                        2026102203	; serial
                         1D              ; refresh
                         2H              ; retry
                         1W              ; expiry
@@ -21,9 +21,6 @@ $TTL 2D
 43     IN      PTR     observability-03.community.kubernerdes.com.
 ; Apps Cluster
 50     IN      PTR     apps.community.kubernerdes.com.
-51     IN      PTR     apps-01.community.kubernerdes.com.
-52     IN      PTR     apps-02.community.kubernerdes.com.
-53     IN      PTR     apps-03.community.kubernerdes.com.
 
 ; Load Balancer for Kubernetes Cluster(s) - one LB per K8s Cluster (sometimes paired)
 93	IN	PTR	nuc-00-03.community.kubernerdes.com.

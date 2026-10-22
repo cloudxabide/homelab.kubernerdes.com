@@ -33,9 +33,6 @@ This repository contains the scripts, configuration files, and documentation for
 > [!TIP] 
 > This is not an official SUSE repository. It is a personal lab environment designed to explore and demonstrate the platform using straightforward, repeatable methods.
 
-> [!NOTE] 
-> Government/air-gapped-specific content will migrate to a separate repo: https://github.com/jradtke-rgs/carbide-enclave.kubernerdes.com
-
 ---
 
 ## Goals

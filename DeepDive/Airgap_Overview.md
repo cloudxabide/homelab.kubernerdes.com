@@ -194,7 +194,7 @@ If you want one of those, tell me which and share a sample chart or your target 
 
 - SUSE Rancher Manager — [Air-Gapped Helm CLI Install](https://ranchermanager.docs.rancher.com/getting-started/installation-and-upgrade/other-installation-methods/air-gapped-helm-cli-install/install-kubernetes) — mirroring images and pointing a cluster at a private / SUSE Prime registry.
 - SUSE — [RKE2 Air-Gap Install](https://documentation.suse.com/cloudnative/rke2/latest/en/install/airgap.html) — `system-default-registry`, containerd registry mirrors, and the tarball vs. private-registry methods.
-- Rancher Government Hauler — [GitHub repo](https://github.com/hauler-dev/hauler) · [hauler.dev docs](https://hauler.dev) · blog: [Simplifying the Airgap Experience with Rancher Government Hauler](https://ranchergovernment.com/blog/simplifying-the-airgap-experience-with-rancher-government-hauler)
+- Hauler — [GitHub repo](https://github.com/hauler-dev/hauler) · [hauler.dev docs](https://hauler.dev)
 - Harbor — [Configure Proxy Cache](https://goharbor.io/docs/latest/administration/configure-proxy-cache/) and [Configuring Replication](https://goharbor.io/docs/latest/administration/configuring-replication/) — keeping the internal registry populated from upstream.
 - [Helm — Registries (OCI charts)](https://helm.sh/docs/topics/registries/) · [skopeo](https://github.com/containers/skopeo) — the chart/image copy tooling used above.
 - Related in this repo: [`GitOps_Fleet_Overview.md`](./GitOps_Fleet_Overview.md) (see its air-gap / enclave notes).

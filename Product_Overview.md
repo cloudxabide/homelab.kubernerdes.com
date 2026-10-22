@@ -1,6 +1,6 @@
 # Product Overview
 
-Here is a quick synopsis of the products available from SUSE/RGS (both Infra and Cloud-Native) as well as references to provide an overview
+Here is a quick synopsis of the products available from SUSE (both Infra and Cloud-Native) as well as references to provide an overview
 
 ## Rancher Rodeo
 Check out the [SUSE Events page](https://www.rancher.com/events) and search for "Rancher Rodeo - North America".
@@ -22,7 +22,7 @@ Harvester is essentially the foundation of this homelab and demo environment.  I
 
 ### Product Content
 [HarvesterHCI YouTube](https://www.youtube.com/@HarvesterHCI) - SUSE produces a Harvester specific channel showcasing the features and updates for Harvester.  
-[Clemenko -  Kubernetes Firefighter](https://www.youtube.com/@clemenko) - Andy does a great job explaining many facets of SUSE Products and specifically Harvester.  (He worked at RGS previously)
+[Clemenko -  Kubernetes Firefighter](https://www.youtube.com/@clemenko) - Andy does a great job explaining many facets of SUSE Products and specifically Harvester.
 
 ## SUSE Rancher Manager
 
@@ -35,7 +35,7 @@ Rancher Manager is central point of administration (single pane of glass) for Vi
 - Rancher Projects: A unique capability that allows grouping multiple Kubernetes namespaces into a single "Project" for unified RBAC and resource quota management.
 - Unified Governance: Centralizes authentication and security policies (including AD/LDAP/SAML integration) at the hub level, automatically enforcing them across all managed clusters.
 - Fleet GitOps Integration: Provides a powerful GitOps engine designed to manage and deploy applications to thousands of clusters simultaneously with consistent, repeatable rollouts.
-- Hardened Security: Features DISA STIG validation and a hardened supply chain with signed images and automated SBOM generation through Carbide integration.
+- Hardened Security: Features DISA STIG validation and a hardened supply chain with signed images and automated SBOM generation.
 
 ### Product Content
 
@@ -92,7 +92,6 @@ RKE2 is a security-hardened, CIS-benchmark-compliant Kubernetes distribution bui
 
 ## Application Collection (AppCo)
 > [SUSE AppCo](https://apps.rancher.io)
-> [RGS Carbide App Portal](https://portal.ranchercarbide.dev/apps)
 
 SUSE’s Rancher Application Collection is a curated catalog of pre-packaged, enterprise-ready applications and services designed to deploy on Kubernetes clusters managed by Rancher. It provides one-click or streamlined Helm-based deployments with built-in governance, security, and standard templates to simplify app provisioning and lifecycle management across clusters.
 
@@ -103,13 +102,12 @@ Rancher AppCo is part of a subscription which does look essentially the same as 
 
 # FOSS Tools
 
-## RGS Hauler
+## Hauler
 
 > [Hauler OSS Project - Github](https://github.com/hauler-dev/hauler)  
-> [Hauler Homepage](https://hauler.dev/)  
-> [Rancher Government Solutions Hauler Product Page](https://ranchergovernment.com/products/hauler)
+> [Hauler Homepage](https://hauler.dev/)
 
-Hauler is an air-gap tool created and maintained by RGS that packages, transports, and unpacks container images, Helm charts, and files as OCI artifacts, making it well suited for populating registries and Kubernetes clusters in disconnected (enclave) environments.
+Hauler is an open-source air-gap tool that packages, transports, and unpacks container images, Helm charts, and files as OCI artifacts, making it well suited for populating registries and Kubernetes clusters in disconnected (enclave) environments.
 
 ## Harbor
 
@@ -123,4 +121,3 @@ Harbor is an open-source container image registry that secures artifacts with vu
 
 ## Company Homepage
 [SUSE](https://www.suse.com)  
-[RGS - Rancher Government Systems](https://ranchergovernment.com/)  

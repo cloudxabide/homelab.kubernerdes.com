@@ -1,7 +1,7 @@
 $TTL 604800 
 $ORIGIN enclave.kubernerdes.com. 
 @	IN SOA      nuc-00.homelab.kubernerdes.com.  root.kubernerdes.com. ( 
-            2026091301 ; Serial
+            2026102203 ; Serial
             604800     ; Refresh
             86400      ; Retry
             2419200    ; Expire
@@ -22,9 +22,6 @@ observability-02        IN       A      10.10.13.42
 observability-03        IN       A      10.10.13.43
 ; Apps Cluster
 apps            IN      A       10.10.13.50
-apps-01         IN      A       10.10.13.51
-apps-02         IN      A       10.10.13.52
-apps-03         IN      A       10.10.13.53
 
 ; Load Balancer for Harvester Cluster(s) - one LB per Harvester Cluster
 ; These are the Host Address - define VIP elsewhere

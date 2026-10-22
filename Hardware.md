@@ -111,7 +111,7 @@ Per-environment IPs (last octet identical across all environments, prefix differ
 | .220 | observability-VIP | observability-VIP | observability-VIP | Observability cluster VIP |
 | .221-.223 | observability-11/12/13 | observability-21/22/23 | observability-01/02/03 | Observability nodes |
 | .230 | apps-VIP | apps-VIP | apps-VIP | Applications cluster VIP |
-| .231-.233 | apps-11/12/13 | apps-21/22/23 | apps-01/02/03 | Applications cluster nodes |
+| — | apps-* (DHCP) | apps-* (DHCP) | apps-* (DHCP) | Applications cluster nodes (Harvester DHCP, no fixed IPs) |
 | .251 | — | — | spark-e | Optional hardware |
 | .228-.254 | dynamic pool | dynamic pool | dynamic pool | DHCP dynamic range |
 

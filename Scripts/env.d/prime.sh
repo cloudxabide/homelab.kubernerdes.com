@@ -31,7 +31,7 @@ export NEUVECTOR_VERSION="5.4.9"
 # Registry — SUSE Prime registry
 # Credentials (PRIME_USERNAME, PRIME_PASSWORD) must be in ~/.config/SUSE/creds
 # ---------------------------------------------------------------------------
-export PRIME_REGISTRY="registry.ranchercarbide.dev"
+export PRIME_REGISTRY="registry.rancher.com"
 export REGISTRY_MIRROR="${PRIME_REGISTRY}"
 
 PRIME_CREDS_FILE="${HOME}/.config/SUSE/creds"

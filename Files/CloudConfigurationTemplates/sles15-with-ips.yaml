@@ -42,9 +42,6 @@ runcmd:
       observability-01)   IPADDR="${OBS_NODE_01}/22" ;;
       observability-02)   IPADDR="${OBS_NODE_02}/22" ;;
       observability-03)   IPADDR="${OBS_NODE_03}/22" ;;
-      apps-01)            IPADDR="${APPS_NODE_01}/22" ;;
-      apps-02)            IPADDR="${APPS_NODE_02}/22" ;;
-      apps-03)            IPADDR="${APPS_NODE_03}/22" ;;
       *)
         echo "Unknown hostname: $HOSTNAME — skipping static IP config"
         exit 0
