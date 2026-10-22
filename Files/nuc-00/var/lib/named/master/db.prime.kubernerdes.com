@@ -1,7 +1,7 @@
 $TTL 604800 
 $ORIGIN prime.kubernerdes.com. 
 @	IN SOA      nuc-00.homelab.kubernerdes.com.  root.kubernerdes.com. ( 
-            2026102201 ; Serial
+            2026102202 ; Serial
             604800     ; Refresh
             86400      ; Retry
             2419200    ; Expire
@@ -22,9 +22,6 @@ observability-02        IN       A      10.10.15.42
 observability-03        IN       A      10.10.15.43
 ; Apps Cluster
 apps            IN      A       10.10.15.50
-apps-01         IN      A       10.10.15.51
-apps-02         IN      A       10.10.15.52
-apps-03         IN      A       10.10.15.53
 
 ; Load Balancer for Harvester Cluster(s) - one LB per Harvester Cluster
 ; These are the Host Address - define VIP elsewhere
@@ -178,7 +175,9 @@ dhcp-253	 IN	 A	 10.10.15.253
 dhcp-254	 IN	 A	 10.10.15.254
 
 ; Application Wildcard Endpoints
-*.apps.prime.kubernerdes.com. 	IN 	A 	10.10.15.50
+; Separate from the apps cluster VIP (.50, Kubernetes API): this is the
+; ingress endpoint (80/443) for user apps, created by hand on the Harvester LB.
+*.apps.prime.kubernerdes.com. 	IN 	A 	10.10.15.51
 
 ; Docs hosted at github pages
 docs.prime.kubernerdes.com.   IN      CNAME   cloudxabide.github.io.

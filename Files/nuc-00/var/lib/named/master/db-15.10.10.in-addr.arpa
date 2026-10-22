@@ -1,6 +1,6 @@
 $TTL 2D
 15.10.10.in-addr.arpa.   IN SOA dns.prime.kubernerdes.com. root.prime.kubernerdes.com. (
-                        2026102201	; serial
+                        2026102202	; serial
                         1D              ; refresh
                         2H              ; retry
                         1W              ; expiry
@@ -21,9 +21,6 @@ $TTL 2D
 43     IN      PTR     observability-03.prime.kubernerdes.com.
 ; Apps Cluster
 50     IN      PTR     apps.prime.kubernerdes.com.
-51     IN      PTR     apps-01.prime.kubernerdes.com.
-52     IN      PTR     apps-02.prime.kubernerdes.com.
-53     IN      PTR     apps-03.prime.kubernerdes.com.
 
 ; Load Balancer for Kubernetes Cluster(s) - one LB per K8s Cluster (sometimes paired)
 93	IN	PTR	nuc-00-03.prime.kubernerdes.com.
