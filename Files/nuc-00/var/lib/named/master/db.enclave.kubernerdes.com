@@ -1,7 +1,7 @@
 $TTL 604800 
 $ORIGIN enclave.kubernerdes.com. 
 @	IN SOA      nuc-00.homelab.kubernerdes.com.  root.kubernerdes.com. ( 
-            2026102203 ; Serial
+            2026102205 ; Serial
             604800     ; Refresh
             86400      ; Retry
             2419200    ; Expire
@@ -33,10 +33,10 @@ harvester	IN	A	10.10.13.100
 nuc-01		IN	A	10.10.13.101
 nuc-02		IN	A	10.10.13.102
 nuc-03		IN	A	10.10.13.103
+nuc-04		IN	A	10.10.13.104
+nuc-05		IN	A	10.10.13.105
+nuc-06		IN	A	10.10.13.106
 
-nuc-01-kvm	IN	A	10.10.13.111
-nuc-02-kvm	IN	A	10.10.13.112
-nuc-03-kvm	IN	A	10.10.13.113
 
 ; DHCP CIDR 10.10.13.0/24
 dhcp-128    IN      A       10.10.13.128
@@ -168,7 +168,9 @@ dhcp-253	 IN	 A	 10.10.13.253
 dhcp-254	 IN	 A	 10.10.13.254
 
 ; Application Wildcard Endpoints
-*.apps.enclave.kubernerdes.com. 	IN 	A 	10.10.13.40
+; Separate from the apps cluster VIP (.50, Kubernetes API): this is the
+; ingress endpoint (80/443) for user apps, created by hand on the Harvester LB.
+*.apps.enclave.kubernerdes.com. 	IN 	A 	10.10.13.51
 
 ; Docs hosted at github pages
 docs.enclave.kubernerdes.com.   IN      CNAME   cloudxabide.github.io.
