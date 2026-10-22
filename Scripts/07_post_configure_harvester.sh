@@ -15,17 +15,18 @@ set -euo pipefail
 #   2. Creates the storage ClusterNetwork + one VlanConfig per hardware gen
 #   3. Creates the untagged VM network on the built-in mgmt cluster network
 #   4. Creates the 1-replica, best-effort-locality StorageClass
-#   5. Imports .qcow2 VM images discovered from the admin node HTTP server,
-#      plus a dedicated copy of the Rancher image on the local StorageClass
-#   6. Imports cloud-init templates from this repo (served via Apache)
-#   7. Applies the storage-network setting (rancher-monitoring is disabled
+#   5. Applies the storage-network setting (rancher-monitoring is disabled
 #      first so no Longhorn volume is attached, as Harvester requires)
-#   8. Enables the rancher-monitoring add-on
+#   6. Enables the rancher-monitoring add-on
+#   7. Imports .qcow2 VM images discovered from the admin node HTTP server,
+#      plus a dedicated copy of the Rancher image on the local StorageClass
+#      (after step 5, which restarts Longhorn's backing-image managers)
+#   8. Imports cloud-init templates from this repo (served via Apache)
 #   9. Installs a Let's Encrypt wildcard certificate for ${BASE_DOMAIN}
 #      (HARVESTER_CERT=letsencrypt) — last, because it replaces the
 #      self-signed certificate your kubeconfig may still trust
 #
-# Steps 1-4 and 7 are skipped when the environment does not define
+# Steps 2-5 are skipped when the environment does not define
 # STORAGE_NETWORK_VLAN / VM_NETWORK_NAME / LOCAL_STORAGE_CLASS (see env.d/).
 # Safe to re-run: existing objects are left alone, and the storage network
 # is only re-applied when its value differs from the desired one.
@@ -181,6 +182,64 @@ EOF
 fi
 
 # ---------------------------------------------------------------------------
+# Storage network setting
+# Harvester only applies it while no Longhorn volume is attached, and
+# rancher-monitoring (enabled by default on v1.8) holds three. So: disable
+# monitoring, wait for every volume to detach, apply, wait for "configured".
+# Monitoring is re-enabled in the next section. Any VM that is running also
+# keeps its volumes attached — stop all VMs before this step on a cluster
+# that already has workloads.
+# ---------------------------------------------------------------------------
+if [[ -n "${STORAGE_NETWORK_VLAN:-}" ]]; then
+  echo "==> Configuring storage-network (VLAN ${STORAGE_NETWORK_VLAN}, ${STORAGE_NETWORK_RANGE})"
+  desired=$(jq -cn --argjson vlan "${STORAGE_NETWORK_VLAN}" \
+    --arg cn "${STORAGE_CLUSTER_NETWORK}" --arg range "${STORAGE_NETWORK_RANGE}" \
+    '{vlan: $vlan, clusterNetwork: $cn, range: $range}')
+  current=$(kubectl get settings.harvesterhci.io storage-network -o jsonpath='{.value}')
+  current_norm=$( [[ -n "${current}" ]] && jq -c '{vlan, clusterNetwork, range}' <<< "${current}" || echo "" )
+
+  if [[ "${current_norm}" == "${desired}" ]]; then
+    echo "    already set to ${desired} — skipping"
+  else
+    echo "    disabling rancher-monitoring so its volumes detach"
+    kubectl patch addon rancher-monitoring -n cattle-monitoring-system \
+      --type merge -p '{"spec":{"enabled":false}}'
+    wait_for "all Longhorn volumes detached" 600 \
+      sh -c "! kubectl -n longhorn-system get volumes.longhorn.io -o jsonpath='{range .items[*]}{.status.state}{\"\\n\"}{end}' | grep -qx attached"
+
+    kubectl patch settings.harvesterhci.io storage-network --type merge \
+      -p "$(jq -cn --arg v "${desired}" '{value: $v}')"
+    sleep 15   # let the controller reset the previous value's "configured" condition
+    wait_for "storage-network configured" 900 \
+      sh -c "kubectl get settings.harvesterhci.io storage-network -o json | jq -e '.status.conditions[]? | select(.type==\"configured\" and .status==\"True\" and .reason==\"Completed\")'"
+  fi
+fi
+
+# ---------------------------------------------------------------------------
+# Rancher Monitoring add-on
+# ---------------------------------------------------------------------------
+echo "==> Enabling rancher-monitoring add-on"
+# Harvester rejects any change while an add-on operation is still running
+# (e.g. the disable above), so wait for it to settle first.
+wait_for "rancher-monitoring add-on idle" 600 \
+  sh -c "kubectl -n cattle-monitoring-system get addon rancher-monitoring -o jsonpath='{.status.conditions[?(@.type==\"InProgress\")].status}' | grep -qx False"
+if [[ "$(kubectl -n cattle-monitoring-system get addon rancher-monitoring -o jsonpath='{.spec.enabled}')" == "true" ]]; then
+  echo "    already enabled"
+else
+  kubectl patch addon rancher-monitoring \
+    -n cattle-monitoring-system \
+    --type merge \
+    -p '{"spec":{"enabled":true}}'
+  echo "    rancher-monitoring enabled — Prometheus/Grafana/Alertmanager deploying"
+fi
+
+# ---------------------------------------------------------------------------
+# Images and templates come after the storage network: applying it restarts
+# Longhorn's backing-image-manager pods, and an image still being imported
+# at that moment gets stuck ("Backing image manager pod is not running").
+# ---------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------
 # VM Images
 # ---------------------------------------------------------------------------
 echo "==> Discovering .qcow2 images at ${IMAGES_BASE_URL}/"
@@ -280,58 +339,6 @@ data:
   cloudInit: ${encoded_content}
 EOF
   done <<< "${TEMPLATE_FILES}"
-fi
-
-# ---------------------------------------------------------------------------
-# Storage network setting
-# Harvester only applies it while no Longhorn volume is attached, and
-# rancher-monitoring (enabled by default on v1.8) holds three. So: disable
-# monitoring, wait for every volume to detach, apply, wait for "configured".
-# Monitoring is re-enabled in the next section. Any VM that is running also
-# keeps its volumes attached — stop all VMs before this step on a cluster
-# that already has workloads.
-# ---------------------------------------------------------------------------
-if [[ -n "${STORAGE_NETWORK_VLAN:-}" ]]; then
-  echo "==> Configuring storage-network (VLAN ${STORAGE_NETWORK_VLAN}, ${STORAGE_NETWORK_RANGE})"
-  desired=$(jq -cn --argjson vlan "${STORAGE_NETWORK_VLAN}" \
-    --arg cn "${STORAGE_CLUSTER_NETWORK}" --arg range "${STORAGE_NETWORK_RANGE}" \
-    '{vlan: $vlan, clusterNetwork: $cn, range: $range}')
-  current=$(kubectl get settings.harvesterhci.io storage-network -o jsonpath='{.value}')
-  current_norm=$( [[ -n "${current}" ]] && jq -c '{vlan, clusterNetwork, range}' <<< "${current}" || echo "" )
-
-  if [[ "${current_norm}" == "${desired}" ]]; then
-    echo "    already set to ${desired} — skipping"
-  else
-    echo "    disabling rancher-monitoring so its volumes detach"
-    kubectl patch addon rancher-monitoring -n cattle-monitoring-system \
-      --type merge -p '{"spec":{"enabled":false}}'
-    wait_for "all Longhorn volumes detached" 600 \
-      sh -c "! kubectl -n longhorn-system get volumes.longhorn.io -o jsonpath='{range .items[*]}{.status.state}{\"\\n\"}{end}' | grep -qx attached"
-
-    kubectl patch settings.harvesterhci.io storage-network --type merge \
-      -p "$(jq -cn --arg v "${desired}" '{value: $v}')"
-    sleep 15   # let the controller reset the previous value's "configured" condition
-    wait_for "storage-network configured" 900 \
-      sh -c "kubectl get settings.harvesterhci.io storage-network -o json | jq -e '.status.conditions[]? | select(.type==\"configured\" and .status==\"True\" and .reason==\"Completed\")'"
-  fi
-fi
-
-# ---------------------------------------------------------------------------
-# Rancher Monitoring add-on
-# ---------------------------------------------------------------------------
-echo "==> Enabling rancher-monitoring add-on"
-# Harvester rejects any change while an add-on operation is still running
-# (e.g. the disable above), so wait for it to settle first.
-wait_for "rancher-monitoring add-on idle" 600 \
-  sh -c "kubectl -n cattle-monitoring-system get addon rancher-monitoring -o jsonpath='{.status.conditions[?(@.type==\"InProgress\")].status}' | grep -qx False"
-if [[ "$(kubectl -n cattle-monitoring-system get addon rancher-monitoring -o jsonpath='{.spec.enabled}')" == "true" ]]; then
-  echo "    already enabled"
-else
-  kubectl patch addon rancher-monitoring \
-    -n cattle-monitoring-system \
-    --type merge \
-    -p '{"spec":{"enabled":true}}'
-  echo "    rancher-monitoring enabled — Prometheus/Grafana/Alertmanager deploying"
 fi
 
 # ---------------------------------------------------------------------------
