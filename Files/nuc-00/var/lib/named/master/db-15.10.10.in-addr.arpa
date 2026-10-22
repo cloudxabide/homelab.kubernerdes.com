@@ -1,6 +1,6 @@
 $TTL 2D
 15.10.10.in-addr.arpa.   IN SOA dns.prime.kubernerdes.com. root.prime.kubernerdes.com. (
-                        2026102202	; serial
+                        2026102204	; serial
                         1D              ; refresh
                         2H              ; retry
                         1W              ; expiry
@@ -33,12 +33,6 @@ $TTL 2D
 104	IN	PTR	nuc-04.prime.kubernerdes.com.
 105	IN	PTR	nuc-05.prime.kubernerdes.com.
 106	IN	PTR	nuc-06.prime.kubernerdes.com.
-111	IN	PTR	nuc-01-kvm.prime.kubernerdes.com.
-112	IN	PTR	nuc-02-kvm.prime.kubernerdes.com.
-113	IN	PTR	nuc-03-kvm.prime.kubernerdes.com.
-114	IN	PTR	nuc-04-kvm.prime.kubernerdes.com.
-115	IN	PTR	nuc-05-kvm.prime.kubernerdes.com.
-116	IN	PTR	nuc-06-kvm.prime.kubernerdes.com.
 
 ; DHCP Pool for this ENVIRONMENT 
 128    IN      PTR     dhcp-128.prime.kubernerdes.com.
