@@ -72,12 +72,16 @@ if [[ "${src}" != "secret" || "${mode}" != "system-store" ]]; then
     --set ingress.tls.source=secret \
     --set agentTLSMode=system-store
   kubectl -n cattle-system rollout status deploy/rancher --timeout=600s
-  # The chart's cert-manager Certificate is gone now; re-apply in case it
-  # rewrote the secret on its way out.
+  # Re-apply in case cert-manager rewrote the secret during the switch
   apply_secret
 else
   echo "    chart already uses the secret with agentTLSMode=system-store"
 fi
+
+# cert-manager's ingress-shim leaves its Certificate behind when the chart
+# drops the issuer annotation. Remove it so it can never overwrite the secret
+# (the secret has no owner reference, so it is kept).
+kubectl -n cattle-system delete certificate.cert-manager.io tls-rancher-ingress --ignore-not-found
 
 # 4. cacerts: empty means "publicly trusted"; a stale self-signed CA here
 #    would make agents pin the wrong certificate.
