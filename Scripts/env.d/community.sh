@@ -61,6 +61,8 @@ export NODES_gen10="nuc-01 nuc-02 nuc-03"
 export NODES_gen13="nuc-04 nuc-05 nuc-06"
 export STORAGE_NIC_gen10="enp0s20f0u4"
 export STORAGE_NIC_gen13="enp0s13f0u1"
+# gen10 onboard NIC (eno1, e1000e) hangs under load without this — see Foo/NIC_issue.md
+export E1000E_FIX_GENS="gen10"
 export STORAGE_CLUSTER_NETWORK="storage"
 export STORAGE_NETWORK_VLAN="128"
 export STORAGE_NETWORK_RANGE="192.168.128.0/24"   # avoids 172.16.0.0/12 (hybrid-cloud headroom)

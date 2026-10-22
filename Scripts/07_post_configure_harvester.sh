@@ -12,6 +12,7 @@ set -euo pipefail
 # What this does:
 #   1. Labels nodes by hardware generation (homelab.kubernerdes.com/nuc-gen)
 #      and gives Harvester worker nodes the node-role.kubernetes.io/worker label
+#      Applies the e1000e NIC workaround to gen10 nodes (CloudInit + live)
 #   2. Creates the storage ClusterNetwork + one VlanConfig per hardware gen
 #   3. Creates the untagged VM network on the built-in mgmt cluster network
 #   4. Creates the 1-replica, best-effort-locality StorageClass
@@ -88,6 +89,68 @@ fi
 echo "==> Labeling Harvester worker nodes with node-role.kubernetes.io/worker"
 kubectl label node -l node-role.harvesterhci.io/worker=true \
   node-role.kubernetes.io/worker=true --overwrite
+
+# ---------------------------------------------------------------------------
+# e1000e "Hardware Unit Hang" workaround (gen10 NUC onboard NIC, eno1)
+# The NIC drops off the network under load until the node is power-cycled
+# (see Foo/NIC_issue.md). Fix: turn off TSO/GSO/GRO and EEE.
+#   - Persistent: a Harvester CloudInit writes /oem/99_e1000e_offload_fix.yaml
+#     to every node with nuc-gen in E1000E_FIX_GENS; it runs at each boot.
+#   - Now: TSO/GSO/GRO off on each running node, one node at a time, so no
+#     reboot is needed. EEE is left to the boot file: turning it off resets
+#     the adapter, which on a control-plane node can cost etcd quorum.
+# ---------------------------------------------------------------------------
+if [[ -n "${E1000E_FIX_GENS:-}" ]]; then
+  echo "==> e1000e offload workaround on: ${E1000E_FIX_GENS}"
+  NIC_FIX_CMD='[ "$(basename "$(readlink /sys/class/net/eno1/device/driver)")" = e1000e ] || { echo "eno1 is not e1000e — skipped"; exit 0; }; ethtool -K eno1 tso off gso off gro off; ethtool --set-eee eno1 eee off 2>/dev/null || true'
+  NIC_FIX_LIVE_CMD='[ "$(basename "$(readlink /sys/class/net/eno1/device/driver)")" = e1000e ] || { echo "eno1 is not e1000e — skipped"; exit 0; }; ethtool -K eno1 tso off gso off gro off'
+  for gen in ${E1000E_FIX_GENS}; do
+    kubectl apply -f - <<EOF
+apiVersion: node.harvesterhci.io/v1beta1
+kind: CloudInit
+metadata:
+  name: e1000e-offload-fix-${gen}
+spec:
+  matchSelector:
+    homelab.kubernerdes.com/nuc-gen: ${gen}
+  filename: 99_e1000e_offload_fix.yaml
+  contents: |
+    name: "e1000e offload workaround (${gen} NUC onboard NIC)"
+    stages:
+      network:
+        - name: "disable offloads and EEE on eno1 (e1000e Hardware Unit Hang)"
+          commands:
+            - sh -c '${NIC_FIX_CMD}'
+EOF
+  done
+
+  # Image already on every node, so this needs no registry access
+  DEBUG_IMAGE=$(kubectl -n harvester-system get ds harvester-node-manager \
+    -o jsonpath='{.spec.template.spec.containers[0].image}')
+  for gen in ${E1000E_FIX_GENS}; do
+    nodes_var="NODES_${gen}"
+    for node in ${!nodes_var}; do
+      if [[ "$(kubectl get node "${node}" -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}' 2>/dev/null)" != "True" ]]; then
+        echo "    WARN: ${node} not Ready — skipped (the CloudInit file covers its next boot)"
+        continue
+      fi
+      offloads=$(kubectl debug "node/${node}" -q --profile=sysadmin --image="${DEBUG_IMAGE}" --attach -- \
+        chroot /host sh -c 'ethtool -k eno1 2>/dev/null | grep -E "^(tcp-segmentation|generic-segmentation|generic-receive)-offload: on" || true' 2>/dev/null)
+      kubectl get pods -o name | grep "^pod/node-debugger-${node}-" | xargs -r kubectl delete --wait=false >/dev/null
+      if [[ -z "${offloads}" ]]; then
+        echo "    ${node}: offloads already off"
+        continue
+      fi
+      echo "    ${node}: applying"
+      kubectl debug "node/${node}" -q --profile=sysadmin --image="${DEBUG_IMAGE}" --attach -- \
+        chroot /host sh -c "${NIC_FIX_LIVE_CMD}" || true
+      kubectl get pods -o name | grep "^pod/node-debugger-${node}-" | xargs -r kubectl delete --wait=false >/dev/null
+      wait_for "${node} Ready after NIC change" 300 \
+        sh -c "kubectl get node ${node} -o jsonpath='{.status.conditions[?(@.type==\"Ready\")].status}' | grep -qx True"
+      sleep 30   # let etcd settle before touching the next control-plane node
+    done
+  done
+fi
 
 # ---------------------------------------------------------------------------
 # Storage ClusterNetwork + per-generation VlanConfigs
