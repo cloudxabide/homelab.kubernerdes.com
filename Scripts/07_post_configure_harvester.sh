@@ -21,6 +21,9 @@ set -euo pipefail
 #   7. Applies the storage-network setting (rancher-monitoring is disabled
 #      first so no Longhorn volume is attached, as Harvester requires)
 #   8. Enables the rancher-monitoring add-on
+#   9. Installs a Let's Encrypt wildcard certificate for ${BASE_DOMAIN}
+#      (HARVESTER_CERT=letsencrypt) — last, because it replaces the
+#      self-signed certificate your kubeconfig may still trust
 #
 # Steps 1-4 and 7 are skipped when the environment does not define
 # STORAGE_NETWORK_VLAN / VM_NETWORK_NAME / LOCAL_STORAGE_CLASS (see env.d/).
@@ -322,6 +325,51 @@ kubectl patch addon rancher-monitoring \
   --type merge \
   -p '{"spec":{"enabled":true}}'
 echo "    rancher-monitoring enabled — Prometheus/Grafana/Alertmanager deploying"
+
+# ---------------------------------------------------------------------------
+# Let's Encrypt certificate (HARVESTER_CERT=letsencrypt)
+# Last on purpose: once Harvester serves the new certificate, a kubeconfig
+# with the old self-signed CA embedded stops working.
+#
+# Needs /root/.aws/credentials on nuc-00 (Route 53 IAM user, see
+# Scripts/nuc-00/harvester_cert_issue.sh). Root gets its own copy of
+# KUBECONFIG for renewals: server pointed at ${HARVESTER_HOSTNAME} (a
+# Let's Encrypt cert can't cover an IP) and no certificate-authority-data,
+# so it trusts the system CA store.
+#
+# Safe to re-run: certbot leaves a valid certificate alone, and the push only
+# happens when Harvester isn't already serving the current one (e.g. after
+# a rebuild, when nuc-00 still has the certificate).
+# ---------------------------------------------------------------------------
+if [[ "${HARVESTER_CERT:-}" == "letsencrypt" ]]; then
+  echo "==> Let's Encrypt certificate for ${BASE_DOMAIN}"
+  ROOT_KUBECONFIG="/root/.kube/${ENVIRONMENT}-harvester.kubeconfig"
+  kubectl config view --raw --flatten -o json \
+    | jq --arg host "https://${HARVESTER_HOSTNAME}" \
+        'del(.clusters[].cluster."certificate-authority-data")
+         | .clusters[].cluster.server |= sub("^https://[^/]+"; $host)' \
+    | sudo install -D -m 600 /dev/stdin "${ROOT_KUBECONFIG}"
+  echo "    root kubeconfig: ${ROOT_KUBECONFIG}"
+
+  # Issues on the first run (and pushes via the deploy hook); no-op after that
+  ENVIRONMENT="${ENVIRONMENT}" ACME_EMAIL="${ACME_EMAIL}" "${SCRIPT_DIR}/nuc-00/harvester_cert_issue.sh"
+
+  live="/etc/letsencrypt/live/${BASE_DOMAIN}/fullchain.pem"
+  # Root's kubeconfig works whichever certificate Harvester is serving
+  served=$(sudo kubectl --kubeconfig "${ROOT_KUBECONFIG}" --insecure-skip-tls-verify \
+      get settings.harvesterhci.io ssl-certificates -o jsonpath='{.value}' 2>/dev/null \
+    | jq -r '.publicCertificate // empty' 2>/dev/null || true)
+  if [[ "${served}" == "$(sudo cat "${live}")" ]]; then
+    echo "    Harvester already has the current certificate"
+  else
+    sudo env INSECURE=1 /usr/local/sbin/harvester-cert-deploy "${BASE_DOMAIN}"
+  fi
+
+  wait_for "https://${HARVESTER_HOSTNAME} serving a trusted certificate" 300 \
+    curl -sf -o /dev/null "https://${HARVESTER_HOSTNAME}/ping"
+  echo "    NOTE: remove certificate-authority-data from your own Harvester"
+  echo "          kubeconfig (and use ${HARVESTER_HOSTNAME}, not the VIP IP)."
+fi
 
 echo
 echo "==> Done. Next step: Scripts/08_create_rancher_vms.sh"

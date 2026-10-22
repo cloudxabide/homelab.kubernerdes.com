@@ -123,6 +123,10 @@ export REPO_BASE="http://${ADMIN_IP}/homelab.kubernerdes.com"
 export HARVESTER_TOKEN="KentuckyHarvester"
 export HARVESTER_PASSWORD="Passw0rd01"
 export HARVESTER_VIP="${IP_PREFIX}.100"
+export HARVESTER_HOSTNAME="harvester.${BASE_DOMAIN}"
+# Let's Encrypt account email (expiry notices). The certificate itself is
+# enabled per environment with HARVESTER_CERT=letsencrypt in env.d/.
+export ACME_EMAIL="${ACME_EMAIL:-cloudxabide@gmail.com}"
 export NUC01_IP="${IP_PREFIX}.101"
 export NUC02_IP="${IP_PREFIX}.102"
 export NUC03_IP="${IP_PREFIX}.103"

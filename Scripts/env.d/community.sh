@@ -82,3 +82,11 @@ export RANCHER_VM_DISK_SIZE="32Gi"
 export RANCHER_VM_CLOUDINIT="sl-micro-6-generic.yaml"   # under Files/CloudConfigurationTemplates/
 export RANCHER_VM_LABEL_KEY="homelab.kubernerdes.com/app"
 export RANCHER_VM_LABEL_VALUE="rancher-manager"
+
+# ---------------------------------------------------------------------------
+# Harvester TLS (consumed by 07_post_configure_harvester.sh, last step)
+# letsencrypt = wildcard cert for ${BASE_DOMAIN} via certbot + Route 53 DNS-01
+# on nuc-00 (Scripts/nuc-00/harvester_cert_issue.sh). Leave unset to keep
+# Harvester's self-signed certificate.
+# ---------------------------------------------------------------------------
+export HARVESTER_CERT="letsencrypt"
