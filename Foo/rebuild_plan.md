@@ -51,16 +51,20 @@ Harvester
 
 Gate: create no VMs, volumes or monitoring add-on until step 12 is finished.
 
-10. Storage network. Create a storage cluster network with two VLAN configs, because the USB NIC names differ between the two node groups:
-    - One for nuc-01–03 using enp0s20f0u4.
-    - One for nuc-04–06 using enp0s13f0u1. Select these nodes by hostname, not by role label: the role labels can change when nodes are promoted.
+Steps 10–12 are automated by Scripts/07_post_configure_harvester.sh (values in Scripts/env.d/community.sh). The steps below describe what it builds.
+
+10. Storage network. Label each node homelab.kubernerdes.com/nuc-gen=gen10 (nuc-01–03) or gen13 (nuc-04–06), then create a storage cluster network with two VLAN configs, because the USB NIC names differ between the two node groups:
+    - strg-gen10: nuc-gen=gen10 nodes, using enp0s20f0u4.
+    - strg-gen13: nuc-gen=gen13 nodes, using enp0s13f0u1.
+    Select nodes by the nuc-gen label, not by role label: the role labels can change when nodes are promoted.
 
     Then set the storage network:
-{"vlan":100,"clusterNetwork":"storage","range":"192.168.100.0/24"}
-    Do this now, while it's cheap: with no VMs or volumes yet, there's nothing to stop first.
+{"vlan":128,"clusterNetwork":"storage","range":"192.168.128.0/24"}
+    (192.168.128.0/24 avoids 172.16.0.0/12 to leave room for hybrid cloud.)
+    Do this now, while it's cheap: with no VMs or volumes yet, there's nothing to stop first. Note that rancher-monitoring is enabled by default on v1.8 and holds Longhorn volumes, so the script disables it, waits for all volumes to detach, applies the setting, then re-enables it.
 
-    Then verify. Every Longhorn instance-manager pod should have an lhnet1 interface with a 192.168.100.x address, and the Longhorn pods should be Ready. If they aren't, your unmanaged switch is probably dropping VLAN-tagged frames. Find that out now rather than after you have data. If that happens, plug the USB adapters into a separate cheap switch.
-11. VM network. Create vmnet-mgmt on the built-in mgmt cluster network, untagged.
+    Then verify. Every Longhorn instance-manager pod should have an lhnet1 interface with a 192.168.128.x address, and the Longhorn pods should be Ready. If they aren't, your unmanaged switch is probably dropping VLAN-tagged frames. Find that out now rather than after you have data. If that happens, plug the USB adapters into a separate cheap switch.
+11. VM network. Create vmnet-vms on the built-in mgmt cluster network, untagged.
 12. Storage classes.
     - harvester-longhorn (default): fine for general VMs. You could lower it to 2 replicas.
     - harvester-longhorn-local-1r: numberOfReplicas: "1", dataLocality: best-effort (Harvester's webhook rejects strict-local). Pin the VMs so the single replica stays local. This one is for the Rancher VMs. etcd already keeps 3 copies of the data, so Longhorn copying it 3 more times over the network is pure overhead.
@@ -72,7 +76,7 @@ Rancher Manager VMs
 13. Create rancher-01, rancher-02 and rancher-03:
     - One per control-plane node: pin rancher-01/02/03 to nuc-01/02/03 (Node Scheduling → run on specific node) so those nodes do useful work. Harvester's OS/etcd is on the SATA SSD and the VM disks are on the NVMe, so they don't share a disk; pinning keeps each VM's single best-effort replica local. Don't take two of nuc-01–03 down at once: that costs quorum for both Harvester and Rancher.
     - 4 vCPU, and 16 GB RAM if you can spare it (they had 8 GB).
-    - The fixed MACs from step 6, on vmnet-mgmt.
+    - The fixed MACs from step 6, on vmnet-vms.
     - Decide on the VIP explicitly. Last time 10.10.14.30 answered, but nothing in your repo creates it. Either deploy kube-vip in ARP mode from your scripts, or skip the VIP and point the rancher DNS name at all three node IPs. Whichever you pick, add the VIP and hostname as tls-san entries in the RKE2 config.
 14. Benchmark the disk before installing RKE2. In one VM, run the standard etcd fio test:
 fio --rw=write --ioengine=sync --fdatasync=1 --directory=/var/lib --size=22m --bs=2300 --name=etcd
