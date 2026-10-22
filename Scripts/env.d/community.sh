@@ -84,9 +84,13 @@ export RANCHER_VM_LABEL_KEY="homelab.kubernerdes.com/app"
 export RANCHER_VM_LABEL_VALUE="rancher-manager"
 
 # ---------------------------------------------------------------------------
-# Harvester TLS (consumed by 07_post_configure_harvester.sh, last step)
-# letsencrypt = wildcard cert for ${BASE_DOMAIN} via certbot + Route 53 DNS-01
-# on nuc-00 (Scripts/nuc-00/harvester_cert_issue.sh). Leave unset to keep
-# Harvester's self-signed certificate.
+# TLS — Let's Encrypt wildcard for ${BASE_DOMAIN} via certbot + Route 53 DNS-01
+# on nuc-00 (Scripts/nuc-00/harvester_cert_issue.sh). One certificate per
+# environment, renewed on nuc-00; the deploy hook updates Harvester and Rancher.
+#   HARVESTER_CERT — issued + installed by 07_post_configure_harvester.sh
+#   RANCHER_CERT   — installed by 10_install_rancher_manager.sh
+#                    (modules/common/rancher_le_cert.sh)
+# Leave unset to keep the self-signed certificates (enclave: local CA instead).
 # ---------------------------------------------------------------------------
 export HARVESTER_CERT="letsencrypt"
+export RANCHER_CERT="letsencrypt"

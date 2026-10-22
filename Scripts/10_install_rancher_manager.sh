@@ -146,6 +146,12 @@ case "${ENVIRONMENT}" in
   ;;
 esac
 
+# Let's Encrypt wildcard (issued on nuc-00 by 07) instead of Rancher's
+# self-signed CA. Agents then trust the OS store rather than a pinned CA.
+if [[ "${RANCHER_CERT:-}" == "letsencrypt" ]]; then
+  RANCHER_EXTRA_ARGS+=(--set ingress.tls.source=secret --set agentTLSMode=system-store)
+fi
+
 helm upgrade --install rancher "${RANCHER_CHART_NAME}" \
   --version "${RANCHER_VERSION}" \
   --namespace cattle-system \
@@ -156,6 +162,10 @@ helm upgrade --install rancher "${RANCHER_CHART_NAME}" \
   "${RANCHER_EXTRA_ARGS[@]}"
 
 kubectl -n cattle-system rollout status deploy/rancher --timeout=300s
+
+if [[ "${RANCHER_CERT:-}" == "letsencrypt" ]]; then
+  "${SCRIPT_DIR}/modules/common/rancher_le_cert.sh"
+fi
 
 # ---------------------------------------------------------------------------
 # Print access info

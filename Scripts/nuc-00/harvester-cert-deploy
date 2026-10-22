@@ -50,3 +50,15 @@ value=$(jq -cn \
   -p "$(jq -cn --arg v "${value}" '{value: $v}')"
 
 echo "    patched — Harvester rolls the new certificate out to its ingress in about a minute"
+
+# Rancher Manager uses the same wildcard (modules/common/rancher_le_cert.sh
+# sets that up and leaves root a kubeconfig). The RKE2 API has its own CA,
+# so no INSECURE handling is needed here.
+RANCHER_KUBECONFIG="/root/.kube/${ENVIRONMENT}-rancher.kubeconfig"
+if [[ -r "${RANCHER_KUBECONFIG}" ]]; then
+  echo "==> Updating Rancher (${ENVIRONMENT}) cattle-system/tls-rancher-ingress"
+  kubectl --kubeconfig "${RANCHER_KUBECONFIG}" -n cattle-system create secret tls tls-rancher-ingress \
+    --cert="${LIVE_DIR}/fullchain.pem" --key="${LIVE_DIR}/privkey.pem" \
+    --dry-run=client -o yaml \
+    | kubectl --kubeconfig "${RANCHER_KUBECONFIG}" apply -f -
+fi
