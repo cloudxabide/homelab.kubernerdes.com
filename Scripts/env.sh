@@ -41,6 +41,26 @@ case "${ENVIRONMENT}" in
 esac
 
 # ---------------------------------------------------------------------------
+# ENVIRONMENT sanity check — a reminder in case the wrong one is set.
+# Waits 5 seconds: N aborts, Y/Enter/timeout proceeds.
+# Skipped when:
+#   - env.sh is sourced from an interactive prompt (not from a script)
+#   - there is no terminal (piped / cron / CI)
+#   - it already ran (modules re-source env.sh; the flag is exported)
+#   - ENV_CONFIRMED=1 is set by the caller (e.g. ENV_CONFIRMED=1 ./07_...sh)
+# ---------------------------------------------------------------------------
+if [[ ${#BASH_SOURCE[@]} -gt 1 && -t 0 && "${ENV_CONFIRMED:-0}" != "1" ]]; then
+  echo "ENVIRONMENT is currently set to: ${ENVIRONMENT}  (${IP_PREFIX}.0/24, ${BASE_DOMAIN})"
+  _env_answer=""
+  read -r -t 5 -p "Is ENVIRONMENT=${ENVIRONMENT} what you want (Y/N)? " _env_answer || echo
+  case "${_env_answer}" in
+    [Nn]*) echo "Aborting. Set it with: export ENVIRONMENT={community|prime|enclave}" >&2; exit 1 ;;
+  esac
+  unset _env_answer
+  export ENV_CONFIRMED=1
+fi
+
+# ---------------------------------------------------------------------------
 # Harvester VM IP helpers
 # Fetches all VMIs once at source time; node-IP exports below resolve from
 # the cached JSON. Two lookup modes:
