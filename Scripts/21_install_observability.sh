@@ -118,7 +118,14 @@ fi
 
 # ---------------------------------------------------------------------------
 # Ingress
+# With OBS_CERT=letsencrypt it serves the nuc-00 wildcard from
+# ${OBS_TLS_SECRET}; otherwise ingress-nginx's default (self-signed) cert.
 # ---------------------------------------------------------------------------
+OBS_TLS_SECRET_LINE=""
+if [[ "${OBS_CERT:-}" == "letsencrypt" ]]; then
+  OBS_TLS_SECRET_LINE="    secretName: ${OBS_TLS_SECRET}"
+fi
+
 kubectl apply -f - <<EOF
 ---
 apiVersion: networking.k8s.io/v1
@@ -142,7 +149,12 @@ spec:
   tls:
   - hosts:
     - ${OBS_HOSTNAME}
+${OBS_TLS_SECRET_LINE}
 EOF
+
+if [[ "${OBS_CERT:-}" == "letsencrypt" ]]; then
+  "${SCRIPT_DIR}/modules/common/observability_le_cert.sh"
+fi
 
 # ---------------------------------------------------------------------------
 # Access info

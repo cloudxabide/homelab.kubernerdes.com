@@ -62,3 +62,14 @@ if [[ -r "${RANCHER_KUBECONFIG}" ]]; then
     --dry-run=client -o yaml \
     | kubectl --kubeconfig "${RANCHER_KUBECONFIG}" apply -f -
 fi
+
+# Observability likewise (modules/common/observability_le_cert.sh). Keep the
+# secret name in sync with OBS_TLS_SECRET in Scripts/env.sh.
+OBS_KUBECONFIG="/root/.kube/${ENVIRONMENT}-observability.kubeconfig"
+if [[ -r "${OBS_KUBECONFIG}" ]]; then
+  echo "==> Updating Observability (${ENVIRONMENT}) suse-observability/tls-observability-ingress"
+  kubectl --kubeconfig "${OBS_KUBECONFIG}" -n suse-observability create secret tls tls-observability-ingress \
+    --cert="${LIVE_DIR}/fullchain.pem" --key="${LIVE_DIR}/privkey.pem" \
+    --dry-run=client -o yaml \
+    | kubectl --kubeconfig "${OBS_KUBECONFIG}" apply -f -
+fi
