@@ -1,6 +1,6 @@
 $TTL 2D
-14.10.10.in-addr.arpa.   IN SOA dns.community.kubernerdes.com. root.community.kubernerdes.com. (
-                        2026102203	; serial
+14.10.10.in-addr.arpa.   IN SOA nuc-00.homelab.kubernerdes.com. root.community.kubernerdes.com. (
+                        2026110601	; serial
                         1D              ; refresh
                         2H              ; retry
                         1W              ; expiry

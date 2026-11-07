@@ -1,6 +1,6 @@
 $TTL 2D
-12.10.10.in-addr.arpa.   IN SOA dns.homelab.kubernerdes.com. root.homelab.kubernerdes.com. (
-                        2026100301      ; serial
+12.10.10.in-addr.arpa.   IN SOA nuc-00.homelab.kubernerdes.com. root.homelab.kubernerdes.com. (
+                        2026110601	; serial
                         1D              ; refresh
                         2H              ; retry
                         1W              ; expiry
@@ -13,11 +13,12 @@ $TTL 2D
 2	IN	PTR	cisco-sg300-28.homelab.kubernerdes.com.
 3	IN	PTR	mikrotik-switch.homelab.kubernerdes.com.
 7	IN	PTR	truenas.homelab.kubernerdes.com.
-8	IN	PTR	nuc-00.homelab.kubernerdes.com.
+8	IN	PTR	nuc-00-01.homelab.kubernerdes.com.
 9	IN	PTR	nuc-00-02.homelab.kubernerdes.com.
 10	IN	PTR	nuc-00.homelab.kubernerdes.com.
 11	IN	PTR	truenas.homelab.kubernerdes.com.
 12	IN	PTR	librenms.homelab.kubernerdes.com.
+13	IN	PTR	litellm.homelab.kubernerdes.com.
 20	IN	PTR	glkvm.homelab.kubernerdes.com.
 
 ; Load Balancer for Kubernetes Cluster(s) - one LB per K8s Cluster (sometimes paired)
@@ -25,8 +26,11 @@ $TTL 2D
 
 ; Rando Hosts (generally AI/GPU boxes)
 247	IN	PTR	blackmesa.homelab.kubernerdes.com.
-247	IN	PTR	wall-e.homelab.kubernerdes.com.
-249	IN	PTR	wheatley.homelab.kubernerdes.com.
+248	IN	PTR	wall-e.homelab.kubernerdes.com.
+249	IN	PTR	wheatley-wifi.homelab.kubernerdes.com.
 250	IN	PTR	jarvis.homelab.kubernerdes.com.
 251	IN	PTR	spark-e.homelab.kubernerdes.com.
-252	IN	PTR	los-alamos.homelab.kubernerdes.com.
+252	IN	PTR	wheatley.homelab.kubernerdes.com.
+
+; DHCP pool
+$GENERATE 128-244 $ IN PTR dhcp-$.homelab.kubernerdes.com.

@@ -1,11 +1,11 @@
-$TTL 604800 
+$TTL 86400 
 $ORIGIN homelab.kubernerdes.com. 
 @	IN SOA      nuc-00.homelab.kubernerdes.com.  root.kubernerdes.com. ( 
-            2026100301 ; Serial
-            604800     ; Refresh
-            86400      ; Retry
+            2026110601 ; Serial
+            86400      ; Refresh
+            7200       ; Retry
             2419200    ; Expire
-            604800 )   ; Negative Cache TTL
+            3600 )   ; Negative Cache TTL
 
              IN NS       nuc-00.homelab.kubernerdes.com.
              IN NS       nuc-00-02.homelab.kubernerdes.com.
@@ -23,6 +23,7 @@ nuc-00-01	IN	A	10.10.12.8
 nuc-00-02	IN	A	10.10.12.9
 nuc-00		IN	A	10.10.12.10
 truenas		IN	A	10.10.12.11
+litellm		IN	A	10.10.12.13
 glkvm		IN	A	10.10.12.20
 
 ; Load Balancer for Harvester Cluster(s) - one LB per Harvester Cluster
@@ -31,11 +32,12 @@ nuc-00-03	IN	A	10.10.12.93
 
 blackmesa	IN	A	10.10.12.247
 wall-e		IN 	A	10.10.12.248
-wheatley	IN 	A	10.10.12.249
+wheatley-wifi	IN 	A	10.10.12.249
 jarvis		IN 	A	10.10.12.250
 *.jarvis		IN 	A	10.10.12.250
 spark-e		IN 	A	10.10.12.251
-los-alamos	IN 	A	10.10.12.252
+wheatley	IN 	A	10.10.12.252
+los-alamos	IN	CNAME	wheatley
 
 docs            IN      CNAME   cloudxabide.github.io.
 

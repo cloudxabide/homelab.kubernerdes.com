@@ -1,11 +1,11 @@
-$TTL 604800 
+$TTL 86400 
 $ORIGIN community.kubernerdes.com. 
 @	IN SOA      nuc-00.homelab.kubernerdes.com.  root.kubernerdes.com. ( 
-            2026102202 ; Serial
-            604800     ; Refresh
-            86400      ; Retry
+            2026110601 ; Serial
+            86400      ; Refresh
+            7200       ; Retry
             2419200    ; Expire
-            604800 )   ; Negative Cache TTL
+            3600 )   ; Negative Cache TTL
 
              IN NS       nuc-00.homelab.kubernerdes.com.
              IN NS       nuc-00-02.homelab.kubernerdes.com.
