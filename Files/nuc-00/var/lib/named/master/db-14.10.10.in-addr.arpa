@@ -1,6 +1,6 @@
 $TTL 2D
 14.10.10.in-addr.arpa.   IN SOA nuc-00.homelab.kubernerdes.com. root.community.kubernerdes.com. (
-                        2026110601	; serial
+                        2026110602	; serial
                         1D              ; refresh
                         2H              ; retry
                         1W              ; expiry
@@ -33,13 +33,6 @@ $TTL 2D
 104	IN	PTR	nuc-04.community.kubernerdes.com.
 105	IN	PTR	nuc-05.community.kubernerdes.com.
 106	IN	PTR	nuc-06.community.kubernerdes.com.
-; KVMs for NUCs
-111	IN	PTR	nuc-01-kvm.community.kubernerdes.com.
-112	IN	PTR	nuc-02-kvm.community.kubernerdes.com.
-113	IN	PTR	nuc-03-kvm.community.kubernerdes.com.
-114	IN	PTR	nuc-04-kvm.community.kubernerdes.com.
-115	IN	PTR	nuc-05-kvm.community.kubernerdes.com.
-116	IN	PTR	nuc-06-kvm.community.kubernerdes.com.
 
 ; DHCP Pool for this ENVIRONMENT 
 128    IN      PTR     dhcp-128.community.kubernerdes.com.

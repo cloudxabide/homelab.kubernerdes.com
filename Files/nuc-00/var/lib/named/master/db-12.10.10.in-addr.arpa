@@ -1,6 +1,6 @@
 $TTL 2D
 12.10.10.in-addr.arpa.   IN SOA nuc-00.homelab.kubernerdes.com. root.homelab.kubernerdes.com. (
-                        2026110601	; serial
+                        2026110602	; serial
                         1D              ; refresh
                         2H              ; retry
                         1W              ; expiry
@@ -20,6 +20,14 @@ $TTL 2D
 12	IN	PTR	librenms.homelab.kubernerdes.com.
 13	IN	PTR	litellm.homelab.kubernerdes.com.
 20	IN	PTR	glkvm.homelab.kubernerdes.com.
+
+; KVMs for NUCs (shared by all ENVIRONMENTs)
+111	IN	PTR	nuc-01-kvm.homelab.kubernerdes.com.
+112	IN	PTR	nuc-02-kvm.homelab.kubernerdes.com.
+113	IN	PTR	nuc-03-kvm.homelab.kubernerdes.com.
+114	IN	PTR	nuc-04-kvm.homelab.kubernerdes.com.
+115	IN	PTR	nuc-05-kvm.homelab.kubernerdes.com.
+116	IN	PTR	nuc-06-kvm.homelab.kubernerdes.com.
 
 ; Load Balancer for Kubernetes Cluster(s) - one LB per K8s Cluster (sometimes paired)
 93	IN	PTR	nuc-00-03.homelab.kubernerdes.com.

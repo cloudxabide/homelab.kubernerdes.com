@@ -1,6 +1,6 @@
 $TTL 2D
 13.10.10.in-addr.arpa.   IN SOA nuc-00.homelab.kubernerdes.com. root.enclave.kubernerdes.com. (
-                        2026110601      ; serial
+                        2026110602      ; serial
                         1D              ; refresh
                         2H              ; retry
                         1W              ; expiry

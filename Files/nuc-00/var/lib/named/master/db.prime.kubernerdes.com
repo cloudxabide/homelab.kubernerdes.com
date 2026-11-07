@@ -1,7 +1,7 @@
 $TTL 86400 
 $ORIGIN prime.kubernerdes.com. 
 @	IN SOA      nuc-00.homelab.kubernerdes.com.  root.kubernerdes.com. ( 
-            2026110601 ; Serial
+            2026110602 ; Serial
             86400      ; Refresh
             7200       ; Retry
             2419200    ; Expire

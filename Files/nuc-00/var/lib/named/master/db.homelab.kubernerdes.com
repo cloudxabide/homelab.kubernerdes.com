@@ -1,7 +1,7 @@
 $TTL 86400 
 $ORIGIN homelab.kubernerdes.com. 
 @	IN SOA      nuc-00.homelab.kubernerdes.com.  root.kubernerdes.com. ( 
-            2026110601 ; Serial
+            2026110602 ; Serial
             86400      ; Refresh
             7200       ; Retry
             2419200    ; Expire
@@ -25,6 +25,14 @@ nuc-00		IN	A	10.10.12.10
 truenas		IN	A	10.10.12.11
 litellm		IN	A	10.10.12.13
 glkvm		IN	A	10.10.12.20
+
+; KVMs for NUCs (shared by all ENVIRONMENTs)
+nuc-01-kvm	IN	A	10.10.12.111
+nuc-02-kvm	IN	A	10.10.12.112
+nuc-03-kvm	IN	A	10.10.12.113
+nuc-04-kvm	IN	A	10.10.12.114
+nuc-05-kvm	IN	A	10.10.12.115
+nuc-06-kvm	IN	A	10.10.12.116
 
 ; Load Balancer for Harvester Cluster(s) - one LB per Harvester Cluster
 ; These are the Host Address - define VIP elsewhere
