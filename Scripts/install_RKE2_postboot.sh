@@ -1,7 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
-# install_RKE2_postboot.sh — Run once after RKE2 server starts on SL-Micro
+# install_RKE2_postboot.sh — Run once after RKE2 server starts (after the
+# reboot on a transactional OS such as SL Micro; inline elsewhere)
 #
 # Sets up kubeconfig for root and sles users.
 # Run manually after reboot if the automatic run did not complete:

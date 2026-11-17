@@ -52,12 +52,12 @@ SSH_KEY="${HOME}/.ssh/id_rsa-${ENVIRONMENT}"
 for NODE in "${NODES[@]}"; do ssh-keygen -R "$NODE" -f "${HOME}/.ssh/known_hosts"; done
 for NODE in "${NODES[@]}"; do ssh -i "$SSH_KEY" -o StrictHostKeyChecking=accept-new sles@"$NODE" "uptime"; done
 for NODE in "${NODES[@]}"; do scp -i "$SSH_KEY" install_RKE2* sles@"$NODE":; done
-# On SL-Micro, install_RKE2.sh reboots the node itself (transactional update),
+# On a transactional OS (SL Micro), install_RKE2.sh reboots the node itself,
 # so each ssh session ends with the connection dropping — that is expected.
 for NODE in "${NODES[@]}"; do ssh -i "$SSH_KEY" -t sles@"$NODE" "sudo ENVIRONMENT=${ENVIRONMENT} RANCHER_VIP=${RANCHER_VIP:-} RANCHER_HOSTNAME=${RANCHER_HOSTNAME:-} bash -i ./install_RKE2.sh"; done
 
 # Wait for each node to come back, then run the postboot step install_RKE2.sh
-# left behind (it writes ~sles/.kube/config). Non-SL-Micro nodes ran it inline
+# left behind (it writes ~sles/.kube/config). Non-transactional nodes ran it inline
 # and have no /var/lib/install_RKE2_postboot.sh, so they are skipped.
 sleep 30
 for NODE in "${NODES[@]}"; do

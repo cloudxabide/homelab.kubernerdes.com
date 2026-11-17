@@ -14,7 +14,8 @@ set -euo pipefail
 #
 # Node-aware: *-01 is the genesis node; subsequent nodes wait and join.
 #
-# SL-Micro nodes:
+# Transactional (immutable) OS nodes — SL Micro and whatever SUSE calls it next;
+# detected by read-only root / transactional-update, not by name:
 #   After rke2-server starts, this script copies a postboot one-shot to /var
 #   (which survives the transactional-update reboot) and reboots.
 #   Run install_RKE2_postboot.sh manually after reboot if it did not run.
@@ -183,16 +184,31 @@ systemctl enable rke2-server.service --now
 
 # ---------------------------------------------------------------------------
 # Post-install kubeconfig setup
-# SL-Micro requires a reboot after transactional update — copy postboot script.
-# Other OS: run postboot inline.
+# Transactional (immutable) OS: the RKE2 install lands in a new snapshot that
+# only becomes active after a reboot — copy the postboot script and reboot.
+# Otherwise run postboot inline.
+#
+# Detected by capability, not by product name: SUSE has renamed this OS more
+# than once (SLE Micro -> SL Micro -> ...) and is moving to one ISO with an
+# immutable mode, so /etc/os-release NAME is not a stable signal. Errs toward
+# rebooting: an extra reboot is harmless, a missed one leaves postboot waiting
+# for an rke2.yaml that never appears.
 # ---------------------------------------------------------------------------
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 POSTBOOT_SCRIPT="${SCRIPT_DIR}/install_RKE2_postboot.sh"
 
-. /etc/*release* 2>/dev/null || true
-case ${NAME:-} in
-  SL-Micro)
-    echo "==> SL-Micro detected — copying postboot script and rebooting"
+is_transactional() {
+  # read-only root filesystem, or the transactional-update tool present
+  # (which the get.rke2.io installer also keys off)
+  findmnt -no OPTIONS / 2>/dev/null | tr ',' '\n' | grep -qx ro && return 0
+  [[ -x /usr/sbin/transactional-update ]] && return 0
+  return 1
+}
+
+_os_pretty="$(. /etc/os-release 2>/dev/null && echo "${PRETTY_NAME:-unknown}")"
+case "$(is_transactional && echo yes || echo no)" in
+  yes)
+    echo "==> Transactional OS (${_os_pretty}) — copying postboot script and rebooting"
     cp "${POSTBOOT_SCRIPT}" /var/lib/install_RKE2_postboot.sh
     chmod 0700 /var/lib/install_RKE2_postboot.sh
     echo "==> After reboot, run: sudo bash /var/lib/install_RKE2_postboot.sh"
@@ -203,6 +219,7 @@ case ${NAME:-} in
     shutdown -r now
   ;;
   *)
+    echo "==> Non-transactional OS (${_os_pretty}) — running postboot inline"
     bash "${POSTBOOT_SCRIPT}"
   ;;
 esac
