@@ -59,6 +59,15 @@ output "rancher_ami_id" {
   value       = aws_instance.rancher.ami
 }
 
+output "route53_zone_id" {
+  description = "Hosted zone cert-manager uses for the rancher-aws DNS-01 challenge (Scripts/modules/common/rancher_aws_le_cert.sh)."
+  value       = try(data.aws_route53_zone.main[0].zone_id, "")
+}
+
+output "aws_region" {
+  value = var.aws_region
+}
+
 output "vpc_id" {
   value = aws_vpc.main.id
 }

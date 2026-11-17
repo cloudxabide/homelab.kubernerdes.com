@@ -68,3 +68,75 @@ resource "aws_iam_user_policy" "node_driver" {
   user   = aws_iam_user.node_driver.name
   policy = data.aws_iam_policy_document.node_driver.json
 }
+
+# ---------------------------------------------------------------------------
+# rancher-01 instance role: lets cert-manager in the AWS Rancher cluster solve
+# Let's Encrypt DNS-01 for rancher-aws.<env>.<domain> by itself (ambient
+# credentials via IMDSv2; hop limit 2 lets pods reach it). Scoped to TXT
+# records for that one _acme-challenge name in the one zone, so it cannot
+# touch the *.<env> wildcard nuc-00 manages or any other record.
+# ---------------------------------------------------------------------------
+data "aws_iam_policy_document" "rancher_assume" {
+  statement {
+    actions = ["sts:AssumeRole"]
+    principals {
+      type        = "Service"
+      identifiers = ["ec2.amazonaws.com"]
+    }
+  }
+}
+
+resource "aws_iam_role" "rancher" {
+  name               = "${local.name}-rancher-01"
+  assume_role_policy = data.aws_iam_policy_document.rancher_assume.json
+}
+
+resource "aws_iam_instance_profile" "rancher" {
+  name = "${local.name}-rancher-01"
+  role = aws_iam_role.rancher.name
+}
+
+data "aws_iam_policy_document" "rancher_cert_dns01" {
+  count = var.rancher_cert_dns01 ? 1 : 0
+
+  statement {
+    sid       = "GetChange"
+    actions   = ["route53:GetChange"]
+    resources = ["arn:aws:route53:::change/*"]
+  }
+
+  statement {
+    sid       = "ListZones"
+    actions   = ["route53:ListHostedZonesByName"]
+    resources = ["*"]
+  }
+
+  statement {
+    sid       = "ReadZone"
+    actions   = ["route53:ListResourceRecordSets"]
+    resources = ["arn:aws:route53:::hostedzone/${data.aws_route53_zone.main[0].zone_id}"]
+  }
+
+  statement {
+    sid       = "ChallengeRecordOnly"
+    actions   = ["route53:ChangeResourceRecordSets"]
+    resources = ["arn:aws:route53:::hostedzone/${data.aws_route53_zone.main[0].zone_id}"]
+    condition {
+      test     = "ForAllValues:StringEquals"
+      variable = "route53:ChangeResourceRecordSetsNormalizedRecordNames"
+      values   = ["_acme-challenge.${local.rancher_hostname}"]
+    }
+    condition {
+      test     = "ForAllValues:StringEquals"
+      variable = "route53:ChangeResourceRecordSetsRecordTypes"
+      values   = ["TXT"]
+    }
+  }
+}
+
+resource "aws_iam_role_policy" "rancher_cert_dns01" {
+  count  = var.rancher_cert_dns01 ? 1 : 0
+  name   = "cert-manager-dns01-rancher-aws"
+  role   = aws_iam_role.rancher.id
+  policy = data.aws_iam_policy_document.rancher_cert_dns01[0].json
+}

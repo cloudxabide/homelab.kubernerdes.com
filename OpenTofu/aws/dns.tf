@@ -6,8 +6,9 @@
 # record (Elastic IP now, the pinned private IP once Tailscale is up) — see
 # the commented line in Files/nuc-00/var/lib/named/master/db.<env>.kubernerdes.com.
 
+# Looked up when either the record or the cert-manager DNS-01 role needs it.
 data "aws_route53_zone" "main" {
-  count        = var.manage_dns ? 1 : 0
+  count        = var.manage_dns || var.rancher_cert_dns01 ? 1 : 0
   name         = var.route53_zone_name
   private_zone = false
 }

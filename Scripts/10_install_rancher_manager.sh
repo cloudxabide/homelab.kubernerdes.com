@@ -89,7 +89,9 @@ kubectl get nodes
 VAULT_ADDR="${VAULT_ADDR:-http://${ADMIN_IP}:8200}"
 VAULT_INIT_FILE="${VAULT_INIT_FILE:-/root/vault-init.json}"
 
-if command -v vault >/dev/null 2>&1 && [[ -f "${VAULT_INIT_FILE}" ]]; then
+if [[ "${RANCHER_LOCATION}" == "aws" ]]; then
+  echo "    INFO: RANCHER_LOCATION=aws — skipping the Vault ClusterIssuer (Vault on ${ADMIN_IP} is not reachable from AWS)."
+elif command -v vault >/dev/null 2>&1 && [[ -f "${VAULT_INIT_FILE}" ]]; then
   echo "==> Configuring cert-manager Vault ClusterIssuer"
   export VAULT_ADDR
   export VAULT_TOKEN
@@ -173,8 +175,16 @@ helm upgrade --install rancher "${RANCHER_CHART_NAME}" \
 
 kubectl -n cattle-system rollout status deploy/rancher --timeout=300s
 
+# onprem: nuc-00's *.${BASE_DOMAIN} wildcard (renewed by nuc-00's certbot hook)
+# aws:    its own rancher-aws.${BASE_DOMAIN} cert, issued + renewed in-cluster
+#         by cert-manager (Route 53 DNS-01, instance role) — the wildcard key
+#         never leaves nuc-00 and its renewal hook is untouched
 if [[ "${RANCHER_CERT:-}" == "letsencrypt" ]]; then
-  "${SCRIPT_DIR}/modules/common/rancher_le_cert.sh"
+  if [[ "${RANCHER_LOCATION}" == "aws" ]]; then
+    "${SCRIPT_DIR}/modules/common/rancher_aws_le_cert.sh"
+  else
+    "${SCRIPT_DIR}/modules/common/rancher_le_cert.sh"
+  fi
 fi
 
 # ---------------------------------------------------------------------------

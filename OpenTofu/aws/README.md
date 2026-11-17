@@ -34,6 +34,10 @@ It links to on-prem at only three points, all handled by one integration step
   `<environment>.<domain>` on the homelab and serves `rancher` as the on-prem VIP. nuc-00 gets its own
   static `rancher-aws` record (commented out in `Files/nuc-00/var/lib/named/master/db.<env>.kubernerdes.com`).
   The `*.<environment>.<domain>` Let's Encrypt wildcard covers both names.
+- An instance role on `rancher-01` (`rancher_cert_dns01`) that lets cert-manager issue and renew its own
+  Let's Encrypt certificate for `rancher-aws.<environment>.<domain>` (Route 53 DNS-01). It may only write
+  the TXT record `_acme-challenge.rancher-aws.<environment>.<domain>`. nuc-00's `*.<environment>` wildcard,
+  its key, and its certbot renewal hook are not involved (`Scripts/modules/common/rancher_aws_le_cert.sh`).
 - For Rancher-provisioned downstream clusters on EC2: a `downstream` security group and an
   IAM user for the Amazon EC2 node driver (create its access key by hand; it is kept out of state)
 
@@ -123,6 +127,10 @@ Uses `admin_cidrs` so nuc-00 reaches `rancher-01` over its Elastic IP. Your home
    source <(sed '/^exit 0$/d' 09_install_RKE2_for_rancher_manager.sh) && run_this_script
    ./10_install_rancher_manager.sh
    ```
+   10 saves the kubeconfig as `~/.kube/prime-rancher-aws.kubeconfig` (the on-prem one is left alone) and,
+   with `RANCHER_CERT=letsencrypt`, has cert-manager issue the `rancher-aws` certificate. To try the
+   certificate step against the staging CA first:
+   `KUBECONFIG=~/.kube/prime-rancher-aws.kubeconfig STAGING=1 modules/common/rancher_aws_le_cert.sh`
 7. **Later, once Tailscale is up:** set `admin_cidrs = []`, `tofu apply`, re-export the outputs file
    (now the private IP), and point nuc-00's `rancher-aws` record at `rancher_private_ip`.
 

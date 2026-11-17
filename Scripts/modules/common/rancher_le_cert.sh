@@ -24,6 +24,10 @@ set -euo pipefail
 #   4. Clears the cacerts setting left over from Rancher's self-signed CA
 #   5. Waits until https://${RANCHER_HOSTNAME} serves a trusted certificate
 #
+# On-prem Rancher only: the AWS Rancher uses rancher_aws_le_cert.sh. Running
+# this against it would point root's renewal kubeconfig (and so the certbot
+# deploy hook) at the AWS cluster and stop renewals for the on-prem one.
+#
 # Switch before importing downstream clusters (Harvester, apps, ...): agents
 # registered against the old self-signed CA would need to be re-registered.
 
@@ -32,6 +36,11 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/../../env.sh"
 
 : "${KUBECONFIG:?export KUBECONFIG (Rancher cluster) first}"
+if [[ "${RANCHER_LOCATION}" == "aws" ]]; then
+  echo "ERROR: RANCHER_LOCATION=aws — use modules/common/rancher_aws_le_cert.sh;" >&2
+  echo "       this module would repoint nuc-00's renewal hook at the AWS Rancher" >&2
+  exit 1
+fi
 LIVE_DIR="/etc/letsencrypt/live/${BASE_DOMAIN}"
 ROOT_KUBECONFIG="/root/.kube/${ENVIRONMENT}-rancher.kubeconfig"
 

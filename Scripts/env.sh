@@ -324,7 +324,14 @@ unset _PRIME_PFX _ENCLAVE_PFX _COMMUNITY_PFX
 # Kubeconfig paths (stored on nuc-00)
 # ---------------------------------------------------------------------------
 export KUBECONFIG_HARVESTER="${HOME}/.kube/${ENVIRONMENT}-harvester.kubeconfig"
-export KUBECONFIG_RANCHER="${HOME}/.kube/${ENVIRONMENT}-rancher.kubeconfig"
+# The AWS Rancher gets its own file so it never overwrites the on-prem one —
+# nuc-00's certbot deploy hook pushes the *.${BASE_DOMAIN} wildcard to
+# /root/.kube/${ENVIRONMENT}-rancher.kubeconfig, which must stay on-prem.
+if [[ "${RANCHER_LOCATION}" == "aws" ]]; then
+  export KUBECONFIG_RANCHER="${HOME}/.kube/${ENVIRONMENT}-rancher-aws.kubeconfig"
+else
+  export KUBECONFIG_RANCHER="${HOME}/.kube/${ENVIRONMENT}-rancher.kubeconfig"
+fi
 export KUBECONFIG_OBS="${HOME}/.kube/${ENVIRONMENT}-observability.kubeconfig"
 export KUBECONFIG_APPS="${HOME}/.kube/${ENVIRONMENT}-apps.kubeconfig"
 

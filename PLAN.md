@@ -65,7 +65,7 @@ Controlled by `RANCHER_LOCATION` / `OBS_LOCATION` = `onprem|aws` (Scripts/env.sh
 - [ ] nuc-00 DNS: uncomment `rancher-aws` in db.<env>.kubernerdes.com with the Elastic IP; switch it to <vpc>.0.30 once Tailscale is up
 - [ ] Tailscale: subnet router in the VPC, nuc-00 advertises 10.10.12.0/22
 - [ ] Reuse 09/10 scripts against EC2 nodes (resolve RANCHER_NODE_0x from `tofu output` instead of Harvester VMIs)
-- [ ] Let's Encrypt for Rancher in AWS (Route 53 DNS-01 already in use)
+- [x] Let's Encrypt for Rancher in AWS: own cert for rancher-aws.<env>, issued/renewed in-cluster by cert-manager (Route 53 DNS-01, instance role); nuc-00 wildcard untouched (written, not yet run)
 - [ ] Integration step (e.g. `Scripts/40_connect_hybrid.sh`): bring up the tunnel, add DNS records, import Harvester + on-prem downstream clusters into the AWS-hosted Rancher
 - [ ] Cloud downstream cluster: provision an RKE2 cluster on EC2 from Rancher (Amazon EC2 node driver / cloud credential)
 - [ ] Apply SUSE Security + Observability agents to both on-prem and AWS downstream clusters

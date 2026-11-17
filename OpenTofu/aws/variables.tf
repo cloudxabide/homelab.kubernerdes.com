@@ -135,3 +135,9 @@ variable "admin_cidrs" {
     error_message = "admin_cidrs must be valid CIDRs, and not 0.0.0.0/0 (that would expose SSH and the kube API to the internet)."
   }
 }
+
+variable "rancher_cert_dns01" {
+  description = "Give rancher-01 an instance role that lets cert-manager issue its own Let's Encrypt cert for rancher-aws.<env>.<domain> (Route 53 DNS-01), independent of nuc-00's *.<env> wildcard."
+  type        = bool
+  default     = true
+}

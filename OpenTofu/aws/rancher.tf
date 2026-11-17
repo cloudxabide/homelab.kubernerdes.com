@@ -42,6 +42,7 @@ resource "aws_instance" "rancher" {
   instance_type          = var.rancher_instance_type
   subnet_id              = aws_subnet.public.id
   private_ip             = local.rancher_private_ip
+  iam_instance_profile   = aws_iam_instance_profile.rancher.name
   vpc_security_group_ids = [aws_security_group.rancher.id]
 
   # install_RKE2.sh keys off the hostname (rancher-01 = genesis node)
