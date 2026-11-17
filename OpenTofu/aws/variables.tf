@@ -95,9 +95,9 @@ variable "ami_owner" {
 }
 
 variable "ami_name_filter" {
-  description = "AMI name pattern for the SL Micro 6.2 lookup."
+  description = "AMI name pattern for the SL Micro lookup. 6.2 is not published in AWS yet (2026-11); 6.1 BYOS is the newest. SUSE names them suse-sle-micro-*."
   type        = string
-  default     = "suse-sl-micro-6-2-*"
+  default     = "suse-sle-micro-6-1-byos-v*-hvm-ssd-x86_64"
 }
 
 variable "cloudinit_template" {

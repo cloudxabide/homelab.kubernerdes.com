@@ -58,8 +58,10 @@ Controlled by `RANCHER_LOCATION` / `OBS_LOCATION` = `onprem|aws` (Scripts/env.sh
 - [x] Decide connectivity: Tailscale (VPC `AWS_VPC_CIDR` ↔ 10.10.12.0/22)
 - [x] Decide DNS: AWS Rancher is `rancher-aws.${BASE_DOMAIN}` (Route 53 + static nuc-00 record); on-prem keeps `rancher.${BASE_DOMAIN}`
 - [ ] OpenTofu remote state backend (S3) with OpenTofu state encryption, outside this repo
-- [x] OpenTofu: single-AZ VPC, subnets, security groups, 1 x EC2 rancher-01 (SL-Micro 6.2) + Elastic IP, Route 53 record, node-driver IAM user (written, not yet applied)
-- [ ] Verify the SL Micro 6.2 AMI lookup + cloud-init support, then first `tofu apply`
+- [x] OpenTofu: single-AZ VPC, subnets, security groups, 1 x EC2 rancher-01 (SL Micro 6.1 BYOS; 6.2 not in AWS yet) + Elastic IP, Route 53 record, node-driver IAM user (written, not yet applied)
+- [x] Find the AMI: SUSE owner 013907871322, `suse-sle-micro-6-1-byos-v*-hvm-ssd-x86_64` (6.2 not published yet)
+- [ ] First `tofu apply`; on first boot confirm cloud-init ran (ssh sles@, hostname rancher-01) and os-release NAME=SL-Micro
+- [ ] Register the BYOS instance: `transactional-update register -r <regcode>`
 - [ ] nuc-00 DNS: uncomment `rancher-aws` in db.<env>.kubernerdes.com with the Elastic IP; switch it to <vpc>.0.30 once Tailscale is up
 - [ ] Tailscale: subnet router in the VPC, nuc-00 advertises 10.10.12.0/22
 - [ ] Reuse 09/10 scripts against EC2 nodes (resolve RANCHER_NODE_0x from `tofu output` instead of Harvester VMIs)

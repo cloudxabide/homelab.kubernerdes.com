@@ -24,7 +24,7 @@ It links to on-prem at only three points, all handled by one integration step
 - VPC from `vpc_cidr` (per-environment default: prime `172.16.0.0/16`, community `172.17.0.0/16`,
   both inside the reserved 172.16.0.0/12, so two environments never overlap on the tailnet), one AZ,
   one public + one private subnet; NAT gateway off by default (`enable_nat_gateway`)
-- `rancher-01`: SL Micro 6.2 EC2 instance (default `t3a.xlarge`) in the public subnet with an Elastic IP
+- `rancher-01`: SL Micro 6.1 BYOS EC2 instance (6.2 is not published in AWS yet) (default `t3a.xlarge`) in the public subnet with an Elastic IP
   and a pinned private IP (`<vpc>.0.30`, mirroring the on-prem `.30` VIP).
   No load balancer. 80/443 open to `public_ingress_cidrs`; 22/443/6443 open to `homelab_cidr`
   (that last part only works once Tailscale is up). Cloud-init reuses the `sles` user and SSH keys
@@ -43,11 +43,20 @@ It links to on-prem at only three points, all handled by one integration step
 - Importing Harvester and the on-prem clusters into this Rancher
 
 ## Check before the first apply
-- **AMI lookup is unverified.** `ami_owner` / `ami_name_filter` are a best guess at SUSE's
-  SL Micro 6.2 images. Confirm with
-  `aws ec2 describe-images --owners 013907871322 --filters 'Name=name,Values=suse-sl-micro-6-2-*'`
-  or set `rancher_ami_id` directly (SL Micro may need a Marketplace subscription or BYOS registration).
-- Whether that image runs cloud-init (the `sles` user and hostname depend on it).
+- **AMI:** owner `013907871322` (SUSE) and the name pattern are confirmed (2026-11-17). SL Micro 6.2 is
+  not published in AWS yet; the newest x86_64 image is `suse-sle-micro-6-1-byos-v20261111-hvm-ssd-x86_64`
+  (`ami-0074608a2dc0cbdba` in us-east-1). List what is current with:
+  ```bash
+  aws ec2 describe-images --owners 013907871322 \
+    --filters 'Name=name,Values=suse-sle-micro-6-*-byos-v*-hvm-ssd-x86_64' \
+    --query 'reverse(sort_by(Images,&CreationDate))[:5].[ImageId,Name,CreationDate]' --output table
+  ```
+  When 6.2 shows up, set `ami_name_filter` to the 6-2 pattern (an existing node keeps its AMI).
+- **BYOS:** no SUSE charge on the hourly price, but the instance needs registering for updates:
+  `sudo transactional-update register -r <Prime regcode>` (then reboot).
+- **Not yet verified on this image:** that it runs cloud-init (the `sles` user and `rancher-01`
+  hostname depend on it), and that `/etc/os-release` reports `NAME="SL-Micro"`, which
+  `install_RKE2.sh` uses to pick the reboot + postboot path. Check both after the first boot.
 - Rough cost: t3a.xlarge ≈ $110/mo + 64 GiB gp3 ≈ $5 + public IPv4 ≈ $4. Stop the instance when idle.
 
 After this provisions `rancher-01`, the existing scripts (`09_install_RKE2_for_rancher_manager.sh`,

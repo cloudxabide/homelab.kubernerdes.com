@@ -1,6 +1,6 @@
 # Rancher Manager: a single node, rancher-01, in the public subnet with an
 # Elastic IP (no load balancer — one node does not need one, and an NLB is
-# ~$16/mo). Same shape as the Harvester VMs: SL Micro 6.2, user "sles", the
+# ~$16/mo). Same shape as the Harvester VMs (SL Micro; 6.1 here because 6.2 is not in AWS yet), user "sles", the
 # same SSH keys. RKE2 + Rancher are installed afterwards by Scripts/09 and 10
 # (SSH from nuc-00 needs Tailscale).
 #

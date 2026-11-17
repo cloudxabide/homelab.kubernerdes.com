@@ -44,7 +44,7 @@ output "rancher_hostname" {
 }
 
 output "rancher_ami_id" {
-  description = "AMI rancher-01 was built from — check it really is SL Micro 6.2."
+  description = "AMI rancher-01 was built from — check it is the SL Micro 6.1 BYOS image you expect."
   value       = aws_instance.rancher.ami
 }
 
