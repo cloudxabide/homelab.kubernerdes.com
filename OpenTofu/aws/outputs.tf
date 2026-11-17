@@ -4,7 +4,7 @@
 #   tofu -chdir=OpenTofu/aws output -json > ~/.config/homelab/<ENVIRONMENT>-aws-outputs.json
 #
 # env.sh reads these names; renaming one here breaks the scripts.
-#   rancher_vip       string        rancher-01 private IP (becomes RANCHER_VIP)
+#   rancher_vip       string        Elastic IP while admin_cidrs is set, else private IP (becomes RANCHER_VIP)
 #   rancher_node_ips  list(string)  node private IPs, rancher-01 first
 #   rancher_hostname  string        rancher-aws.<env>.<domain> (read by 09)
 
@@ -23,14 +23,25 @@ output "vpc_cidr" {
   value       = local.vpc_cidr
 }
 
+locals {
+  # Address nuc-00 uses for SSH + kube API: the Elastic IP while admin_cidrs
+  # is set (pre-Tailscale), otherwise the private IP over Tailscale.
+  rancher_admin_ip = length(var.admin_cidrs) > 0 ? aws_eip.rancher.public_ip : aws_instance.rancher.private_ip
+}
+
 output "rancher_vip" {
-  description = "RANCHER_VIP for env.sh: rancher-01's private IP (kube API over Tailscale)."
-  value       = aws_instance.rancher.private_ip
+  description = "RANCHER_VIP for env.sh: Elastic IP while admin_cidrs is set, else rancher-01's private IP (Tailscale)."
+  value       = local.rancher_admin_ip
 }
 
 output "rancher_node_ips" {
-  description = "Rancher node private IPs, rancher-01 first (single node)."
-  value       = [aws_instance.rancher.private_ip]
+  description = "Rancher node IPs nuc-00 SSHes to, rancher-01 first (single node). Same switch as rancher_vip."
+  value       = [local.rancher_admin_ip]
+}
+
+output "rancher_private_ip" {
+  description = "rancher-01 private IP (always), for the post-Tailscale nuc-00 DNS record."
+  value       = aws_instance.rancher.private_ip
 }
 
 output "rancher_public_ip" {

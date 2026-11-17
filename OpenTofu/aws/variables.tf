@@ -118,3 +118,20 @@ variable "route53_zone_name" {
   type        = string
   default     = "kubernerdes.com"
 }
+
+variable "admin_cidrs" {
+  description = <<-EOT
+    Pre-Tailscale admin access. CIDRs (your home egress IP /32) allowed to reach rancher-01 on
+    22 (SSH) and 6443 (kube API) over its Elastic IP. While non-empty, the rancher_vip and
+    rancher_node_ips outputs are the Elastic IP, so Scripts/09 and 10 on nuc-00 work without
+    Tailscale. Set back to [] once Tailscale is up: outputs revert to the private IP and the
+    public 22/6443 rules are removed.
+  EOT
+  type        = list(string)
+  default     = []
+
+  validation {
+    condition     = alltrue([for c in var.admin_cidrs : can(cidrnetmask(c)) && c != "0.0.0.0/0"])
+    error_message = "admin_cidrs must be valid CIDRs, and not 0.0.0.0/0 (that would expose SSH and the kube API to the internet)."
+  }
+}

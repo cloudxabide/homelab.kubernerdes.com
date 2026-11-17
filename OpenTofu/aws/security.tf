@@ -1,7 +1,8 @@
 # Security groups.
 #   rancher-01  — 80/443 from public_ingress_cidrs (Rancher UI, downstream
 #                 agent registration); 22/6443 from homelab_cidr (nuc-00 over
-#                 Tailscale — no effect until Tailscale is up); all from the VPC
+#                 Tailscale — no effect until Tailscale is up); all from the VPC;
+#                 22/6443 from admin_cidrs over the Elastic IP until Tailscale exists
 #   downstream  — clusters Rancher provisions with the Amazon EC2 node driver
 
 # --- Rancher node ----------------------------------------------------------
@@ -29,6 +30,17 @@ resource "aws_vpc_security_group_ingress_rule" "rancher_homelab" {
   cidr_ipv4         = var.homelab_cidr
   from_port         = tonumber(each.value)
   to_port           = tonumber(each.value)
+  ip_protocol       = "tcp"
+}
+
+# Pre-Tailscale admin access (var.admin_cidrs) — empty by default.
+resource "aws_vpc_security_group_ingress_rule" "rancher_admin" {
+  for_each = { for pair in setproduct(var.admin_cidrs, [22, 6443]) : "${pair[0]}-${pair[1]}" => pair }
+
+  security_group_id = aws_security_group.rancher.id
+  cidr_ipv4         = each.value[0]
+  from_port         = each.value[1]
+  to_port           = each.value[1]
   ip_protocol       = "tcp"
 }
 

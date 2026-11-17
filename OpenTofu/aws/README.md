@@ -84,6 +84,48 @@ tofu output -json > ~/.config/homelab/community-aws-outputs.json   # read by Scr
 | `outputs.tf` | Output contract with `Scripts/env.sh` (`rancher_vip`, `rancher_node_ips`) |
 | `backend.hcl.example` / `example.tfvars` | Templates for the gitignored local copies |
 
+## First deploy, before Tailscale (prime shown)
+Uses `admin_cidrs` so nuc-00 reaches `rancher-01` over its Elastic IP. Your home egress IP
+(`curl -s https://checkip.amazonaws.com`) goes in both `public_ingress_cidrs` and `admin_cidrs`.
+
+1. **One-time state setup** (laptop or nuc-00, wherever `tofu` + AWS creds live):
+   ```bash
+   aws s3api create-bucket --bucket <bucket> --region us-east-1
+   aws s3api put-bucket-versioning --bucket <bucket> --versioning-configuration Status=Enabled
+   aws s3api put-public-access-block --bucket <bucket> --public-access-block-configuration \
+     BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
+   cp backend.hcl.example backend.hcl   # bucket=<bucket>, key="prime/aws.tfstate"
+   ```
+2. **Vars** — `prime.tfvars`:
+   ```hcl
+   environment          = "prime"
+   public_ingress_cidrs = ["<home-ip>/32"]
+   admin_cidrs          = ["<home-ip>/32"]
+   ```
+3. **Apply**:
+   ```bash
+   export TF_VAR_state_passphrase=...   # 16+ chars, keep it safe
+   tofu init -backend-config=backend.hcl
+   tofu plan  -var-file=prime.tfvars
+   tofu apply -var-file=prime.tfvars
+   tofu output -json > prime-aws-outputs.json
+   ```
+4. **First-boot checks** (`ssh -i ~/.ssh/id_rsa-prime sles@<rancher_public_ip>`):
+   `hostname` is `rancher-01` (cloud-init ran); then register the BYOS image:
+   `sudo transactional-update register -r <regcode> && sudo reboot`.
+5. **nuc-00 DNS** — in `/var/lib/named/master/db.prime.kubernerdes.com` uncomment `rancher-aws` with the
+   Elastic IP, bump the serial, `rndc reload prime.kubernerdes.com`. Check `dig +short rancher-aws.prime.kubernerdes.com`.
+6. **On nuc-00**, from `Scripts/`:
+   ```bash
+   mkdir -p ~/.config/homelab && cp prime-aws-outputs.json ~/.config/homelab/
+   export ENVIRONMENT=prime RANCHER_LOCATION=aws
+   # 09 is still read-and-run: its steps live in run_this_script (the file exits before calling it)
+   source <(sed '/^exit 0$/d' 09_install_RKE2_for_rancher_manager.sh) && run_this_script
+   ./10_install_rancher_manager.sh
+   ```
+7. **Later, once Tailscale is up:** set `admin_cidrs = []`, `tofu apply`, re-export the outputs file
+   (now the private IP), and point nuc-00's `rancher-aws` record at `rancher_private_ip`.
+
 ## Rules
 - Use OpenTofu (`tofu`), not Terraform. `required_version` is pinned to OpenTofu 1.10+.
   (`.terraform.lock.hcl` is excluded by the global git ignore, so it is not committed.)
