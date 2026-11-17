@@ -1,0 +1,190 @@
+#!/bin/bash
+set -euo pipefail
+
+# awsctl — drive the AWS side of the hybrid setup (OpenTofu/aws).
+#
+# Runs wherever tofu + AWS credentials live (laptop or nuc-00). Does NOT source
+# Scripts/env.sh: the AWS side is self-contained and must not depend on
+# Harvester being reachable.
+#
+#   ENVIRONMENT=prime Scripts/awsctl build     # init + apply + outputs + wait for SSH
+#   ENVIRONMENT=prime Scripts/awsctl help
+#
+# Inputs (all outside git):
+#   OpenTofu/aws/<ENVIRONMENT>.tfvars   — from example.tfvars
+#   OpenTofu/aws/backend.hcl            — from backend.hcl.example; the state key is
+#                                         forced to <ENVIRONMENT>/aws.tfstate here
+#   TF_VAR_state_passphrase             — or exported by ~/.config/homelab/creds
+#   ~/.ssh/id_rsa-<ENVIRONMENT>         — SSH key whose .pub is in the cloud-init template
+#
+# Optional:
+#   NUC00_HOST=nuc-00   also copy the outputs file to <host>:~/.config/homelab/
+#                       (where Scripts/env.sh on nuc-00 reads it)
+#   AUTO_APPROVE=1      skip the apply/destroy confirmation
+#   WAIT_SECONDS=600    how long `wait` counts down for SSH
+
+ENVIRONMENT="${ENVIRONMENT:-}"
+case "${ENVIRONMENT}" in
+  prime|community) ;;
+  enclave) echo "ERROR: ENVIRONMENT=enclave is air-gapped and never runs in AWS" >&2; exit 1 ;;
+  *) echo "ERROR: set ENVIRONMENT=prime or ENVIRONMENT=community" >&2; exit 1 ;;
+esac
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+TOFU_DIR="$(cd "${SCRIPT_DIR}/../OpenTofu/aws" && pwd)"
+TFVARS="${TOFU_DIR}/${ENVIRONMENT}.tfvars"
+BACKEND="${TOFU_DIR}/backend.hcl"
+STATE_KEY="${ENVIRONMENT}/aws.tfstate"
+OUTPUTS_FILE="${HOME}/.config/homelab/${ENVIRONMENT}-aws-outputs.json"
+SSH_KEY="${HOME}/.ssh/id_rsa-${ENVIRONMENT}"
+CREDS="${HOME}/.config/homelab/creds"
+
+tofu_() { tofu -chdir="${TOFU_DIR}" "$@"; }
+
+need() {
+  command -v tofu >/dev/null || { echo "ERROR: tofu not found" >&2; exit 1; }
+  [[ -f "${TFVARS}" ]]  || { echo "ERROR: ${TFVARS} missing (cp ${TOFU_DIR}/example.tfvars ${TFVARS})" >&2; exit 1; }
+  [[ -f "${BACKEND}" ]] || { echo "ERROR: ${BACKEND} missing (cp ${TOFU_DIR}/backend.hcl.example ${BACKEND})" >&2; exit 1; }
+  if [[ -z "${TF_VAR_state_passphrase:-}" && -f "${CREDS}" ]]; then
+    # shellcheck source=/dev/null
+    source "${CREDS}"
+  fi
+  if [[ -z "${TF_VAR_state_passphrase:-}" ]]; then
+    echo "ERROR: TF_VAR_state_passphrase not set (export it, or put it in ${CREDS})" >&2
+    exit 1
+  fi
+  export TF_VAR_state_passphrase
+}
+
+approve_flag() { [[ "${AUTO_APPROVE:-0}" == "1" ]] && echo "-auto-approve" || true; }
+
+cmd_init() {
+  need
+  echo "==> tofu init (${ENVIRONMENT}, state key ${STATE_KEY})"
+  # -reconfigure: the same .terraform dir serves every ENVIRONMENT; each has its own state key
+  tofu_ init -input=false -reconfigure \
+    -backend-config="${BACKEND}" -backend-config="key=${STATE_KEY}"
+}
+
+cmd_plan()  { cmd_init; tofu_ plan -var-file="${TFVARS}"; }
+
+cmd_apply() {
+  cmd_init
+  echo "==> tofu apply (${ENVIRONMENT})"
+  # shellcheck disable=SC2046
+  tofu_ apply -var-file="${TFVARS}" $(approve_flag)
+}
+
+cmd_outputs() {
+  need
+  mkdir -p "$(dirname "${OUTPUTS_FILE}")"
+  tofu_ output -json > "${OUTPUTS_FILE}"
+  chmod 600 "${OUTPUTS_FILE}"
+  echo "==> Outputs written to ${OUTPUTS_FILE}"
+  if [[ -n "${NUC00_HOST:-}" ]]; then
+    ssh "${NUC00_HOST}" "mkdir -p ~/.config/homelab"
+    scp -q "${OUTPUTS_FILE}" "${NUC00_HOST}:.config/homelab/"
+    echo "    copied to ${NUC00_HOST}:~/.config/homelab/"
+  fi
+}
+
+out() { tofu_ output -raw "$1"; }
+
+cmd_wait() {
+  need
+  local ip seconds="${WAIT_SECONDS:-600}"
+  ip="$(out rancher_public_ip)"
+  echo "==> Waiting for rancher-01 (${ip}) to accept SSH as sles (cloud-init done)"
+  while (( seconds >= 0 )); do
+    if (( seconds % 10 == 0 )) && ssh -i "${SSH_KEY}" -o BatchMode=yes -o ConnectTimeout=5 \
+         -o StrictHostKeyChecking=accept-new sles@"${ip}" true 2>/dev/null; then
+      printf "\rrancher-01 (%s) is up \033[0K\n" "${ip}"
+      ssh -i "${SSH_KEY}" -o BatchMode=yes sles@"${ip}" \
+        'echo "    hostname: $(hostname)"; . /etc/os-release; echo "    os:       ${PRETTY_NAME}"'
+      return 0
+    fi
+    printf "\rTime remaining: %3d seconds \033[0K" "${seconds}"
+    seconds=$((seconds - 1))
+    sleep 1
+  done
+  echo
+  echo "ERROR: no SSH as sles@${ip} after ${WAIT_SECONDS:-600}s." >&2
+  echo "       Is your IP in admin_cidrs? Did cloud-init run (aws ec2 get-console-output)?" >&2
+  return 1
+}
+
+cmd_build() {
+  cmd_apply
+  cmd_outputs
+  cmd_wait
+  local ip host
+  ip="$(out rancher_public_ip)"; host="$(out rancher_hostname)"
+  cat <<EOF
+
+========================================
+ rancher-01 is up (${ENVIRONMENT})
+   Elastic IP: ${ip}
+   Hostname:   ${host}
+ Next (see OpenTofu/aws/README.md, "First deploy, before Tailscale"):
+   1. Register BYOS:  ssh -i ${SSH_KEY} sles@${ip} 'sudo transactional-update register -r <regcode>' && reboot it
+   2. nuc-00 DNS:     rancher-aws  IN  A  ${ip}   (db.${ENVIRONMENT}.kubernerdes.com; bump serial; rndc reload)
+   3. On nuc-00:      outputs file in ~/.config/homelab/ $( [[ -n "${NUC00_HOST:-}" ]] && echo "(copied)" || echo "(copy it, or rerun with NUC00_HOST=nuc-00)" )
+                      ENVIRONMENT=${ENVIRONMENT} RANCHER_LOCATION=aws: run 09, then 10
+========================================
+EOF
+}
+
+cmd_ssh()    { need; exec ssh -i "${SSH_KEY}" sles@"$(out rancher_public_ip)" "$@"; }
+
+cmd_status() {
+  need
+  local id
+  id="$(out rancher_instance_id)"
+  aws ec2 describe-instances --region "$(out aws_region)" --instance-ids "${id}" \
+    --query 'Reservations[0].Instances[0].[InstanceId,State.Name,InstanceType,PublicIpAddress,PrivateIpAddress]' \
+    --output table
+}
+
+cmd_stop()  { need; aws ec2 stop-instances  --region "$(out aws_region)" --instance-ids "$(out rancher_instance_id)" --output table; }
+cmd_start() { need; aws ec2 start-instances --region "$(out aws_region)" --instance-ids "$(out rancher_instance_id)" --output table; }
+
+cmd_destroy() {
+  cmd_init
+  echo "==> tofu destroy (${ENVIRONMENT}) — removes rancher-01, its Elastic IP, the VPC, DNS record and IAM"
+  # shellcheck disable=SC2046
+  tofu_ destroy -var-file="${TFVARS}" $(approve_flag)
+  rm -f "${OUTPUTS_FILE}"
+  echo "    removed ${OUTPUTS_FILE}; remember the rancher-aws record on nuc-00"
+}
+
+usage() {
+  cat <<EOF
+Usage: ENVIRONMENT={prime|community} $(basename "$0") <command>
+
+  build     init + apply + write outputs + wait for SSH, then print next steps
+  plan      init + plan
+  apply     init + apply
+  outputs   write ${OUTPUTS_FILE} (and copy to \$NUC00_HOST if set)
+  wait      count down until rancher-01 accepts SSH as sles
+  ssh       ssh sles@rancher-01 (Elastic IP)
+  status    instance state
+  stop      stop rancher-01 (keeps EIP, disk and private IP; stops compute charges)
+  start     start rancher-01
+  destroy   tofu destroy
+EOF
+}
+
+case "${1:-help}" in
+  build)   cmd_build ;;
+  plan)    cmd_plan ;;
+  apply)   cmd_apply ;;
+  outputs) cmd_outputs ;;
+  wait)    cmd_wait ;;
+  ssh)     shift; cmd_ssh "$@" ;;
+  status)  cmd_status ;;
+  stop)    cmd_stop ;;
+  start)   cmd_start ;;
+  destroy) cmd_destroy ;;
+  help|-h|--help) usage ;;
+  *) usage; exit 1 ;;
+esac

@@ -2,6 +2,6 @@
 # The bucket is created once by hand (versioning on, public access blocked) —
 # OpenTofu cannot create the bucket that holds its own state.
 bucket       = "CHANGEME-homelab-tofu-state"
-key          = "community/aws.tfstate"   # <ENVIRONMENT>/aws.tfstate
+key          = "community/aws.tfstate"   # <ENVIRONMENT>/aws.tfstate (Scripts/awsctl overrides this per ENVIRONMENT)
 region       = "us-east-1"
 use_lockfile = true                      # native S3 locking, no DynamoDB table

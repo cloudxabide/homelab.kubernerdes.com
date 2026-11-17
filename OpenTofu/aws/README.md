@@ -89,6 +89,9 @@ tofu output -json > ~/.config/homelab/community-aws-outputs.json   # read by Scr
 | `backend.hcl.example` / `example.tfvars` | Templates for the gitignored local copies |
 
 ## First deploy, before Tailscale (prime shown)
+`Scripts/awsctl` wraps steps 3–4 (`ENVIRONMENT=prime Scripts/awsctl build`) and forces the state key to
+`<ENVIRONMENT>/aws.tfstate`; `Scripts/awsctl help` for the rest. The manual commands below are what it runs.
+
 Uses `admin_cidrs` so nuc-00 reaches `rancher-01` over its Elastic IP. Your home egress IP
 (`curl -s https://checkip.amazonaws.com`) goes in both `public_ingress_cidrs` and `admin_cidrs`.
 

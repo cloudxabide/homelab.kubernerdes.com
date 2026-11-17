@@ -57,29 +57,16 @@ cp ../../../prime.tfvars-homelab prime.tfvars
 cp ../../../backend.hcl-homelab  backend.hcl
 cat prime.tfvars
 
-# State passphrase lives with your other creds, never in the repo
-source ~/.config/homelab/creds   # exports TF_VAR_state_passphrase
-
-tofu init -backend-config=backend.hcl
-tofu apply -var-file=prime.tfvars
-mkdir -p ~/.config/homelab && tofu output -json > ~/.config/homelab/prime-aws-outputs.json
-
-# Countdown while rancher-01 boots and cloud-init creates the sles user (stops early once SSH works)
-RANCHER_IP=$(tofu output -raw rancher_public_ip)
-countdown_seconds=600
-while [ "$countdown_seconds" -ge 0 ]; do
-    if (( countdown_seconds % 10 == 0 )) && ssh -i ~/.ssh/id_rsa-prime -o BatchMode=yes -o ConnectTimeout=5 \
-         -o StrictHostKeyChecking=accept-new sles@"$RANCHER_IP" true 2>/dev/null; then
-        printf "\rrancher-01 (%s) is up \033[0K\n" "$RANCHER_IP"; break
-    fi
-    printf "\rTime remaining: %3d seconds \033[0K" "$countdown_seconds"
-    countdown_seconds=$((countdown_seconds - 1))
-    sleep 1
-done
+# State passphrase: awsctl reads TF_VAR_state_passphrase from ~/.config/homelab/creds if not exported
+# build = tofu init + apply + write the outputs file + countdown until rancher-01 accepts SSH as sles.
+# NUC00_HOST also copies the outputs file to nuc-00, where Scripts/env.sh reads it.
+ENVIRONMENT=prime NUC00_HOST=nuc-00 ../../Scripts/awsctl build
 ```
 
-Then: register the BYOS image, point nuc-00's `rancher-aws` record at the Elastic IP, and run 09 + 10
-from nuc-00. Steps 4–6 of "First deploy, before Tailscale" in [OpenTofu/aws/README.md](OpenTofu/aws/README.md).
+`build` finishes by printing the next steps: register the BYOS image, point nuc-00's `rancher-aws` record at
+the Elastic IP, and run 09 + 10 from nuc-00 (details: "First deploy, before Tailscale" in
+[OpenTofu/aws/README.md](OpenTofu/aws/README.md)). Day-to-day: `Scripts/awsctl status|stop|start|ssh|destroy`
+(`stop` when idle keeps the Elastic IP and disk and stops the compute charge).
 
 ---
 

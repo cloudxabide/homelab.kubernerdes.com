@@ -90,3 +90,8 @@ output "rancher_node_driver_user" {
   description = "IAM user for the Rancher Amazon EC2 cloud credential (create its access key by hand)."
   value       = aws_iam_user.node_driver.name
 }
+
+output "rancher_instance_id" {
+  description = "rancher-01 instance ID (Scripts/awsctl stop/start/status)."
+  value       = aws_instance.rancher.id
+}
