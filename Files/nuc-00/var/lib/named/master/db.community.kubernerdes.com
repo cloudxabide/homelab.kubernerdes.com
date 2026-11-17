@@ -14,6 +14,12 @@ $ORIGIN community.kubernerdes.com.
 ; Rancher Cluster
 rancher         IN      A       10.10.14.30
 rancher-test	IN	A 	10.10.12.185
+; Rancher Manager in AWS (RANCHER_LOCATION=aws) — separate name so it never
+; collides with the on-prem VIP above. Uncomment after `tofu apply`:
+;   before Tailscale: the Elastic IP (tofu output rancher_public_ip)
+;   after Tailscale:  the pinned private IP 172.17.0.30 (keeps agent traffic in the tunnel)
+; Bump the serial and `rndc reload community.kubernerdes.com` when changing it.
+;rancher-aws     IN      A       <rancher_public_ip>
 
 ; Observability Cluster
 observability   IN      A       10.10.14.40

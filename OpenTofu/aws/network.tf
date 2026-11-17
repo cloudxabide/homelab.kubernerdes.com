@@ -1,5 +1,6 @@
 # Single-AZ VPC (cost over resilience — this is a lab):
-#   public  subnet: cidrsubnet(vpc_cidr, 4, 0)  e.g. 172.16.0.0/20   — rancher-01 (Elastic IP)
+#   vpc_cidr: prime 172.16.0.0/16, community 172.17.0.0/16 (unless overridden)
+#   public  subnet: cidrsubnet(vpc_cidr, 4, 0)  e.g. 172.16.0.0/20   — rancher-01 (Elastic IP, private .0.30)
 #   private subnet: cidrsubnet(vpc_cidr, 4, 8)  e.g. 172.16.128.0/20 — downstream clusters later
 # Index 1-7 / 9-15 are left free if a second AZ is ever wanted.
 #
@@ -16,12 +17,18 @@ data "aws_availability_zones" "available" {
 }
 
 locals {
+  default_vpc_cidrs = {
+    prime     = "172.16.0.0/16"
+    community = "172.17.0.0/16"
+  }
+  vpc_cidr = coalesce(var.vpc_cidr, local.default_vpc_cidrs[var.environment])
+
   name = "homelab-${var.environment}"
   az   = var.availability_zone != "" ? var.availability_zone : data.aws_availability_zones.available.names[0]
 }
 
 resource "aws_vpc" "main" {
-  cidr_block           = var.vpc_cidr
+  cidr_block           = local.vpc_cidr
   enable_dns_support   = true
   enable_dns_hostnames = true
 
@@ -36,7 +43,7 @@ resource "aws_internet_gateway" "main" {
 resource "aws_subnet" "public" {
   vpc_id                  = aws_vpc.main.id
   availability_zone       = local.az
-  cidr_block              = cidrsubnet(var.vpc_cidr, 4, 0)
+  cidr_block              = cidrsubnet(local.vpc_cidr, 4, 0)
   map_public_ip_on_launch = false
 
   tags = {
@@ -48,7 +55,7 @@ resource "aws_subnet" "public" {
 resource "aws_subnet" "private" {
   vpc_id            = aws_vpc.main.id
   availability_zone = local.az
-  cidr_block        = cidrsubnet(var.vpc_cidr, 4, 8)
+  cidr_block        = cidrsubnet(local.vpc_cidr, 4, 8)
 
   tags = {
     Name                              = "${local.name}-private-${local.az}"

@@ -4,8 +4,11 @@
 # same SSH keys. RKE2 + Rancher are installed afterwards by Scripts/09 and 10
 # (SSH from nuc-00 needs Tailscale).
 #
-#   RANCHER_VIP (env.sh) = private IP — kube API for nuc-00 over Tailscale
-#   rancher.<env>.<domain> = Elastic IP — UI and downstream agents
+#   RANCHER_VIP (env.sh)       = private IP, pinned to <public subnet>.30 so
+#                                nuc-00's post-Tailscale DNS record never moves
+#   rancher-aws.<env>.<domain> = Elastic IP — UI and downstream agents. Not
+#                                "rancher.<env>": nuc-00 serves that name as the
+#                                on-prem VIP (.30), so the two must not share it.
 
 data "aws_ami" "sl_micro" {
   count       = var.rancher_ami_id == "" ? 1 : 0
@@ -23,8 +26,9 @@ data "aws_ami" "sl_micro" {
 }
 
 locals {
-  rancher_ami_id   = var.rancher_ami_id != "" ? var.rancher_ami_id : data.aws_ami.sl_micro[0].id
-  rancher_hostname = "rancher.${var.environment}.${var.domain}"
+  rancher_ami_id     = var.rancher_ami_id != "" ? var.rancher_ami_id : data.aws_ami.sl_micro[0].id
+  rancher_hostname   = "rancher-aws.${var.environment}.${var.domain}"
+  rancher_private_ip = cidrhost(aws_subnet.public.cidr_block, 30)
 
   # Reuse the sles user + SSH keys from the Harvester cloud-init template so
   # the keys live in one place. The password hash is dropped (key-only in AWS)
@@ -37,6 +41,7 @@ resource "aws_instance" "rancher" {
   ami                    = local.rancher_ami_id
   instance_type          = var.rancher_instance_type
   subnet_id              = aws_subnet.public.id
+  private_ip             = local.rancher_private_ip
   vpc_security_group_ids = [aws_security_group.rancher.id]
 
   # install_RKE2.sh keys off the hostname (rancher-01 = genesis node)

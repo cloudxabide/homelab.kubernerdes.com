@@ -1,9 +1,10 @@
-# Public DNS: rancher.<env>.<domain> -> rancher-01's Elastic IP, in the Route 53
-# zone already used for Let's Encrypt DNS-01.
+# Public DNS: rancher-aws.<env>.<domain> -> rancher-01's Elastic IP, in the
+# Route 53 zone already used for Let's Encrypt DNS-01.
 #
-# Split horizon: nuc-00's BIND is authoritative for <env>.<domain> on the
-# homelab and still answers with the on-prem VIP (.30). Updating that zone is
-# part of the hybrid integration step, not this directory.
+# nuc-00's BIND is authoritative for <env>.<domain> on the homelab, so the
+# homelab never sees this record. nuc-00 needs its own static rancher-aws
+# record (Elastic IP now, the pinned private IP once Tailscale is up) — see
+# the commented line in Files/nuc-00/var/lib/named/master/db.<env>.kubernerdes.com.
 
 data "aws_route53_zone" "main" {
   count        = var.manage_dns ? 1 : 0

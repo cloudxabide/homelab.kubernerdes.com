@@ -34,7 +34,7 @@ resource "aws_vpc_security_group_ingress_rule" "rancher_homelab" {
 
 resource "aws_vpc_security_group_ingress_rule" "rancher_vpc" {
   security_group_id = aws_security_group.rancher.id
-  cidr_ipv4         = var.vpc_cidr
+  cidr_ipv4         = local.vpc_cidr
   ip_protocol       = "-1"
 }
 

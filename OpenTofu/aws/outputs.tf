@@ -6,6 +6,7 @@
 # env.sh reads these names; renaming one here breaks the scripts.
 #   rancher_vip       string        rancher-01 private IP (becomes RANCHER_VIP)
 #   rancher_node_ips  list(string)  node private IPs, rancher-01 first
+#   rancher_hostname  string        rancher-aws.<env>.<domain> (read by 09)
 
 output "environment" {
   description = "ENVIRONMENT this state belongs to."
@@ -19,7 +20,7 @@ output "base_domain" {
 
 output "vpc_cidr" {
   description = "VPC CIDR (advertised by the Tailscale subnet router)."
-  value       = var.vpc_cidr
+  value       = local.vpc_cidr
 }
 
 output "rancher_vip" {
@@ -33,12 +34,13 @@ output "rancher_node_ips" {
 }
 
 output "rancher_public_ip" {
-  description = "rancher-01 Elastic IP (target of rancher.<environment>.<domain>)."
+  description = "rancher-01 Elastic IP (target of rancher-aws.<environment>.<domain>)."
   value       = aws_eip.rancher.public_ip
 }
 
 output "rancher_hostname" {
-  value = local.rancher_hostname
+  description = "rancher-aws.<environment>.<domain> (RANCHER_HOSTNAME in env.sh for aws)."
+  value       = local.rancher_hostname
 }
 
 output "rancher_ami_id" {

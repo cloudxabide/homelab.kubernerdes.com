@@ -33,8 +33,10 @@ run_this_script() {
 if [[ "${RANCHER_LOCATION:-onprem}" == "aws" ]]; then
   AWS_OUTPUTS_FILE="${AWS_OUTPUTS_FILE:-${HOME}/.config/homelab/${ENVIRONMENT}-aws-outputs.json}"
   mapfile -t NODES < <(jq -r '.rancher_node_ips.value[]' "${AWS_OUTPUTS_FILE}")
-  # install_RKE2.sh would otherwise put the on-prem VIP (${IP_PREFIX}.30) in tls-san
+  # install_RKE2.sh would otherwise put the on-prem VIP (${IP_PREFIX}.30) and
+  # rancher.<env> name in tls-san
   RANCHER_VIP="$(jq -r '.rancher_vip.value' "${AWS_OUTPUTS_FILE}")"
+  RANCHER_HOSTNAME="$(jq -r '.rancher_hostname.value' "${AWS_OUTPUTS_FILE}")"
 else
 mapfile -t NODES < <(KUBECONFIG="${HOME}/.kube/${ENVIRONMENT}-harvester.kubeconfig" \
   kubectl --context local get virtualmachineinstances -A -o json \
@@ -52,7 +54,7 @@ for NODE in "${NODES[@]}"; do ssh -i "$SSH_KEY" -o StrictHostKeyChecking=accept-
 for NODE in "${NODES[@]}"; do scp -i "$SSH_KEY" install_RKE2* sles@"$NODE":; done
 # On SL-Micro, install_RKE2.sh reboots the node itself (transactional update),
 # so each ssh session ends with the connection dropping — that is expected.
-for NODE in "${NODES[@]}"; do ssh -i "$SSH_KEY" -t sles@"$NODE" "sudo ENVIRONMENT=${ENVIRONMENT} RANCHER_VIP=${RANCHER_VIP:-} bash -i ./install_RKE2.sh"; done
+for NODE in "${NODES[@]}"; do ssh -i "$SSH_KEY" -t sles@"$NODE" "sudo ENVIRONMENT=${ENVIRONMENT} RANCHER_VIP=${RANCHER_VIP:-} RANCHER_HOSTNAME=${RANCHER_HOSTNAME:-} bash -i ./install_RKE2.sh"; done
 
 # Wait for each node to come back, then run the postboot step install_RKE2.sh
 # left behind (it writes ~sles/.kube/config). Non-SL-Micro nodes ran it inline

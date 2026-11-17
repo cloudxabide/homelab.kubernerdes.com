@@ -55,11 +55,12 @@ Credentials NEVER go in this repo.  I will utilize the strategy I have documente
 
 ## Hybrid (AWS) — after the on-prem Day 1 baseline works
 Controlled by `RANCHER_LOCATION` / `OBS_LOCATION` = `onprem|aws` (Scripts/env.sh). Hybrid cloud: the AWS-hosted Rancher manages downstream clusters on-prem (Harvester) and in AWS. Not valid for `enclave`. The AWS side is built and torn down on its own and links to on-prem only at connectivity, DNS, and cluster import. Infra code: [OpenTofu/aws](OpenTofu/aws/README.md).
-- [ ] Decide connectivity: AWS Site-to-Site VPN vs. Tailscale/WireGuard (VPC `AWS_VPC_CIDR` ↔ 10.10.12.0/22)
-- [ ] Decide DNS: Route 53 for `rancher.${BASE_DOMAIN}` vs. nuc-00 forwarding (homelab nodes must resolve it; AWS must resolve Harvester)
+- [x] Decide connectivity: Tailscale (VPC `AWS_VPC_CIDR` ↔ 10.10.12.0/22)
+- [x] Decide DNS: AWS Rancher is `rancher-aws.${BASE_DOMAIN}` (Route 53 + static nuc-00 record); on-prem keeps `rancher.${BASE_DOMAIN}`
 - [ ] OpenTofu remote state backend (S3) with OpenTofu state encryption, outside this repo
 - [x] OpenTofu: single-AZ VPC, subnets, security groups, 1 x EC2 rancher-01 (SL-Micro 6.2) + Elastic IP, Route 53 record, node-driver IAM user (written, not yet applied)
 - [ ] Verify the SL Micro 6.2 AMI lookup + cloud-init support, then first `tofu apply`
+- [ ] nuc-00 DNS: uncomment `rancher-aws` in db.<env>.kubernerdes.com with the Elastic IP; switch it to <vpc>.0.30 once Tailscale is up
 - [ ] Tailscale: subnet router in the VPC, nuc-00 advertises 10.10.12.0/22
 - [ ] Reuse 09/10 scripts against EC2 nodes (resolve RANCHER_NODE_0x from `tofu output` instead of Harvester VMIs)
 - [ ] Let's Encrypt for Rancher in AWS (Route 53 DNS-01 already in use)

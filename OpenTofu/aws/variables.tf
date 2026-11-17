@@ -19,12 +19,12 @@ variable "aws_region" {
 }
 
 variable "vpc_cidr" {
-  description = "VPC CIDR, carved from the reserved 172.16.0.0/12 (no overlap with the homelab or storage network)."
+  description = "VPC CIDR inside 172.16.0.0/12. null = per-environment default (prime 172.16.0.0/16, community 172.17.0.0/16; same map as Scripts/env.sh) so environments never overlap on the tailnet."
   type        = string
-  default     = "172.16.0.0/16"
+  default     = null
 
   validation {
-    condition     = can(cidrnetmask(var.vpc_cidr)) && cidrcontains("172.16.0.0/12", var.vpc_cidr)
+    condition     = var.vpc_cidr == null ? true : try(cidrcontains("172.16.0.0/12", var.vpc_cidr), false)
     error_message = "vpc_cidr must be a valid CIDR inside 172.16.0.0/12."
   }
 }

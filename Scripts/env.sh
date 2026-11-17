@@ -65,10 +65,18 @@ done
 unset _loc_var
 
 # AWS side of the hybrid setup (only used when a *_LOCATION=aws).
-# The VPC comes from 172.16.0.0/12, which is kept clear of the
-# homelab (10.10.12.0/22) and the Harvester storage network (192.168.128.0/24).
+# Each environment's VPC is a /16 from 172.16.0.0/12, which is kept clear of
+# the homelab (10.10.12.0/22) and the Harvester storage network
+# (192.168.128.0/24). Distinct per environment so two AWS environments on the
+# same tailnet never overlap. Must match the map in OpenTofu/aws/network.tf.
 export AWS_REGION="${AWS_REGION:-us-east-1}"
-export AWS_VPC_CIDR="${AWS_VPC_CIDR:-172.16.0.0/16}"
+case "${ENVIRONMENT}" in
+  prime)     _aws_vpc_default="172.16.0.0/16" ;;
+  community) _aws_vpc_default="172.17.0.0/16" ;;
+  *)         _aws_vpc_default="" ;;   # enclave: never in AWS
+esac
+export AWS_VPC_CIDR="${AWS_VPC_CIDR:-${_aws_vpc_default}}"
+unset _aws_vpc_default
 
 # ---------------------------------------------------------------------------
 # ENVIRONMENT sanity check — a reminder in case the wrong one is set.
@@ -193,10 +201,14 @@ export NUC03_IP="${IP_PREFIX}.103"
 #            credentials and state access. Output names it expects:
 #              rancher_vip      (string)
 #              rancher_node_ips (list of strings, rancher-01 first)
-# RANCHER_HOSTNAME is the same in both cases; DNS decides where it points.
+# RANCHER_HOSTNAME differs by location so the two never collide in nuc-00's
+# DNS (authoritative for ${BASE_DOMAIN}):
+#   onprem — rancher.${BASE_DOMAIN}     -> ${IP_PREFIX}.30
+#   aws    — rancher-aws.${BASE_DOMAIN} -> Elastic IP (Route 53 + nuc-00), or the
+#            pinned private IP (<vpc>.0.30) on nuc-00 once Tailscale is up
+# Both are covered by the *.${BASE_DOMAIN} Let's Encrypt wildcard.
 # RANCHER_REPLICAS follows the node count (Rancher helm chart replicas).
 # ---------------------------------------------------------------------------
-export RANCHER_HOSTNAME="rancher.${BASE_DOMAIN}"
 export AWS_OUTPUTS_FILE="${AWS_OUTPUTS_FILE:-${HOME}/.config/homelab/${ENVIRONMENT}-aws-outputs.json}"
 
 aws_output() {
@@ -208,12 +220,14 @@ aws_output() {
 if [[ "${RANCHER_LOCATION}" == "aws" ]]; then
   [[ -f "${AWS_OUTPUTS_FILE}" ]] || \
     echo "WARN: ${AWS_OUTPUTS_FILE} not found — RANCHER_VIP and node IPs will be empty" >&2
+  export RANCHER_HOSTNAME="rancher-aws.${BASE_DOMAIN}"
   export RANCHER_VIP="$(aws_output '.rancher_vip.value')"
   export RANCHER_REPLICAS="1"
   export RANCHER_NODE_01="$(aws_output '.rancher_node_ips.value[0]')"
   export RANCHER_NODE_02="$(aws_output '.rancher_node_ips.value[1]')"
   export RANCHER_NODE_03="$(aws_output '.rancher_node_ips.value[2]')"
 else
+  export RANCHER_HOSTNAME="rancher.${BASE_DOMAIN}"
   export RANCHER_VIP="${IP_PREFIX}.30"
   export RANCHER_REPLICAS="3"
   export RANCHER_NODE_01="$(harvester_vm_ip "rancher-01")"

@@ -8,8 +8,9 @@ set -euo pipefail
 #
 # This script runs on remote nodes and cannot source env.sh directly.
 # ENVIRONMENT must be set before running, or defaults to "community".
-# RANCHER_VIP overrides the rancher cluster VIP (set by 09 for Rancher in AWS,
-# where it is rancher-01's private IP instead of ${IP_PREFIX}.30).
+# RANCHER_VIP / RANCHER_HOSTNAME override the rancher cluster's VIP and name
+# (set by 09 for Rancher in AWS: rancher-01's private IP instead of
+# ${IP_PREFIX}.30, and rancher-aws.${BASE_DOMAIN} instead of rancher.${BASE_DOMAIN}).
 #
 # Node-aware: *-01 is the genesis node; subsequent nodes wait and join.
 #
@@ -66,7 +67,7 @@ export MY_CLUSTER=rancher
 export MY_RKE2_VERSION=${RKE2_VERSION:-${RKE2_VERSION_DEFAULT}}
 export MY_RKE2_TOKEN=ChangeMe-RancherRKE2
 export MY_RKE2_VIP=${RANCHER_VIP:-${IP_PREFIX}.30}
-export MY_RKE2_HOSTNAME=rancher.${BASE_DOMAIN}
+export MY_RKE2_HOSTNAME=${RANCHER_HOSTNAME:-rancher.${BASE_DOMAIN}}
 EOF
   ;;
   observability-*)

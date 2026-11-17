@@ -21,13 +21,19 @@ It links to on-prem at only three points, all handled by one integration step
 `ENVIRONMENT=enclave` is air-gapped and refuses any `aws` location.
 
 ## What it builds (cost over resilience: single AZ, single node)
-- VPC from `vpc_cidr` (default `172.16.0.0/16`, carved from the reserved 172.16.0.0/12), one AZ,
+- VPC from `vpc_cidr` (per-environment default: prime `172.16.0.0/16`, community `172.17.0.0/16`,
+  both inside the reserved 172.16.0.0/12, so two environments never overlap on the tailnet), one AZ,
   one public + one private subnet; NAT gateway off by default (`enable_nat_gateway`)
-- `rancher-01`: SL Micro 6.2 EC2 instance (default `t3a.xlarge`) in the public subnet with an Elastic IP.
+- `rancher-01`: SL Micro 6.2 EC2 instance (default `t3a.xlarge`) in the public subnet with an Elastic IP
+  and a pinned private IP (`<vpc>.0.30`, mirroring the on-prem `.30` VIP).
   No load balancer. 80/443 open to `public_ingress_cidrs`; 22/443/6443 open to `homelab_cidr`
   (that last part only works once Tailscale is up). Cloud-init reuses the `sles` user and SSH keys
   from `Files/CloudConfigurationTemplates/`
-- Route 53 `A` record `rancher.<environment>.<domain>` → the Elastic IP (`manage_dns`)
+- Route 53 `A` record `rancher-aws.<environment>.<domain>` → the Elastic IP (`manage_dns`).
+  The name is `rancher-aws`, not `rancher`, because nuc-00's BIND is authoritative for
+  `<environment>.<domain>` on the homelab and serves `rancher` as the on-prem VIP. nuc-00 gets its own
+  static `rancher-aws` record (commented out in `Files/nuc-00/var/lib/named/master/db.<env>.kubernerdes.com`).
+  The `*.<environment>.<domain>` Let's Encrypt wildcard covers both names.
 - For Rancher-provisioned downstream clusters on EC2: a `downstream` security group and an
   IAM user for the Amazon EC2 node driver (create its access key by hand; it is kept out of state)
 
