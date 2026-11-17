@@ -39,6 +39,50 @@ This repository contains the scripts, configuration files, and documentation for
 
 ---
 
+## Quick start: Rancher in AWS (hybrid, prime)
+
+Builds `rancher-01` in AWS with OpenTofu. Needs `tofu`, the AWS CLI with credentials, and the S3 state
+bucket already created (one-time; see [OpenTofu/aws/README.md](OpenTofu/aws/README.md)).
+
+```bash
+mkdir -p ~/Developer/Projects; cd $_
+# Archive an existing checkout instead of clobbering it
+[ -d "homelab.kubernerdes.com" ] && { i=1; while [ -d "homelab.kubernerdes.com-$(date +%F)-$(printf '%02d' $i)" ]; do ((i++)); done; mv homelab.kubernerdes.com "homelab.kubernerdes.com-$(date +%F)-$(printf '%02d' $i)"; }
+git clone https://github.com/cloudxabide/homelab.kubernerdes.com.git; cd homelab.kubernerdes.com/OpenTofu/aws
+
+# Copy in pre-populated ("hydrated") files kept one level above the checkout, outside the repo, with
+# real values already filled in. If you don't have them yet, start from the repo's own
+# example.tfvars and backend.hcl.example instead (both copies are gitignored).
+cp ../../../prime.tfvars-homelab prime.tfvars
+cp ../../../backend.hcl-homelab  backend.hcl
+cat prime.tfvars
+
+# State passphrase lives with your other creds, never in the repo
+source ~/.config/homelab/creds   # exports TF_VAR_state_passphrase
+
+tofu init -backend-config=backend.hcl
+tofu apply -var-file=prime.tfvars
+mkdir -p ~/.config/homelab && tofu output -json > ~/.config/homelab/prime-aws-outputs.json
+
+# Countdown while rancher-01 boots and cloud-init creates the sles user (stops early once SSH works)
+RANCHER_IP=$(tofu output -raw rancher_public_ip)
+countdown_seconds=600
+while [ "$countdown_seconds" -ge 0 ]; do
+    if (( countdown_seconds % 10 == 0 )) && ssh -i ~/.ssh/id_rsa-prime -o BatchMode=yes -o ConnectTimeout=5 \
+         -o StrictHostKeyChecking=accept-new sles@"$RANCHER_IP" true 2>/dev/null; then
+        printf "\rrancher-01 (%s) is up \033[0K\n" "$RANCHER_IP"; break
+    fi
+    printf "\rTime remaining: %3d seconds \033[0K" "$countdown_seconds"
+    countdown_seconds=$((countdown_seconds - 1))
+    sleep 1
+done
+```
+
+Then: register the BYOS image, point nuc-00's `rancher-aws` record at the Elastic IP, and run 09 + 10
+from nuc-00. Steps 4–6 of "First deploy, before Tailscale" in [OpenTofu/aws/README.md](OpenTofu/aws/README.md).
+
+---
+
 ## Goals
 
 - Single codebase that can build out a complete environment end-to-end
