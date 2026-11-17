@@ -58,7 +58,9 @@ Controlled by `RANCHER_LOCATION` / `OBS_LOCATION` = `onprem|aws` (Scripts/env.sh
 - [ ] Decide connectivity: AWS Site-to-Site VPN vs. Tailscale/WireGuard (VPC `AWS_VPC_CIDR` ↔ 10.10.12.0/22)
 - [ ] Decide DNS: Route 53 for `rancher.${BASE_DOMAIN}` vs. nuc-00 forwarding (homelab nodes must resolve it; AWS must resolve Harvester)
 - [ ] OpenTofu remote state backend (S3) with OpenTofu state encryption, outside this repo
-- [ ] OpenTofu: VPC, subnets, security groups, 3 x EC2 (SL-Micro 6.2), NLB (80/443/6443/9345)
+- [x] OpenTofu: single-AZ VPC, subnets, security groups, 1 x EC2 rancher-01 (SL-Micro 6.2) + Elastic IP, Route 53 record, node-driver IAM user (written, not yet applied)
+- [ ] Verify the SL Micro 6.2 AMI lookup + cloud-init support, then first `tofu apply`
+- [ ] Tailscale: subnet router in the VPC, nuc-00 advertises 10.10.12.0/22
 - [ ] Reuse 09/10 scripts against EC2 nodes (resolve RANCHER_NODE_0x from `tofu output` instead of Harvester VMIs)
 - [ ] Let's Encrypt for Rancher in AWS (Route 53 DNS-01 already in use)
 - [ ] Integration step (e.g. `Scripts/40_connect_hybrid.sh`): bring up the tunnel, add DNS records, import Harvester + on-prem downstream clusters into the AWS-hosted Rancher

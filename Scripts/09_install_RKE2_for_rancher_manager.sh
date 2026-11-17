@@ -33,6 +33,8 @@ run_this_script() {
 if [[ "${RANCHER_LOCATION:-onprem}" == "aws" ]]; then
   AWS_OUTPUTS_FILE="${AWS_OUTPUTS_FILE:-${HOME}/.config/homelab/${ENVIRONMENT}-aws-outputs.json}"
   mapfile -t NODES < <(jq -r '.rancher_node_ips.value[]' "${AWS_OUTPUTS_FILE}")
+  # install_RKE2.sh would otherwise put the on-prem VIP (${IP_PREFIX}.30) in tls-san
+  RANCHER_VIP="$(jq -r '.rancher_vip.value' "${AWS_OUTPUTS_FILE}")"
 else
 mapfile -t NODES < <(KUBECONFIG="${HOME}/.kube/${ENVIRONMENT}-harvester.kubeconfig" \
   kubectl --context local get virtualmachineinstances -A -o json \
@@ -46,7 +48,7 @@ sleep 5
 for NODE in ${NODES[@]}; do ssh-keygen -R $NODE -f /home/mansible/.ssh/known_hosts; done
 for NODE in ${NODES[@]}; do ssh -i ~/.ssh/id_rsa-${ENVIRONMENT} -o StrictHostKeyChecking=accept-new sles@$NODE "uptime"; done
 for NODE in ${NODES[@]}; do scp -i ~/.ssh/id_rsa-${ENVIRONMENT} install_RKE2* sles@$NODE:; done
-for NODE in ${NODES[@]}; do ssh -i ~/.ssh/id_rsa-${ENVIRONMENT} -t sles@$NODE "sudo ENVIRONMENT=${ENVIRONMENT} bash -i ./install_RKE2.sh"; done
+for NODE in ${NODES[@]}; do ssh -i ~/.ssh/id_rsa-${ENVIRONMENT} -t sles@$NODE "sudo ENVIRONMENT=${ENVIRONMENT} RANCHER_VIP=${RANCHER_VIP:-} bash -i ./install_RKE2.sh"; done
 
 for NODE in $NODES; do ssh -t  $NODE "sudo shutdown now -r"; done
 # Grab the kubeconfig from the first node in the list

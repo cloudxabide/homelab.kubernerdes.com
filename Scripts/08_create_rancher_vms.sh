@@ -36,7 +36,7 @@ REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 # shellcheck source=env.sh
 source "${SCRIPT_DIR}/env.sh"
 
-# Rancher in AWS: the nodes and the NLB come from OpenTofu/aws, not Harvester.
+# Rancher in AWS: the node (rancher-01) comes from OpenTofu/aws, not Harvester.
 if [[ "${RANCHER_LOCATION}" != "onprem" ]]; then
   echo "==> RANCHER_LOCATION=${RANCHER_LOCATION} — skipping Harvester VMs and load balancer."
   echo "    Provision with OpenTofu/aws, then write ${AWS_OUTPUTS_FILE}"

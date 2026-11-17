@@ -46,3 +46,75 @@ variable "state_passphrase" {
   type        = string
   sensitive   = true
 }
+
+variable "availability_zone" {
+  description = "Single AZ for everything. Empty = first available AZ in the region."
+  type        = string
+  default     = ""
+}
+
+variable "enable_nat_gateway" {
+  description = "NAT gateway for the private subnet (~$32/mo + data). Off until something runs there."
+  type        = bool
+  default     = false
+}
+
+variable "public_ingress_cidrs" {
+  description = "CIDRs allowed to reach Rancher on 80/443 (UI + downstream agent registration). No default: decide deliberately (your home egress IP /32, or 0.0.0.0/0)."
+  type        = list(string)
+
+  validation {
+    condition     = length(var.public_ingress_cidrs) > 0 && alltrue([for c in var.public_ingress_cidrs : can(cidrnetmask(c))])
+    error_message = "public_ingress_cidrs must be a non-empty list of valid CIDRs."
+  }
+}
+
+# --- Rancher node ----------------------------------------------------------
+variable "rancher_instance_type" {
+  description = "rancher-01 instance type. t3a.xlarge = 4 vCPU / 16 GiB."
+  type        = string
+  default     = "t3a.xlarge"
+}
+
+variable "rancher_root_volume_gb" {
+  description = "rancher-01 root volume (gp3, encrypted)."
+  type        = number
+  default     = 64
+}
+
+variable "rancher_ami_id" {
+  description = "Pin an exact AMI. Empty = newest match for ami_owner + ami_name_filter."
+  type        = string
+  default     = ""
+}
+
+variable "ami_owner" {
+  description = "AMI owner account for the SL Micro lookup (SUSE)."
+  type        = string
+  default     = "013907871322"
+}
+
+variable "ami_name_filter" {
+  description = "AMI name pattern for the SL Micro 6.2 lookup."
+  type        = string
+  default     = "suse-sl-micro-6-2-*"
+}
+
+variable "cloudinit_template" {
+  description = "File under Files/CloudConfigurationTemplates/ whose sles user + SSH keys are reused."
+  type        = string
+  default     = "sl-micro-6-generic.yaml"
+}
+
+# --- DNS -------------------------------------------------------------------
+variable "manage_dns" {
+  description = "Create rancher.<environment>.<domain> in Route 53."
+  type        = bool
+  default     = true
+}
+
+variable "route53_zone_name" {
+  description = "Public Route 53 zone that holds <environment>.<domain> records."
+  type        = string
+  default     = "kubernerdes.com"
+}

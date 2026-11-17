@@ -32,8 +32,8 @@ source "${SCRIPT_DIR}/env.sh"
 #   fail. The Harvester kubeconfig carries two contexts ("rancher" and
 #   "local") — VMIs only exist under "local" (see env.sh), so it's selected
 #   explicitly.
-# aws: env.sh reads RANCHER_NODE_01 and RANCHER_VIP (the NLB DNS name) from
-#   AWS_OUTPUTS_FILE, written from `tofu output -json`.
+# aws: env.sh reads RANCHER_NODE_01 and RANCHER_VIP (rancher-01's private
+#   IP, single node) from AWS_OUTPUTS_FILE, written from `tofu output -json`.
 # ---------------------------------------------------------------------------
 if [[ "${RANCHER_LOCATION}" == "aws" ]]; then
   if [[ -z "${RANCHER_NODE_01:-}" || -z "${RANCHER_VIP:-}" ]]; then
@@ -167,7 +167,7 @@ helm upgrade --install rancher "${RANCHER_CHART_NAME}" \
   --namespace cattle-system \
   --create-namespace \
   --set hostname="${RANCHER_HOSTNAME}" \
-  --set replicas=3 \
+  --set replicas="${RANCHER_REPLICAS:-3}" \
   --set bootstrapPassword=ChangeMe-RancherBootstrap \
   "${RANCHER_EXTRA_ARGS[@]}"
 

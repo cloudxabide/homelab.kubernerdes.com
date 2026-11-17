@@ -4,10 +4,8 @@
 #   tofu -chdir=OpenTofu/aws output -json > ~/.config/homelab/<ENVIRONMENT>-aws-outputs.json
 #
 # env.sh reads these names; renaming one here breaks the scripts.
-#   rancher_lb_dns    string        NLB DNS name (becomes RANCHER_VIP)
-#   rancher_node_ips  list(string)  rancher-01..03 private IPs, in that order
-#
-# Defined below once the resources exist. Only non-resource outputs for now.
+#   rancher_vip       string        rancher-01 private IP (becomes RANCHER_VIP)
+#   rancher_node_ips  list(string)  node private IPs, rancher-01 first
 
 output "environment" {
   description = "ENVIRONMENT this state belongs to."
@@ -20,6 +18,53 @@ output "base_domain" {
 }
 
 output "vpc_cidr" {
-  description = "VPC CIDR (for the site-to-site link and routes on the homelab side)."
+  description = "VPC CIDR (advertised by the Tailscale subnet router)."
   value       = var.vpc_cidr
+}
+
+output "rancher_vip" {
+  description = "RANCHER_VIP for env.sh: rancher-01's private IP (kube API over Tailscale)."
+  value       = aws_instance.rancher.private_ip
+}
+
+output "rancher_node_ips" {
+  description = "Rancher node private IPs, rancher-01 first (single node)."
+  value       = [aws_instance.rancher.private_ip]
+}
+
+output "rancher_public_ip" {
+  description = "rancher-01 Elastic IP (target of rancher.<environment>.<domain>)."
+  value       = aws_eip.rancher.public_ip
+}
+
+output "rancher_hostname" {
+  value = local.rancher_hostname
+}
+
+output "rancher_ami_id" {
+  description = "AMI rancher-01 was built from — check it really is SL Micro 6.2."
+  value       = aws_instance.rancher.ami
+}
+
+output "vpc_id" {
+  value = aws_vpc.main.id
+}
+
+output "public_subnet_id" {
+  value = aws_subnet.public.id
+}
+
+output "private_subnet_id" {
+  description = "Subnet for Rancher-provisioned downstream clusters (needs enable_nat_gateway)."
+  value       = aws_subnet.private.id
+}
+
+output "downstream_security_group" {
+  description = "Security group name to select in Rancher EC2 machine pools."
+  value       = aws_security_group.downstream.name
+}
+
+output "rancher_node_driver_user" {
+  description = "IAM user for the Rancher Amazon EC2 cloud credential (create its access key by hand)."
+  value       = aws_iam_user.node_driver.name
 }
