@@ -21,19 +21,6 @@ Free, as-in beer, software to run infrastructure by SUSE. (*)
 </tr>
 </table>
 
-<table style="background-color: white;">
-<tr>
-<img src="Images/harvester_logo_horizontal.svg" width=150>
-<img src="Images/rancher-suse-logo-horizontal-color.svg" width=150>
-<img src="Images/SUSE_Linux_ES16_pos-green-stacked-1202x450-6f6d51d-1.webp" width=150>
-</tr>
-<tr>
-<img src="Images/neuvectorlogo.svg" width=150>
-<img src="Images/StackState-Color-padding.png" width=150>
-<img src="Images/hauler-logo.png" width=150>
-</tr>
-</table>
-
 I am currently (summer 2026) rebuilding my homelab content applying some "lessons learned" from previous attempts.
 
 **Associated Documentation Site:** The Narrative form guide for this repo is located at https://docs.homelab.kubernerdes.com/

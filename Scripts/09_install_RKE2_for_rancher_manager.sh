@@ -39,7 +39,7 @@ if [[ "${RANCHER_LOCATION:-onprem}" == "aws" ]]; then
   RANCHER_HOSTNAME="$(jq -r '.rancher_hostname.value' "${AWS_OUTPUTS_FILE}")"
 else
 mapfile -t NODES < <(KUBECONFIG="${HOME}/.kube/${ENVIRONMENT}-harvester.kubeconfig" \
-  kubectl --context local get virtualmachineinstances -A -o json \
+  kubectl --context local --request-timeout="${HARVESTER_TIMEOUT:-5s}" get virtualmachineinstances -A -o json \
   | jq -r '[.items[] | select(.metadata.name | startswith("rancher")) | {name: .metadata.name, ip: (.status.interfaces[0].ipAddress // "")}] | sort_by(.name)[] | .ip')
 fi
 

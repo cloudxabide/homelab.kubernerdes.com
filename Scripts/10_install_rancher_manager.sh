@@ -47,7 +47,7 @@ else
     echo "       Create it first, then re-run this script." >&2
     exit 1
   fi
-  if ! kubectl --kubeconfig "${KUBECONFIG_HARVESTER}" --context local get virtualmachineinstances -A -o name &>/dev/null; then
+  if ! kubectl --kubeconfig "${KUBECONFIG_HARVESTER}" --context local --request-timeout="${HARVESTER_TIMEOUT:-5s}" get virtualmachineinstances -A -o name &>/dev/null; then
     echo "ERROR: Cannot connect to Harvester using ${KUBECONFIG_HARVESTER}" >&2
     echo "       Check that the kubeconfig is valid and the cluster is reachable." >&2
     exit 1

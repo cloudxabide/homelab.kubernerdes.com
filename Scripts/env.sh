@@ -118,9 +118,15 @@ fi
 # ---------------------------------------------------------------------------
 _HARVESTER_KUBECONFIG="${HOME}/.kube/${ENVIRONMENT}-harvester.kubeconfig"
 _HARVESTER_VMI_JSON=""
+# HARVESTER_TIMEOUT bounds the lookup so sourcing env.sh off the homelab
+# network (Harvester unreachable) fails fast instead of hanging.
+export HARVESTER_TIMEOUT="${HARVESTER_TIMEOUT:-5s}"
 if [[ -f "${_HARVESTER_KUBECONFIG}" ]] && command -v kubectl >/dev/null 2>&1; then
   _HARVESTER_VMI_JSON="$(kubectl --kubeconfig "${_HARVESTER_KUBECONFIG}" --context local \
+    --request-timeout="${HARVESTER_TIMEOUT}" \
     get virtualmachineinstances -A -o json 2>/dev/null || true)"
+  [[ -z "${_HARVESTER_VMI_JSON}" ]] && \
+    echo "WARN: Harvester not reachable via ${_HARVESTER_KUBECONFIG} within ${HARVESTER_TIMEOUT} — node IPs will be empty" >&2
 else
   echo "WARN: ${_HARVESTER_KUBECONFIG} not found or kubectl missing — node IPs will be empty" >&2
 fi
