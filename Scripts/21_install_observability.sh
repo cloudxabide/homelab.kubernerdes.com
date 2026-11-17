@@ -12,6 +12,10 @@ set -euo pipefail
 #   - O11Y_LICENSE environment variable set (SUSE Observability license key)
 #     export O11Y_LICENSE=<your-license-key>
 #
+# OBS_LOCATION does not change this script: the observability cluster is
+# provisioned by Rancher (Harvester node driver for onprem, Amazon EC2 node
+# driver for aws) and its kubeconfig always comes through Rancher.
+#
 # Reference:
 #   https://docs.stackstate.com/
 

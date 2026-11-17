@@ -26,26 +26,36 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/env.sh"
 
 # ---------------------------------------------------------------------------
-# Validate harvester kubeconfig and resolved rancher-01 IP
-# env.sh queries Harvester via kubectl to set RANCHER_NODE_01; without the
-# kubeconfig that lookup returns empty and all subsequent SSH/scp calls fail.
-#
-# The Harvester kubeconfig carries two contexts ("rancher" and "local") —
-# VMIs only exist under "local" (see env.sh), so it's selected explicitly.
+# Validate resolved rancher-01 IP and VIP
+# onprem: env.sh queries Harvester via kubectl to set RANCHER_NODE_01; without
+#   the kubeconfig that lookup returns empty and all subsequent SSH/scp calls
+#   fail. The Harvester kubeconfig carries two contexts ("rancher" and
+#   "local") — VMIs only exist under "local" (see env.sh), so it's selected
+#   explicitly.
+# aws: env.sh reads RANCHER_NODE_01 and RANCHER_VIP (the NLB DNS name) from
+#   AWS_OUTPUTS_FILE, written from `tofu output -json`.
 # ---------------------------------------------------------------------------
-if [[ ! -f "${KUBECONFIG_HARVESTER}" ]]; then
-  echo "ERROR: Harvester kubeconfig not found: ${KUBECONFIG_HARVESTER}" >&2
-  echo "       Create it first, then re-run this script." >&2
-  exit 1
-fi
-if ! kubectl --kubeconfig "${KUBECONFIG_HARVESTER}" --context local get virtualmachineinstances -A -o name &>/dev/null; then
-  echo "ERROR: Cannot connect to Harvester using ${KUBECONFIG_HARVESTER}" >&2
-  echo "       Check that the kubeconfig is valid and the cluster is reachable." >&2
-  exit 1
-fi
-if [[ -z "${RANCHER_NODE_01:-}" ]]; then
-  echo "ERROR: VM 'rancher-01' not found or has no IP assigned in Harvester" >&2
-  exit 1
+if [[ "${RANCHER_LOCATION}" == "aws" ]]; then
+  if [[ -z "${RANCHER_NODE_01:-}" || -z "${RANCHER_VIP:-}" ]]; then
+    echo "ERROR: RANCHER_NODE_01 / RANCHER_VIP empty — check ${AWS_OUTPUTS_FILE}" >&2
+    echo "       Write it with: tofu -chdir=OpenTofu/aws output -json > ${AWS_OUTPUTS_FILE}" >&2
+    exit 1
+  fi
+else
+  if [[ ! -f "${KUBECONFIG_HARVESTER}" ]]; then
+    echo "ERROR: Harvester kubeconfig not found: ${KUBECONFIG_HARVESTER}" >&2
+    echo "       Create it first, then re-run this script." >&2
+    exit 1
+  fi
+  if ! kubectl --kubeconfig "${KUBECONFIG_HARVESTER}" --context local get virtualmachineinstances -A -o name &>/dev/null; then
+    echo "ERROR: Cannot connect to Harvester using ${KUBECONFIG_HARVESTER}" >&2
+    echo "       Check that the kubeconfig is valid and the cluster is reachable." >&2
+    exit 1
+  fi
+  if [[ -z "${RANCHER_NODE_01:-}" ]]; then
+    echo "ERROR: VM 'rancher-01' not found or has no IP assigned in Harvester" >&2
+    exit 1
+  fi
 fi
 
 KUBECONFIG_PATH="${KUBECONFIG_RANCHER}"

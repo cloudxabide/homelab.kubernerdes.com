@@ -28,9 +28,16 @@ printf '%s\n' "${NODES[@]}"
 run_this_script() {
 # Rancher-node IPs, resolved from Harvester. VMIs only exist under the
 # kubeconfig's "local" context (see Scripts/env.sh), not "rancher".
+# RANCHER_LOCATION=aws: read them from the OpenTofu outputs file instead
+# (same file and output name as Scripts/env.sh).
+if [[ "${RANCHER_LOCATION:-onprem}" == "aws" ]]; then
+  AWS_OUTPUTS_FILE="${AWS_OUTPUTS_FILE:-${HOME}/.config/homelab/${ENVIRONMENT}-aws-outputs.json}"
+  mapfile -t NODES < <(jq -r '.rancher_node_ips.value[]' "${AWS_OUTPUTS_FILE}")
+else
 mapfile -t NODES < <(KUBECONFIG="${HOME}/.kube/${ENVIRONMENT}-harvester.kubeconfig" \
   kubectl --context local get virtualmachineinstances -A -o json \
   | jq -r '[.items[] | select(.metadata.name | startswith("rancher")) | {name: .metadata.name, ip: (.status.interfaces[0].ipAddress // "")}] | sort_by(.name)[] | .ip')
+fi
 
 echo "Discovered rancher node IPs:"
 printf '  %s\n' "${NODES[@]}"

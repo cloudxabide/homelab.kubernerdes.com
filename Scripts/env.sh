@@ -184,12 +184,38 @@ export NUC03_IP="${IP_PREFIX}.103"
 
 # ---------------------------------------------------------------------------
 # RKE2 cluster — Rancher Manager
+#   onprem — VIP is the Harvester load balancer; node IPs come from Harvester VMIs
+#   aws    — VIP is the NLB DNS name; node IPs come from the OpenTofu outputs
+#            file (AWS_OUTPUTS_FILE), written on nuc-00 after `tofu apply` with:
+#              tofu -chdir=OpenTofu/aws output -json > "${AWS_OUTPUTS_FILE}"
+#            Reading a file (not running tofu here) keeps env.sh free of AWS
+#            credentials and state access. Output names it expects:
+#              rancher_lb_dns   (string)
+#              rancher_node_ips (list of 3 strings, rancher-01..03 order)
+# RANCHER_HOSTNAME is the same in both cases; DNS decides where it points.
 # ---------------------------------------------------------------------------
-export RANCHER_VIP="${IP_PREFIX}.30"
 export RANCHER_HOSTNAME="rancher.${BASE_DOMAIN}"
-export RANCHER_NODE_01="$(harvester_vm_ip "rancher-01")"
-export RANCHER_NODE_02="$(harvester_vm_ip "rancher-02")"
-export RANCHER_NODE_03="$(harvester_vm_ip "rancher-03")"
+export AWS_OUTPUTS_FILE="${AWS_OUTPUTS_FILE:-${HOME}/.config/homelab/${ENVIRONMENT}-aws-outputs.json}"
+
+aws_output() {
+  # aws_output <jq filter> — read a value from the OpenTofu outputs file
+  [[ -f "${AWS_OUTPUTS_FILE}" ]] || { echo ""; return 0; }
+  jq -r "$1 // empty" "${AWS_OUTPUTS_FILE}" 2>/dev/null || echo ""
+}
+
+if [[ "${RANCHER_LOCATION}" == "aws" ]]; then
+  [[ -f "${AWS_OUTPUTS_FILE}" ]] || \
+    echo "WARN: ${AWS_OUTPUTS_FILE} not found — RANCHER_VIP and node IPs will be empty" >&2
+  export RANCHER_VIP="$(aws_output '.rancher_lb_dns.value')"
+  export RANCHER_NODE_01="$(aws_output '.rancher_node_ips.value[0]')"
+  export RANCHER_NODE_02="$(aws_output '.rancher_node_ips.value[1]')"
+  export RANCHER_NODE_03="$(aws_output '.rancher_node_ips.value[2]')"
+else
+  export RANCHER_VIP="${IP_PREFIX}.30"
+  export RANCHER_NODE_01="$(harvester_vm_ip "rancher-01")"
+  export RANCHER_NODE_02="$(harvester_vm_ip "rancher-02")"
+  export RANCHER_NODE_03="$(harvester_vm_ip "rancher-03")"
+fi
 
 # ---------------------------------------------------------------------------
 # RKE2 cluster — Observability (provisioned by Rancher Manager)
