@@ -32,6 +32,9 @@ Homelab is a supernet (10.10.12.0/22) and each environment has a /24 (as shown i
 | enclave | 10.10.13.0/24 | Air-gapped deployment using SUSE prime and Hauler |
 | community | 10.10.14.0/24 | Deployment using "community bits" |  
 | prime  | 10.10.15.0/24 | Deployment using bits from SUSE Prime registry/repo |  
+| aws (hybrid) | 172.16.0.0/16 (AWS_VPC_CIDR, from reserved 172.16.0.0/12) | VPC for products placed in AWS |
+
+Product placement is a second axis, separate from ENVIRONMENT: `RANCHER_LOCATION` / `OBS_LOCATION` = {onprem|aws} (default onprem). Variable names follow `{PRODUCT}_{ATTRIBUTE}` (e.g. RANCHER_CERT, OBS_VIP). With `aws`, this is a hybrid-cloud setup: the AWS-hosted Rancher manages downstream clusters both on-prem (Harvester) and in AWS. `enclave` must be all on-prem. The AWS side is built and torn down on its own (OpenTofu/aws does not source Scripts/env.sh); it links to on-prem only at connectivity, DNS, and cluster import. The separate "AWS Demo" repo is unrelated to this project.
 
 # Tech Stack
 - SUSE Virtualization (Harvester) 
@@ -47,6 +50,7 @@ Homelab is a supernet (10.10.12.0/22) and each environment has a /24 (as shown i
 - /Foo :  random directory for test scripts, notes, etc...
 - /Images : contains graphical images for repo (architecture overview, branded imagery, etc..)
 - /Scripts : directory to host scripts used to deploy software, typically specific to the "ENVIRONMENT" that is set
+- /OpenTofu/aws : AWS infrastructure (OpenTofu, not Terraform) for the hybrid placement (*_LOCATION=aws); no state or creds in repo
 - /Files : boilerplate or template with placeholders replaced by "ENVIRONMENT" that is set 
 
 # Coding Conventions

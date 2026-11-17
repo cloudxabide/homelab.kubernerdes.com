@@ -53,6 +53,20 @@ Credentials NEVER go in this repo.  I will utilize the strategy I have documente
 - [ ] Configure Backups to utilize TrueNAS
 - [ ] Run SUSE Security (NeuVector) demo walkthrough — see [Security_Demo.md](Security_Demo.md)
 
+## Hybrid (AWS) — after the on-prem Day 1 baseline works
+Controlled by `RANCHER_LOCATION` / `OBS_LOCATION` = `onprem|aws` (Scripts/env.sh). Hybrid cloud: the AWS-hosted Rancher manages downstream clusters on-prem (Harvester) and in AWS. Not valid for `enclave`. The AWS side is built and torn down on its own and links to on-prem only at connectivity, DNS, and cluster import. Infra code: [OpenTofu/aws](OpenTofu/aws/README.md).
+- [ ] Decide connectivity: AWS Site-to-Site VPN vs. Tailscale/WireGuard (VPC `AWS_VPC_CIDR` ↔ 10.10.12.0/22)
+- [ ] Decide DNS: Route 53 for `rancher.${BASE_DOMAIN}` vs. nuc-00 forwarding (homelab nodes must resolve it; AWS must resolve Harvester)
+- [ ] OpenTofu remote state backend (S3) with OpenTofu state encryption, outside this repo
+- [ ] OpenTofu: VPC, subnets, security groups, 3 x EC2 (SL-Micro 6.2), NLB (80/443/6443/9345)
+- [ ] Reuse 09/10 scripts against EC2 nodes (resolve RANCHER_NODE_0x from `tofu output` instead of Harvester VMIs)
+- [ ] Let's Encrypt for Rancher in AWS (Route 53 DNS-01 already in use)
+- [ ] Integration step (e.g. `Scripts/40_connect_hybrid.sh`): bring up the tunnel, add DNS records, import Harvester + on-prem downstream clusters into the AWS-hosted Rancher
+- [ ] Cloud downstream cluster: provision an RKE2 cluster on EC2 from Rancher (Amazon EC2 node driver / cloud credential)
+- [ ] Apply SUSE Security + Observability agents to both on-prem and AWS downstream clusters
+- [ ] (Optional) Observability in AWS (`OBS_LOCATION=aws`); size EC2 for the SUSE Observability profile
+- [ ] Cost estimate + teardown procedure (`tofu destroy`), document in docs site
+
 ## Futures/Unknowns
 - [ ] CA for Homelab
 - [ ] Harbor

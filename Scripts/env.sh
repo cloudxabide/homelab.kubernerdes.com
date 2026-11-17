@@ -41,6 +41,36 @@ case "${ENVIRONMENT}" in
 esac
 
 # ---------------------------------------------------------------------------
+# Product placement — where each management-plane product runs.
+#   onprem — Harvester VMs on the NUCs (default; the original design)
+#   aws    — EC2 in AWS (hybrid); infra lives under OpenTofu/aws/
+# Hybrid cloud: a Rancher in AWS manages downstream clusters on-prem (Harvester)
+# and in AWS (EC2, provisioned by Rancher).
+# enclave is air-gapped, so it must stay fully on-prem.
+#
+#   RANCHER_LOCATION=aws ./10_install_rancher_manager.sh
+# ---------------------------------------------------------------------------
+export RANCHER_LOCATION="${RANCHER_LOCATION:-onprem}"
+export OBS_LOCATION="${OBS_LOCATION:-onprem}"
+for _loc_var in RANCHER_LOCATION OBS_LOCATION; do
+  case "${!_loc_var}" in
+    onprem|aws) ;;
+    *) echo "ERROR: ${_loc_var}='${!_loc_var}' — must be onprem or aws" >&2; unset _loc_var; return 1 ;;
+  esac
+  if [[ "${ENVIRONMENT}" == "enclave" && "${!_loc_var}" != "onprem" ]]; then
+    echo "ERROR: ${_loc_var}=${!_loc_var} is not valid for ENVIRONMENT=enclave (air-gapped)" >&2
+    unset _loc_var; return 1
+  fi
+done
+unset _loc_var
+
+# AWS side of the hybrid setup (only used when a *_LOCATION=aws).
+# The VPC comes from 172.16.0.0/12, which is kept clear of the
+# homelab (10.10.12.0/22) and the Harvester storage network (192.168.128.0/24).
+export AWS_REGION="${AWS_REGION:-us-east-1}"
+export AWS_VPC_CIDR="${AWS_VPC_CIDR:-172.16.0.0/16}"
+
+# ---------------------------------------------------------------------------
 # ENVIRONMENT sanity check — a reminder in case the wrong one is set.
 # Waits 5 seconds: N aborts, Y/Enter/timeout proceeds.
 # Skipped when:
@@ -51,6 +81,7 @@ esac
 # ---------------------------------------------------------------------------
 if [[ ${#BASH_SOURCE[@]} -gt 1 && -t 0 && "${ENV_CONFIRMED:-0}" != "1" ]]; then
   echo "ENVIRONMENT is currently set to: ${ENVIRONMENT}  (${IP_PREFIX}.0/24, ${BASE_DOMAIN})"
+  echo "  RANCHER_LOCATION=${RANCHER_LOCATION}  OBS_LOCATION=${OBS_LOCATION}"
   _env_answer=""
   read -r -t 5 -p "Is ENVIRONMENT=${ENVIRONMENT} what you want (Y/N)? " _env_answer || echo
   case "${_env_answer}" in

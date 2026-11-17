@@ -1,0 +1,7 @@
+# OpenTofu — state, local plugin cache, and var files never belong in the repo (lock file IS committed)
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+crash.log
+.DS_Store
