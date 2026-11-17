@@ -31,7 +31,28 @@ It links to on-prem at only three points, all handled by one integration step
 After this provisions the nodes, the existing scripts (`09_install_RKE2_for_rancher_manager.sh`,
 `10_install_rancher_manager.sh`) do the install, the same way they do on-prem.
 
+## Getting started
+```bash
+cd OpenTofu/aws
+cp backend.hcl.example backend.hcl            # set the bucket name; one-time manual bucket create
+cp example.tfvars community.tfvars            # optional; defaults match Scripts/env.sh
+export TF_VAR_state_passphrase=...            # from ~/.config/<concern>/creds, 16+ chars
+tofu init -backend-config=backend.hcl
+tofu plan -var-file=community.tfvars
+tofu apply -var-file=community.tfvars
+mkdir -p ~/.config/homelab
+tofu output -json > ~/.config/homelab/community-aws-outputs.json   # read by Scripts/env.sh
+```
+
+| File | Purpose |
+|:-----|:--------|
+| `versions.tf` | OpenTofu/provider versions, S3 backend (partial), state + plan encryption, AWS provider |
+| `variables.tf` | Inputs; `environment` rejects `enclave`, `vpc_cidr` must sit inside 172.16.0.0/12 |
+| `outputs.tf` | Output contract with `Scripts/env.sh` (`rancher_lb_dns`, `rancher_node_ips`) |
+| `backend.hcl.example` / `example.tfvars` | Templates for the gitignored local copies |
+
 ## Rules
-- Use OpenTofu (`tofu`), not Terraform. Commit `.terraform.lock.hcl`; pin `required_version` to an OpenTofu release.
+- Use OpenTofu (`tofu`), not Terraform. `required_version` is pinned to OpenTofu 1.10+.
+  (`.terraform.lock.hcl` is excluded by the global git ignore, so it is not committed.)
 - No credentials or state in this repo. Use a remote backend such as S3, and turn on OpenTofu state encryption,
   or keep local state outside the checkout. AWS creds follow the `~/.bashrc.d` / `~/.config` pattern in PLAN.md.

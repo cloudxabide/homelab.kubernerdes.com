@@ -1,0 +1,7 @@
+# Copy to backend.hcl (gitignored), edit, then: tofu init -backend-config=backend.hcl
+# The bucket is created once by hand (versioning on, public access blocked) —
+# OpenTofu cannot create the bucket that holds its own state.
+bucket       = "CHANGEME-homelab-tofu-state"
+key          = "community/aws.tfstate"   # <ENVIRONMENT>/aws.tfstate
+region       = "us-east-1"
+use_lockfile = true                      # native S3 locking, no DynamoDB table

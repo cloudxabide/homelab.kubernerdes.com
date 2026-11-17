@@ -5,3 +5,5 @@
 *.tfvars
 crash.log
 .DS_Store
+!example.tfvars
+backend.hcl
