@@ -45,14 +45,31 @@ echo "Discovered rancher node IPs:"
 printf '  %s\n' "${NODES[@]}"
 sleep 5
 
-for NODE in ${NODES[@]}; do ssh-keygen -R $NODE -f /home/mansible/.ssh/known_hosts; done
-for NODE in ${NODES[@]}; do ssh -i ~/.ssh/id_rsa-${ENVIRONMENT} -o StrictHostKeyChecking=accept-new sles@$NODE "uptime"; done
-for NODE in ${NODES[@]}; do scp -i ~/.ssh/id_rsa-${ENVIRONMENT} install_RKE2* sles@$NODE:; done
-for NODE in ${NODES[@]}; do ssh -i ~/.ssh/id_rsa-${ENVIRONMENT} -t sles@$NODE "sudo ENVIRONMENT=${ENVIRONMENT} RANCHER_VIP=${RANCHER_VIP:-} bash -i ./install_RKE2.sh"; done
+SSH_KEY="${HOME}/.ssh/id_rsa-${ENVIRONMENT}"
 
-for NODE in $NODES; do ssh -t  $NODE "sudo shutdown now -r"; done
+for NODE in "${NODES[@]}"; do ssh-keygen -R "$NODE" -f "${HOME}/.ssh/known_hosts"; done
+for NODE in "${NODES[@]}"; do ssh -i "$SSH_KEY" -o StrictHostKeyChecking=accept-new sles@"$NODE" "uptime"; done
+for NODE in "${NODES[@]}"; do scp -i "$SSH_KEY" install_RKE2* sles@"$NODE":; done
+# On SL-Micro, install_RKE2.sh reboots the node itself (transactional update),
+# so each ssh session ends with the connection dropping — that is expected.
+for NODE in "${NODES[@]}"; do ssh -i "$SSH_KEY" -t sles@"$NODE" "sudo ENVIRONMENT=${ENVIRONMENT} RANCHER_VIP=${RANCHER_VIP:-} bash -i ./install_RKE2.sh"; done
+
+# Wait for each node to come back, then run the postboot step install_RKE2.sh
+# left behind (it writes ~sles/.kube/config). Non-SL-Micro nodes ran it inline
+# and have no /var/lib/install_RKE2_postboot.sh, so they are skipped.
+sleep 30
+for NODE in "${NODES[@]}"; do
+  echo "Waiting for ${NODE} to come back..."
+  for _ in $(seq 1 60); do
+    ssh -i "$SSH_KEY" -o ConnectTimeout=5 -o BatchMode=yes sles@"$NODE" true 2>/dev/null && break
+    sleep 10
+  done
+  ssh -i "$SSH_KEY" -t sles@"$NODE" \
+    "if sudo test -f /var/lib/install_RKE2_postboot.sh; then sudo bash /var/lib/install_RKE2_postboot.sh; fi"
+done
+
 # Grab the kubeconfig from the first node in the list
-scp -i ~/.ssh/id_rsa-${ENVIRONMENT} sles@${NODES%% *}:.kube/config ~/.kube/${ENVIRONMENT}-rancher.kubeconfig
+scp -i "$SSH_KEY" sles@"${NODES[0]}":.kube/config ~/.kube/${ENVIRONMENT}-rancher.kubeconfig
 export KUBECONFIG=~/.kube/${ENVIRONMENT}-rancher.kubeconfig
 chmod 0644 $KUBECONFIG
 kubectl get nodes
