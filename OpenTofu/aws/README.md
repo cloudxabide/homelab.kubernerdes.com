@@ -176,7 +176,8 @@ Cloud-init installs Tailscale from the static tarball into `/opt/tailscale` (che
 `sudo /opt/tailscale/install.sh [version]`. **Not yet verified on the image**; if `tailscale-up` reports it
 missing, look at `/var/log/cloud-init-output.log` on tailscale-01.
 
-The VPC range must not overlap any home subnet, including IoT or guest VLANs: check before step 6.
+The VPC range must not overlap any home subnet, including IoT or guest VLANs: check before step 5
+(once nuc-00 accepts routes, it sends the whole VPC range into the tunnel).
 
 1. **Auth key:** Tailscale admin console → Settings → Keys → generate an auth key (not reusable, not
    ephemeral). Add it to `~/.config/homelab/creds` (`chmod 600`) on the machine that runs `awsctl`:
