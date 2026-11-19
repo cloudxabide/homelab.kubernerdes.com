@@ -136,6 +136,30 @@ variable "admin_cidrs" {
   }
 }
 
+# --- Tailscale subnet router -----------------------------------------------
+variable "tailscale_router_enabled" {
+  description = "Build tailscale-01, a Tailscale subnet router that advertises the VPC, and route homelab_cidr through it (see tailscale.tf)."
+  type        = bool
+  default     = false
+}
+
+variable "tailscale_instance_type" {
+  description = "tailscale-01 instance type. t3a.micro = 2 vCPU / 1 GiB, plenty for a lab subnet router."
+  type        = string
+  default     = "t3a.micro"
+}
+
+variable "tailscale_version" {
+  description = "Tailscale release installed on first boot: \"latest\" (newest stable) or an exact version such as \"1.104.7\"."
+  type        = string
+  default     = "latest"
+
+  validation {
+    condition     = can(regex("^(latest|[0-9]+\\.[0-9]+\\.[0-9]+)$", var.tailscale_version))
+    error_message = "tailscale_version must be \"latest\" or a version such as \"1.104.7\"."
+  }
+}
+
 variable "rancher_cert_dns01" {
   description = "Give rancher-01 an instance role that lets cert-manager issue its own Let's Encrypt cert for rancher-aws.<env>.<domain> (Route 53 DNS-01), independent of nuc-00's *.<env> wildcard."
   type        = bool

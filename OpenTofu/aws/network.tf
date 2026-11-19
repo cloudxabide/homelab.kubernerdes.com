@@ -8,9 +8,9 @@
 # subnet and needs no NAT. Turn it on (enable_nat_gateway) once something runs
 # in the private subnet.
 #
-# Tailscale (later): a subnet router advertises vpc_cidr to the tailnet and
-# nuc-00 advertises homelab_cidr; a route for homelab_cidr via the router is
-# added to both route tables then.
+# Tailscale: a subnet router (tailscale.tf, tailscale_router_enabled) advertises
+# vpc_cidr to the tailnet and nuc-00 advertises homelab_cidr; tailscale.tf adds
+# a route for homelab_cidr via the router to both route tables.
 
 data "aws_availability_zones" "available" {
   state = "available"

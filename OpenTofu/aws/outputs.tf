@@ -95,3 +95,24 @@ output "rancher_instance_id" {
   description = "rancher-01 instance ID (Scripts/awsctl stop/start/status)."
   value       = aws_instance.rancher.id
 }
+
+# Tailscale subnet router — empty strings when tailscale_router_enabled = false
+output "tailscale_router_instance_id" {
+  description = "tailscale-01 instance ID (Scripts/awsctl stop/start/status)."
+  value       = try(aws_instance.tailscale[0].id, "")
+}
+
+output "tailscale_router_private_ip" {
+  description = "tailscale-01 private IP (<public subnet>.10)."
+  value       = try(aws_instance.tailscale[0].private_ip, "")
+}
+
+output "tailscale_router_public_ip" {
+  description = "tailscale-01 public IP. Not an Elastic IP: it changes when the instance is stopped and started."
+  value       = try(aws_instance.tailscale[0].public_ip, "")
+}
+
+output "tailscale_router_admin_ip" {
+  description = "Address Scripts/awsctl uses to SSH to tailscale-01: the public IP while admin_cidrs is set, else the private IP (over Tailscale)."
+  value       = try(length(var.admin_cidrs) > 0 ? aws_instance.tailscale[0].public_ip : aws_instance.tailscale[0].private_ip, "")
+}

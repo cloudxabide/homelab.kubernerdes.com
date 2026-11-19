@@ -41,9 +41,9 @@ It links to on-prem at only three points, all handled by one integration step
 - For Rancher-provisioned downstream clusters on EC2: a `downstream` security group and an
   IAM user for the Amazon EC2 node driver (create its access key by hand; it is kept out of state)
 
-## Not yet (needs Tailscale)
-- Tailscale subnet router + routes for `homelab_cidr`
-- Running `Scripts/09` / `10` against `rancher-01` (SSH and 6443 from nuc-00)
+## Not yet
+- Automating the on-prem half of Tailscale (nuc-00, home router); it is done by hand for now, see
+  "Tailscale subnet router" (planned: `Scripts/40_connect_hybrid.sh`)
 - Importing Harvester and the on-prem clusters into this Rancher
 
 ## Check before the first apply
@@ -86,6 +86,7 @@ tofu output -json > ~/.config/homelab/community-aws-outputs.json   # read by Scr
 | `variables.tf` | Inputs; `environment` rejects `enclave`, `vpc_cidr` must sit inside 172.16.0.0/12 |
 | `network.tf` / `security.tf` | VPC, subnets, routes, optional NAT; security groups |
 | `rancher.tf` / `dns.tf` / `iam.tf` | rancher-01 + Elastic IP; Route 53 record; node-driver IAM user |
+| `tailscale.tf` / `files/tailscale_install.sh` | Optional Tailscale subnet router (tailscale-01), its VPC routes, its first-boot install |
 | `outputs.tf` | Output contract with `Scripts/env.sh` (`rancher_vip`, `rancher_node_ips`) |
 | `backend.hcl.example` / `example.tfvars` | Templates for the gitignored local copies |
 
@@ -163,6 +164,43 @@ The A record and the `_acme-challenge` TXT record then both live in the delegate
   pointing at the account that owns `kubernerdes.com`, separate from the lab credentials used here.
 - OpenTofu does not manage this zone, so `Scripts/awsctl destroy` leaves it and the delegation in place for
   the next rebuild (about $0.50/month). Delete the zone and the `NS` record by hand when finished with AWS.
+
+## Tailscale subnet router (prime shown)
+`tailscale_router_enabled = true` builds `tailscale-01`: SL Micro (same AMI as rancher-01), `t3a.micro`,
+pinned private IP `<vpc>.0.10`, an auto-assigned public IP (no Elastic IP), source/destination check off.
+Both VPC route tables send `homelab_cidr` through it. Rough cost: ≈ $7/mo + public IPv4 ≈ $4; `awsctl stop`
+stops it along with rancher-01.
+
+Cloud-init installs Tailscale from the static tarball into `/opt/tailscale` (checksum verified;
+`tailscale_version`, default newest stable) because SL Micro's `/usr` is read-only. Upgrade later with
+`sudo /opt/tailscale/install.sh [version]`. **Not yet verified on the image**; if `tailscale-up` reports it
+missing, look at `/var/log/cloud-init-output.log` on tailscale-01.
+
+The VPC range must not overlap any home subnet, including IoT or guest VLANs: check before step 6.
+
+1. **Auth key:** Tailscale admin console → Settings → Keys → generate an auth key (not reusable, not
+   ephemeral). Add it to `~/.config/homelab/creds` (`chmod 600`) on the machine that runs `awsctl`:
+   ```bash
+   export TAILSCALE_AUTHKEY='tskey-auth-...'
+   ```
+   It never goes into OpenTofu state or user_data: `tailscale-up` passes it over SSH.
+2. **Build:** add `tailscale_router_enabled = true` to `prime.tfvars`, then `ENVIRONMENT=prime Scripts/awsctl build`.
+3. **Join:** `ENVIRONMENT=prime Scripts/awsctl tailscale-up` (joins as `aws-prime-router`, advertising `vpc_cidr`).
+4. **Admin console:** approve the `172.16.0.0/16` subnet route for `aws-prime-router`, and disable key expiry for it.
+5. **nuc-00** (on-prem side):
+   ```bash
+   curl -fsSL https://tailscale.com/install.sh | sh
+   printf 'net.ipv4.ip_forward = 1\nnet.ipv6.conf.all.forwarding = 1\n' | sudo tee /etc/sysctl.d/99-tailscale.conf
+   sudo sysctl --system
+   sudo tailscale up --advertise-routes=10.10.12.0/22 --accept-routes
+   ```
+   Approve the `10.10.12.0/22` route for nuc-00 in the admin console, and disable its key expiry.
+6. **Home router:** add a static route `172.16.0.0/16` via nuc-00, so other on-prem hosts (Harvester,
+   downstream clusters) reach the VPC. Without it, only nuc-00 can.
+7. **Check from nuc-00:** `ping -c3 172.16.0.30` and `ssh -i ~/.ssh/id_rsa-prime sles@172.16.0.30 hostname`.
+8. **Switch to the tunnel:** set `admin_cidrs = []`, `ENVIRONMENT=prime Scripts/awsctl apply`, then
+   `ENVIRONMENT=prime Scripts/awsctl outputs` (rancher and router addresses become the private IPs), and point
+   nuc-00's `rancher-aws` record at `172.16.0.30`.
 
 ## Rules
 - Use OpenTofu (`tofu`), not Terraform. `required_version` is pinned to OpenTofu 1.10+.
