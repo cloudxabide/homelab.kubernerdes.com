@@ -58,9 +58,10 @@ It links to on-prem at only three points, all handled by one integration step
   When 6.2 shows up, set `ami_name_filter` to the 6-2 pattern (an existing node keeps its AMI).
 - **BYOS:** no SUSE charge on the hourly price, but the instance needs registering for updates:
   `sudo transactional-update register -r <Prime regcode>` (then reboot).
-- **Not yet verified on this image:** that it runs cloud-init (the `sles` user and `rancher-01`
-  hostname depend on it), and that `/etc/os-release` reports `NAME="SL-Micro"`, which
-  `install_RKE2.sh` uses to pick the reboot + postboot path. Check both after the first boot.
+- **Verified on this image (2026-11-18, `ami-0074608a2dc0cbdba`):** cloud-init runs, creating the `sles`
+  user and setting the `rancher-01` hostname, and `install_RKE2.sh` completes its reboot + postboot path.
+- **Route 53 zone:** must be a public zone in the same AWS account as these credentials. If
+  `kubernerdes.com` is in another account, see "Route 53 zone in a different AWS account" below.
 - Rough cost: t3a.xlarge ≈ $110/mo + 64 GiB gp3 ≈ $5 + public IPv4 ≈ $4. Stop the instance when idle.
 
 After this provisions `rancher-01`, the existing scripts (`09_install_RKE2_for_rancher_manager.sh`,
@@ -130,12 +131,38 @@ Uses `admin_cidrs` so nuc-00 reaches `rancher-01` over its Elastic IP. Your home
    source <(sed '/^exit 0$/d' 09_install_RKE2_for_rancher_manager.sh) && run_this_script
    ./10_install_rancher_manager.sh
    ```
-   10 saves the kubeconfig as `~/.kube/prime-rancher-aws.kubeconfig` (the on-prem one is left alone) and,
-   with `RANCHER_CERT=letsencrypt`, has cert-manager issue the `rancher-aws` certificate. To try the
+   09 and 10 save the kubeconfig as `~/.kube/prime-rancher-aws.kubeconfig` (the on-prem one is left alone).
+   With `RANCHER_CERT=letsencrypt`, 10 has cert-manager issue the `rancher-aws` certificate. To try the
    certificate step against the staging CA first:
    `KUBECONFIG=~/.kube/prime-rancher-aws.kubeconfig STAGING=1 modules/common/rancher_aws_le_cert.sh`
 7. **Later, once Tailscale is up:** set `admin_cidrs = []`, `tofu apply`, re-export the outputs file
    (now the private IP), and point nuc-00's `rancher-aws` record at `rancher_private_ip`.
+
+## Route 53 zone in a different AWS account
+OpenTofu and `rancher-01`'s instance role only work with a zone in the lab account. When `kubernerdes.com`
+is hosted in another account, delegate just the Rancher name to a small zone in the lab account (prime shown).
+No credentials cross accounts, and no code changes are needed.
+
+1. **Lab account:** create the public zone and note its four name servers:
+   ```bash
+   ZONE=rancher-aws.prime.kubernerdes.com
+   ZONE_ID=$(aws route53 create-hosted-zone --name "$ZONE" \
+     --caller-reference "$ZONE-$(date +%s)" --query 'HostedZone.Id' --output text)
+   aws route53 get-hosted-zone --id "$ZONE_ID" --query 'DelegationSet.NameServers' --output text
+   ```
+2. **Account that owns `kubernerdes.com`:** add an `NS` record named `rancher-aws.prime.kubernerdes.com`
+   with those four name servers.
+3. **Check from a public resolver** (nuc-00's BIND answers for `prime` locally):
+   `dig +short NS rancher-aws.prime.kubernerdes.com @1.1.1.1`
+4. **`prime.tfvars`:** `route53_zone_name = "rancher-aws.prime.kubernerdes.com"`
+
+The A record and the `_acme-challenge` TXT record then both live in the delegated zone.
+
+- Do not delegate all of `prime.kubernerdes.com`: nuc-00's `*.prime` wildcard certificate solves its DNS-01
+  challenge in the parent zone. That certificate uses root's own AWS credentials on nuc-00, which must keep
+  pointing at the account that owns `kubernerdes.com`, separate from the lab credentials used here.
+- OpenTofu does not manage this zone, so `Scripts/awsctl destroy` leaves it and the delegation in place for
+  the next rebuild (about $0.50/month). Delete the zone and the `NS` record by hand when finished with AWS.
 
 ## Rules
 - Use OpenTofu (`tofu`), not Terraform. `required_version` is pinned to OpenTofu 1.10+.

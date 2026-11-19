@@ -114,7 +114,7 @@ variable "manage_dns" {
 }
 
 variable "route53_zone_name" {
-  description = "Public Route 53 zone that holds <environment>.<domain> records."
+  description = "Public Route 53 zone, in this AWS account, that holds the rancher-aws record. If the parent zone is in another account, delegate rancher-aws.<environment>.<domain> and set that name here (see README.md)."
   type        = string
   default     = "kubernerdes.com"
 }

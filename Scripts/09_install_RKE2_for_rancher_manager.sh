@@ -70,10 +70,22 @@ for NODE in "${NODES[@]}"; do
     "if sudo test -f /var/lib/install_RKE2_postboot.sh; then sudo bash /var/lib/install_RKE2_postboot.sh; fi"
 done
 
-# Grab the kubeconfig from the first node in the list
-scp -i "$SSH_KEY" sles@"${NODES[0]}":.kube/config ~/.kube/${ENVIRONMENT}-rancher.kubeconfig
-export KUBECONFIG=~/.kube/${ENVIRONMENT}-rancher.kubeconfig
-chmod 0644 $KUBECONFIG
+# Grab the kubeconfig from the first node in the list. The AWS Rancher gets its
+# own file (same name as KUBECONFIG_RANCHER in Scripts/env.sh): on nuc-00,
+# <env>-rancher.kubeconfig is the on-prem cluster, and root's copy is what the
+# wildcard certificate renewal hook uses.
+if [[ "${RANCHER_LOCATION:-onprem}" == "aws" ]]; then
+  KUBECONFIG_FILE="${HOME}/.kube/${ENVIRONMENT}-rancher-aws.kubeconfig"
+else
+  KUBECONFIG_FILE="${HOME}/.kube/${ENVIRONMENT}-rancher.kubeconfig"
+fi
+scp -i "$SSH_KEY" sles@"${NODES[0]}":.kube/config "${KUBECONFIG_FILE}"
+# RKE2 writes 127.0.0.1; the AWS node's API is only reachable at RANCHER_VIP
+if [[ "${RANCHER_LOCATION:-onprem}" == "aws" ]]; then
+  sed -i -e "s/127.0.0.1/${RANCHER_VIP}/g" "${KUBECONFIG_FILE}"
+fi
+export KUBECONFIG="${KUBECONFIG_FILE}"
+chmod 0644 "$KUBECONFIG"
 kubectl get nodes
 }
 
