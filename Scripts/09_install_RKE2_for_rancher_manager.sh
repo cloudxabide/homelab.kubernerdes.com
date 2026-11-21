@@ -1,11 +1,15 @@
 #!/bin/bash
 
+# Installs RKE2 on the Rancher node(s) and fetches the kubeconfig.
+# Usage (needs a terminal: install_RKE2.sh runs in an interactive ssh session):
+#   ENVIRONMENT=prime ./09_install_RKE2_for_rancher_manager.sh                       # on-prem (Harvester VMs)
+#   ENVIRONMENT=prime RANCHER_LOCATION=aws ./09_install_RKE2_for_rancher_manager.sh  # AWS (Scripts/awsctl build first)
+# Sourcing the file defines run_this_script without running it.
+#
 # TODO
-#   [DONE] get the IPs for the nodes from Harvester API call 
-#   test that the current KUBECONFIG scoped in this script works
-#   Automate the reboot of the nodes post-RKE2 install
-
-echo "Read this script - it needs to be done manually still at this time"
+#   [DONE] get the IPs for the nodes from Harvester API call
+#   [DONE] automate the reboot of the nodes post-RKE2 install (install_RKE2.sh + postboot step)
+#   [DONE on AWS] kubeconfig fetch; re-test on-prem
 
 # Check if ENVIRONMENT is set, and if not, set it to community
 ENVIRONMENT="${ENVIRONMENT:-community}"
@@ -32,6 +36,10 @@ run_this_script() {
 # (same file and output name as Scripts/env.sh).
 if [[ "${RANCHER_LOCATION:-onprem}" == "aws" ]]; then
   AWS_OUTPUTS_FILE="${AWS_OUTPUTS_FILE:-${HOME}/.config/homelab/${ENVIRONMENT}-aws-outputs.json}"
+  if [[ ! -s "${AWS_OUTPUTS_FILE}" ]]; then
+    echo "ERROR: ${AWS_OUTPUTS_FILE} not found (run Scripts/awsctl build first)" >&2
+    return 1
+  fi
   mapfile -t NODES < <(jq -r '.rancher_node_ips.value[]' "${AWS_OUTPUTS_FILE}")
   # install_RKE2.sh would otherwise put the on-prem VIP (${IP_PREFIX}.30) and
   # rancher.<env> name in tls-san
@@ -41,6 +49,11 @@ else
 mapfile -t NODES < <(KUBECONFIG="${HOME}/.kube/${ENVIRONMENT}-harvester.kubeconfig" \
   kubectl --context local --request-timeout="${HARVESTER_TIMEOUT:-5s}" get virtualmachineinstances -A -o json \
   | jq -r '[.items[] | select(.metadata.name | startswith("rancher")) | {name: .metadata.name, ip: (.status.interfaces[0].ipAddress // "")}] | sort_by(.name)[] | .ip')
+fi
+
+if [[ ${#NODES[@]} -eq 0 || -z "${NODES[0]}" ]]; then
+  echo "ERROR: no rancher node IPs found for ENVIRONMENT=${ENVIRONMENT} RANCHER_LOCATION=${RANCHER_LOCATION:-onprem}" >&2
+  return 1
 fi
 
 echo "Discovered rancher node IPs:"
@@ -89,4 +102,9 @@ chmod 0644 "$KUBECONFIG"
 kubectl get nodes
 }
 
-exit 0
+# Run only when executed, not when sourced. cd so `scp install_RKE2*` finds
+# the files no matter where the script is called from.
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+  cd "$(dirname "$(readlink -f "$0")")" || exit 1
+  run_this_script
+fi

@@ -129,8 +129,7 @@ Uses `admin_cidrs` so nuc-00 reaches `rancher-01` over its Elastic IP. Your home
    ```bash
    mkdir -p ~/.config/homelab && cp prime-aws-outputs.json ~/.config/homelab/
    export ENVIRONMENT=prime RANCHER_LOCATION=aws
-   # 09 is still read-and-run: its steps live in run_this_script (the file exits before calling it)
-   source <(sed '/^exit 0$/d' 09_install_RKE2_for_rancher_manager.sh) && run_this_script
+   ./09_install_RKE2_for_rancher_manager.sh
    ./10_install_rancher_manager.sh
    ```
    09 and 10 save the kubeconfig as `~/.kube/prime-rancher-aws.kubeconfig` (the on-prem one is left alone).
