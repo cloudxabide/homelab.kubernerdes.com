@@ -1,7 +1,8 @@
 # Single-AZ VPC (cost over resilience — this is a lab):
-#   vpc_cidr: prime 172.16.0.0/16, community 172.17.0.0/16 (unless overridden)
-#   public  subnet: cidrsubnet(vpc_cidr, 4, 0)  e.g. 172.16.0.0/20   — rancher-01 (Elastic IP, private .0.30)
-#   private subnet: cidrsubnet(vpc_cidr, 4, 8)  e.g. 172.16.128.0/20 — downstream clusters later
+#   vpc_cidr: prime 172.18.0.0/16, community 172.17.0.0/16 (unless overridden)
+#             (172.16.0.0/16 is skipped: the home IoT VLAN is 172.16.0.0/23)
+#   public  subnet: cidrsubnet(vpc_cidr, 4, 0)  e.g. 172.18.0.0/20   — rancher-01 (Elastic IP, private .0.30)
+#   private subnet: cidrsubnet(vpc_cidr, 4, 8)  e.g. 172.18.128.0/20 — downstream clusters later
 # Index 1-7 / 9-15 are left free if a second AZ is ever wanted.
 #
 # NAT gateway is off by default (~$32/mo + data). rancher-01 is in the public
@@ -18,7 +19,7 @@ data "aws_availability_zones" "available" {
 
 locals {
   default_vpc_cidrs = {
-    prime     = "172.16.0.0/16"
+    prime     = "172.18.0.0/16"
     community = "172.17.0.0/16"
   }
   vpc_cidr = coalesce(var.vpc_cidr, local.default_vpc_cidrs[var.environment])

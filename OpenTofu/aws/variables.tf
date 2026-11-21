@@ -19,7 +19,7 @@ variable "aws_region" {
 }
 
 variable "vpc_cidr" {
-  description = "VPC CIDR inside 172.16.0.0/12. null = per-environment default (prime 172.16.0.0/16, community 172.17.0.0/16; same map as Scripts/env.sh) so environments never overlap on the tailnet."
+  description = "VPC CIDR inside 172.16.0.0/12. null = per-environment default (prime 172.18.0.0/16, community 172.17.0.0/16; same map as Scripts/env.sh) so environments never overlap on the tailnet."
   type        = string
   default     = null
 

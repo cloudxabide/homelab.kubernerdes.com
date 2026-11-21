@@ -69,9 +69,10 @@ unset _loc_var
 # the homelab (10.10.12.0/22) and the Harvester storage network
 # (192.168.128.0/24). Distinct per environment so two AWS environments on the
 # same tailnet never overlap. Must match the map in OpenTofu/aws/network.tf.
+# 172.16.0.0/16 is skipped: the home IoT VLAN is 172.16.0.0/23.
 export AWS_REGION="${AWS_REGION:-us-east-1}"
 case "${ENVIRONMENT}" in
-  prime)     _aws_vpc_default="172.16.0.0/16" ;;
+  prime)     _aws_vpc_default="172.18.0.0/16" ;;
   community) _aws_vpc_default="172.17.0.0/16" ;;
   *)         _aws_vpc_default="" ;;   # enclave: never in AWS
 esac

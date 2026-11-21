@@ -21,8 +21,9 @@ It links to on-prem at only three points, all handled by one integration step
 `ENVIRONMENT=enclave` is air-gapped and refuses any `aws` location.
 
 ## What it builds (cost over resilience: single AZ, single node)
-- VPC from `vpc_cidr` (per-environment default: prime `172.16.0.0/16`, community `172.17.0.0/16`,
-  both inside the reserved 172.16.0.0/12, so two environments never overlap on the tailnet), one AZ,
+- VPC from `vpc_cidr` (per-environment default: prime `172.18.0.0/16`, community `172.17.0.0/16`,
+  both inside the reserved 172.16.0.0/12, so two environments never overlap on the tailnet; 172.16.0.0/16
+  is skipped because the home IoT VLAN is 172.16.0.0/23), one AZ,
   one public + one private subnet; NAT gateway off by default (`enable_nat_gateway`)
 - `rancher-01`: SL Micro 6.1 BYOS EC2 instance (6.2 is not published in AWS yet) (default `t3a.xlarge`) in the public subnet with an Elastic IP
   and a pinned private IP (`<vpc>.0.30`, mirroring the on-prem `.30` VIP).
@@ -187,7 +188,7 @@ The VPC range must not overlap any home subnet, including IoT or guest VLANs: ch
    It never goes into OpenTofu state or user_data: `tailscale-up` passes it over SSH.
 2. **Build:** add `tailscale_router_enabled = true` to `prime.tfvars`, then `ENVIRONMENT=prime Scripts/awsctl build`.
 3. **Join:** `ENVIRONMENT=prime Scripts/awsctl tailscale-up` (joins as `aws-prime-router`, advertising `vpc_cidr`).
-4. **Admin console:** approve the `172.16.0.0/16` subnet route for `aws-prime-router`, and disable key expiry for it.
+4. **Admin console:** approve the `172.18.0.0/16` subnet route for `aws-prime-router`, and disable key expiry for it.
 5. **nuc-00** (on-prem side):
    ```bash
    curl -fsSL https://tailscale.com/install.sh | sh
@@ -196,12 +197,12 @@ The VPC range must not overlap any home subnet, including IoT or guest VLANs: ch
    sudo tailscale up --advertise-routes=10.10.12.0/22 --accept-routes
    ```
    Approve the `10.10.12.0/22` route for nuc-00 in the admin console, and disable its key expiry.
-6. **Home router:** add a static route `172.16.0.0/16` via nuc-00, so other on-prem hosts (Harvester,
+6. **Home router:** add a static route `172.18.0.0/16` via nuc-00, so other on-prem hosts (Harvester,
    downstream clusters) reach the VPC. Without it, only nuc-00 can.
-7. **Check from nuc-00:** `ping -c3 172.16.0.30` and `ssh -i ~/.ssh/id_rsa-prime sles@172.16.0.30 hostname`.
+7. **Check from nuc-00:** `ping -c3 172.18.0.30` and `ssh -i ~/.ssh/id_rsa-prime sles@172.18.0.30 hostname`.
 8. **Switch to the tunnel:** set `admin_cidrs = []`, `ENVIRONMENT=prime Scripts/awsctl apply`, then
    `ENVIRONMENT=prime Scripts/awsctl outputs` (rancher and router addresses become the private IPs), and point
-   nuc-00's `rancher-aws` record at `172.16.0.30`.
+   nuc-00's `rancher-aws` record at `172.18.0.30`.
 
 ## Rules
 - Use OpenTofu (`tofu`), not Terraform. `required_version` is pinned to OpenTofu 1.10+.
