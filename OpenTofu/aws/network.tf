@@ -10,7 +10,7 @@
 # in the private subnet.
 #
 # Tailscale: a subnet router (tailscale.tf, tailscale_router_enabled) advertises
-# vpc_cidr to the tailnet and nuc-00 advertises homelab_cidr; tailscale.tf adds
+# vpc_cidr to the tailnet and ts-onprem advertises homelab_cidr; tailscale.tf adds
 # a route for homelab_cidr via the router to both route tables.
 
 data "aws_availability_zones" "available" {

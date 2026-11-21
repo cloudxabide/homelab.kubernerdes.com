@@ -167,7 +167,9 @@ cmd_tailscale_up() {
  Next (see OpenTofu/aws/README.md, "Tailscale subnet router"):
    1. Tailscale admin console: approve the ${routes} route for ${ts_host},
       and disable key expiry for it
-   2. nuc-00: tailscale up --advertise-routes=10.10.12.0/22 --accept-routes; approve that route
+   2. ts-onprem (10.10.12.14): tailscale up --hostname=ts-onprem --advertise-routes=10.10.12.0/22 --accept-routes;
+      approve that route, disable its key expiry
+   3. nuc-00: ip route add ${routes} via 10.10.12.14 (and make it persistent)
 ========================================
 EOF
 }

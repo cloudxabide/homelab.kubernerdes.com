@@ -1,7 +1,8 @@
 # Tailscale subnet router: tailscale-01 joins the tailnet and advertises the
 # VPC, and the VPC routes homelab_cidr back through it. Opt-in with
-# tailscale_router_enabled. The on-prem side (nuc-00 advertising homelab_cidr)
-# is set up by hand; see README.md "Tailscale subnet router".
+# tailscale_router_enabled. The on-prem side (ts-onprem, 10.10.12.14, a VM on
+# nuc-00 advertising homelab_cidr) is set up by hand; see README.md
+# "Tailscale subnet router".
 #
 #   tailscale-01  SL Micro (same AMI as rancher-01), public subnet, pinned
 #                 private IP <public subnet>.10, an auto-assigned public IP

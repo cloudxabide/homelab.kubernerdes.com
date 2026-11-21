@@ -43,7 +43,7 @@ It links to on-prem at only three points, all handled by one integration step
   IAM user for the Amazon EC2 node driver (create its access key by hand; it is kept out of state)
 
 ## Not yet
-- Automating the on-prem half of Tailscale (nuc-00, home router); it is done by hand for now, see
+- Automating the on-prem half of Tailscale (ts-onprem VM, host routes); it is done by hand for now, see
   "Tailscale subnet router" (planned: `Scripts/40_connect_hybrid.sh`)
 - Importing Harvester and the on-prem clusters into this Rancher
 
@@ -176,8 +176,11 @@ Cloud-init installs Tailscale from the static tarball into `/opt/tailscale` (che
 `sudo /opt/tailscale/install.sh [version]`. **Not yet verified on the image**; if `tailscale-up` reports it
 missing, look at `/var/log/cloud-init-output.log` on tailscale-01.
 
+The on-prem end is **ts-onprem** (`ts-onprem.homelab.kubernerdes.com`, 10.10.12.14): a small VM on nuc-00,
+bridged onto the homelab network (not libvirt's NAT network), so nuc-00 stays out of the routing path.
+
 The VPC range must not overlap any home subnet, including IoT or guest VLANs: check before step 5
-(once nuc-00 accepts routes, it sends the whole VPC range into the tunnel).
+(once ts-onprem accepts routes, it sends the whole VPC range into the tunnel).
 
 1. **Auth key:** Tailscale admin console → Settings → Keys → generate an auth key (not reusable, not
    ephemeral). Add it to `~/.config/homelab/creds` (`chmod 600`) on the machine that runs `awsctl`:
@@ -188,20 +191,35 @@ The VPC range must not overlap any home subnet, including IoT or guest VLANs: ch
 2. **Build:** add `tailscale_router_enabled = true` to `prime.tfvars`, then `ENVIRONMENT=prime Scripts/awsctl build`.
 3. **Join:** `ENVIRONMENT=prime Scripts/awsctl tailscale-up` (joins as `aws-prime-router`, advertising `vpc_cidr`).
 4. **Admin console:** approve the `172.18.0.0/16` subnet route for `aws-prime-router`, and disable key expiry for it.
-5. **nuc-00** (on-prem side):
+5. **ts-onprem** (on-prem side; VM on nuc-00, static 10.10.12.14/22, gateway 10.10.12.1, DNS nuc-00;
+   the `ts-onprem` A/PTR records are in `Files/nuc-00/var/lib/named/master/`). On SLES / openSUSE:
    ```bash
    curl -fsSL https://tailscale.com/install.sh | sh
    printf 'net.ipv4.ip_forward = 1\nnet.ipv6.conf.all.forwarding = 1\n' | sudo tee /etc/sysctl.d/99-tailscale.conf
    sudo sysctl --system
-   sudo tailscale up --advertise-routes=10.10.12.0/22 --accept-routes
+   sudo tailscale up --hostname=ts-onprem --advertise-routes=10.10.12.0/22 --accept-routes
    ```
-   Approve the `10.10.12.0/22` route for nuc-00 in the admin console, and disable its key expiry.
-6. **Home router:** add a static route `172.18.0.0/16` via nuc-00, so other on-prem hosts (Harvester,
-   downstream clusters) reach the VPC. Without it, only nuc-00 can.
+   If firewalld is running, put `tailscale0` in the trusted zone (or stop firewalld) so it forwards.
+   Approve the `10.10.12.0/22` route for ts-onprem in the admin console, and disable its key expiry.
+   This alone is enough for **AWS → homelab** (Rancher SSHing to VMs it provisions on Harvester, the kube API
+   of imported clusters): ts-onprem source-NATs that traffic to 10.10.12.14, so replies come straight back.
+6. **Homelab → AWS routes.** On-prem hosts that open connections to the VPC need `172.18.0.0/16 via
+   10.10.12.14`. The homelab is one flat /22, so put the route **on the hosts**, not only on the Sophos
+   firewall: a firewall route makes the path asymmetric (out via the firewall, replies straight from
+   ts-onprem on the same LAN), and a stateful firewall may drop those flows.
+   - **nuc-00 (needed for 09/10/awsctl over the tunnel):**
+     `sudo ip route add 172.18.0.0/16 via 10.10.12.14`, made persistent in nuc-00's network config
+     (wicked: add `172.18.0.0/16 10.10.12.14 - -` to `/etc/sysconfig/network/routes`;
+     NetworkManager: `nmcli connection modify <conn> +ipv4.routes "172.18.0.0/16 10.10.12.14"`).
+   - **Rancher agents** (Harvester, imported clusters) reaching `rancher-aws` on 443: simplest is to keep
+     the `rancher-aws` record on the Elastic IP (agents go over the internet, limited to
+     `public_ingress_cidrs`). To keep them private, give those hosts the same route (or push DHCP option
+     121 from nuc-00's dhcpd to DHCP clients) before moving the record to the private IP.
 7. **Check from nuc-00:** `ping -c3 172.18.0.30` and `ssh -i ~/.ssh/id_rsa-prime sles@172.18.0.30 hostname`.
-8. **Switch to the tunnel:** set `admin_cidrs = []`, `ENVIRONMENT=prime Scripts/awsctl apply`, then
-   `ENVIRONMENT=prime Scripts/awsctl outputs` (rancher and router addresses become the private IPs), and point
-   nuc-00's `rancher-aws` record at `172.18.0.30`.
+8. **Switch admin to the tunnel:** set `admin_cidrs = []`, `ENVIRONMENT=prime Scripts/awsctl apply`, then
+   `ENVIRONMENT=prime Scripts/awsctl outputs` (rancher and router addresses become the private IPs), and
+   point `~/.kube/prime-rancher-aws.kubeconfig` at `172.18.0.30` (or rerun 10). Move nuc-00's
+   `rancher-aws` record to `172.18.0.30` only once every agent host has the route from step 6.
 
 ## Rules
 - Use OpenTofu (`tofu`), not Terraform. `required_version` is pinned to OpenTofu 1.10+.
