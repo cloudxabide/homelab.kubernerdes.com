@@ -32,8 +32,9 @@ source "${SCRIPT_DIR}/env.sh"
 #   fail. The Harvester kubeconfig carries two contexts ("rancher" and
 #   "local") — VMIs only exist under "local" (see env.sh), so it's selected
 #   explicitly.
-# aws: env.sh reads RANCHER_NODE_01 and RANCHER_VIP (rancher-01's private
-#   IP, single node) from AWS_OUTPUTS_FILE, written from `tofu output -json`.
+# aws: env.sh reads RANCHER_NODE_01 and RANCHER_VIP (single node) from
+#   AWS_OUTPUTS_FILE, written from `tofu output -json`: the Elastic IP while
+#   admin_cidrs is set, rancher-01's private IP once Tailscale is up.
 # ---------------------------------------------------------------------------
 if [[ "${RANCHER_LOCATION}" == "aws" ]]; then
   if [[ -z "${RANCHER_NODE_01:-}" || -z "${RANCHER_VIP:-}" ]]; then
