@@ -10,12 +10,12 @@ set -euo pipefail
 #   Scripts/modules/common/observability_le_cert.sh
 #
 # Reuses the certificate 07_post_configure_harvester.sh issued for Harvester
-# (/etc/letsencrypt/live/${BASE_DOMAIN}, covering *.${BASE_DOMAIN}). The
-# certbot deploy hook (/usr/local/sbin/harvester-cert-deploy) updates the
-# secret on renewal using root's copy of this kubeconfig.
+# (/etc/letsencrypt/live/${BASE_DOMAIN}, covering *.${BASE_DOMAIN}). On
+# renewal, certbot's /etc/letsencrypt/renewal-hooks/deploy/cluster-cert-deploy
+# (installed here) updates the secret using root's copy of this kubeconfig.
 #
 # What this does (safe to re-run):
-#   1. Gives root a copy of KUBECONFIG for renewals
+#   1. Gives root a copy of KUBECONFIG and installs the renewal hook
 #   2. Writes the certificate into suse-observability/${OBS_TLS_SECRET}
 #   3. Points the suse-observability-ui ingress at that secret
 #   4. Waits until https://${OBS_HOSTNAME} serves a trusted certificate
@@ -41,6 +41,9 @@ echo "==> Observability certificate: Let's Encrypt *.${BASE_DOMAIN}"
 # 1. Root's kubeconfig for renewals
 sudo install -D -m 600 "${KUBECONFIG}" "${ROOT_KUBECONFIG}"
 echo "    root kubeconfig: ${ROOT_KUBECONFIG}"
+sudo install -D -m 0755 "${SCRIPT_DIR}/../../nuc-00/cluster-cert-deploy" \
+  /etc/letsencrypt/renewal-hooks/deploy/cluster-cert-deploy
+echo "    renewal hook: /etc/letsencrypt/renewal-hooks/deploy/cluster-cert-deploy"
 
 # 2. Certificate into the TLS secret
 kubectl create namespace "${NAMESPACE}" --dry-run=client -o yaml | kubectl apply -f - >/dev/null

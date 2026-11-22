@@ -11,12 +11,12 @@ set -euo pipefail
 #
 # Reuses the certificate 07_post_configure_harvester.sh issued for Harvester
 # (/etc/letsencrypt/live/${BASE_DOMAIN}, covering *.${BASE_DOMAIN}), so there
-# is one certificate and one renewal per environment. The certbot deploy hook
-# (/usr/local/sbin/harvester-cert-deploy) updates Rancher on renewal using
-# root's copy of this kubeconfig.
+# is one certificate and one renewal per environment. On renewal, certbot's
+# /etc/letsencrypt/renewal-hooks/deploy/cluster-cert-deploy (installed here)
+# updates Rancher using root's copy of this kubeconfig.
 #
 # What this does (safe to re-run):
-#   1. Gives root a copy of KUBECONFIG for renewals
+#   1. Gives root a copy of KUBECONFIG and installs the renewal hook
 #   2. Writes the certificate into cattle-system/tls-rancher-ingress
 #   3. Switches the chart to ingress.tls.source=secret and
 #      agentTLSMode=system-store (agents trust the OS store, not a pinned CA)
@@ -56,6 +56,9 @@ echo "==> Rancher certificate: Let's Encrypt *.${BASE_DOMAIN}"
 #    so this kubeconfig is unaffected by the ingress certificate)
 sudo install -D -m 600 "${KUBECONFIG}" "${ROOT_KUBECONFIG}"
 echo "    root kubeconfig: ${ROOT_KUBECONFIG}"
+sudo install -D -m 0755 "${SCRIPT_DIR}/../../nuc-00/cluster-cert-deploy" \
+  /etc/letsencrypt/renewal-hooks/deploy/cluster-cert-deploy
+echo "    renewal hook: /etc/letsencrypt/renewal-hooks/deploy/cluster-cert-deploy"
 
 apply_secret() {
   kubectl create namespace cattle-system --dry-run=client -o yaml | kubectl apply -f - >/dev/null

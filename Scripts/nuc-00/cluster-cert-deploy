@@ -1,0 +1,50 @@
+#!/bin/bash
+set -euo pipefail
+
+# cluster-cert-deploy — Copy the environment's Let's Encrypt wildcard into the
+# ingress secrets of the on-prem Rancher Manager and Observability clusters.
+#
+# Installed on nuc-00 as /etc/letsencrypt/renewal-hooks/deploy/cluster-cert-deploy
+# by modules/common/rancher_le_cert.sh and observability_le_cert.sh (i.e. only
+# once one of those products exists). certbot runs every script in that
+# directory, as root, after each successful renewal, so it runs alongside
+# harvester-cert-deploy, which handles Harvester only. Can also be run by hand:
+#
+#   sudo /etc/letsencrypt/renewal-hooks/deploy/cluster-cert-deploy prime.kubernerdes.com
+#
+# Uses root's kubeconfigs /root/.kube/<env>-{rancher,observability}.kubeconfig
+# (written by those modules). Best effort: a cluster that doesn't answer (not
+# built yet, or gone after a rebuild with its kubeconfig left behind) is
+# skipped with a note and never fails the renewal. The RKE2 API has its own CA,
+# so no INSECURE handling is needed. The AWS Rancher is not handled here: it
+# gets its own certificate from cert-manager (rancher_aws_le_cert.sh).
+
+CERT_NAME="${1:-$(basename "${RENEWED_LINEAGE:-}")}"
+if [[ -z "${CERT_NAME}" ]]; then
+  echo "usage: $0 <env>.kubernerdes.com (or run as a certbot deploy hook)" >&2
+  exit 1
+fi
+ENVIRONMENT="${CERT_NAME%%.*}"
+LIVE_DIR="/etc/letsencrypt/live/${CERT_NAME}"
+
+update_tls_secret() {
+  local label="$1" kubeconfig="$2" namespace="$3" secret="$4"
+  [[ -r "${kubeconfig}" ]] || return 0
+  echo "==> Updating ${label} (${ENVIRONMENT}) ${namespace}/${secret}"
+  if ! kubectl --kubeconfig "${kubeconfig}" --request-timeout=10s get namespace "${namespace}" >/dev/null 2>&1; then
+    echo "    SKIPPED: cluster in ${kubeconfig} not reachable, or no ${namespace} namespace."
+    echo "    Stale? Remove that file. Once ${label} is up, re-run: sudo $0 ${CERT_NAME}"
+    return 0
+  fi
+  kubectl --kubeconfig "${kubeconfig}" -n "${namespace}" create secret tls "${secret}" \
+    --cert="${LIVE_DIR}/fullchain.pem" --key="${LIVE_DIR}/privkey.pem" \
+    --dry-run=client -o yaml \
+    | kubectl --kubeconfig "${kubeconfig}" --request-timeout=30s apply -f - \
+    || echo "    WARNING: updating ${namespace}/${secret} failed; re-run: sudo $0 ${CERT_NAME}"
+}
+
+update_tls_secret "Rancher" "/root/.kube/${ENVIRONMENT}-rancher.kubeconfig" \
+  cattle-system tls-rancher-ingress
+# Keep the secret name in sync with OBS_TLS_SECRET in Scripts/env.sh
+update_tls_secret "Observability" "/root/.kube/${ENVIRONMENT}-observability.kubeconfig" \
+  suse-observability tls-observability-ingress
