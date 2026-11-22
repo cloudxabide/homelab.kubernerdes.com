@@ -214,6 +214,19 @@ All IPs are derived from `${IP_PREFIX}` defined in `env.sh`.
 
 Wildcard DNS: `*.apps.${ENVIRONMENT}.kubernerdes.com` → `${IP_PREFIX}.230`
 
+### Other reserved ranges (keep these from overlapping)
+
+| Range | Use |
+|:------|:----|
+| 172.16.0.0/23 | Home IoT VLAN |
+| 172.17.0.0/16 | community AWS VPC (also Docker's default `docker0` on nuc-00 — move `bip` before community goes to AWS) |
+| 172.18.0.0/16 | prime AWS VPC |
+| 172.19.0.0/16 | Harbor's Docker network on nuc-00 (`Files/nuc-00/opt/harbor/docker-compose.override.yml`) |
+| 192.168.128.0/24 | Harvester storage network |
+
+nuc-00 reaches the AWS VPCs through ts-onprem (10.10.12.14, Tailscale), so no Docker network on nuc-00 may
+use a VPC range: a local bridge on the same range wins and the traffic never leaves nuc-00.
+
 ---
 
 ## Day 0 — Design and Plan

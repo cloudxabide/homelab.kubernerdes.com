@@ -19,7 +19,7 @@ variable "aws_region" {
 }
 
 variable "vpc_cidr" {
-  description = "VPC CIDR inside 172.16.0.0/12. null = per-environment default (prime 172.16.0.0/16, community 172.17.0.0/16; same map as Scripts/env.sh) so environments never overlap on the tailnet."
+  description = "VPC CIDR inside 172.16.0.0/12. null = per-environment default (prime 172.18.0.0/16, community 172.17.0.0/16; same map as Scripts/env.sh) so environments never overlap on the tailnet."
   type        = string
   default     = null
 
@@ -114,7 +114,7 @@ variable "manage_dns" {
 }
 
 variable "route53_zone_name" {
-  description = "Public Route 53 zone that holds <environment>.<domain> records."
+  description = "Public Route 53 zone, in this AWS account, that holds the rancher-aws record. If the parent zone is in another account, delegate rancher-aws.<environment>.<domain> and set that name here (see README.md)."
   type        = string
   default     = "kubernerdes.com"
 }
@@ -133,6 +133,30 @@ variable "admin_cidrs" {
   validation {
     condition     = alltrue([for c in var.admin_cidrs : can(cidrnetmask(c)) && c != "0.0.0.0/0"])
     error_message = "admin_cidrs must be valid CIDRs, and not 0.0.0.0/0 (that would expose SSH and the kube API to the internet)."
+  }
+}
+
+# --- Tailscale subnet router -----------------------------------------------
+variable "tailscale_router_enabled" {
+  description = "Build tailscale-01, a Tailscale subnet router that advertises the VPC, and route homelab_cidr through it (see tailscale.tf)."
+  type        = bool
+  default     = false
+}
+
+variable "tailscale_instance_type" {
+  description = "tailscale-01 instance type. t3a.micro = 2 vCPU / 1 GiB, plenty for a lab subnet router."
+  type        = string
+  default     = "t3a.micro"
+}
+
+variable "tailscale_version" {
+  description = "Tailscale release installed on first boot: \"latest\" (newest stable) or an exact version such as \"1.104.7\"."
+  type        = string
+  default     = "latest"
+
+  validation {
+    condition     = can(regex("^(latest|[0-9]+\\.[0-9]+\\.[0-9]+)$", var.tailscale_version))
+    error_message = "tailscale_version must be \"latest\" or a version such as \"1.104.7\"."
   }
 }
 

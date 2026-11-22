@@ -1,6 +1,6 @@
 $TTL 2D
 12.10.10.in-addr.arpa.   IN SOA nuc-00.homelab.kubernerdes.com. root.homelab.kubernerdes.com. (
-                        2026110602	; serial
+                        2026112101	; serial
                         1D              ; refresh
                         2H              ; retry
                         1W              ; expiry
@@ -19,6 +19,7 @@ $TTL 2D
 11	IN	PTR	truenas.homelab.kubernerdes.com.
 12	IN	PTR	librenms.homelab.kubernerdes.com.
 13	IN	PTR	litellm.homelab.kubernerdes.com.
+14	IN	PTR	ts-onprem.homelab.kubernerdes.com.
 20	IN	PTR	glkvm.homelab.kubernerdes.com.
 
 ; KVMs for NUCs (shared by all ENVIRONMENTs)

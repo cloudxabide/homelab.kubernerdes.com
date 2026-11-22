@@ -16,6 +16,7 @@ set -euo pipefail
 #                                         forced to <ENVIRONMENT>/aws.tfstate here
 #   TF_VAR_state_passphrase             — or exported by ~/.config/homelab/creds
 #   ~/.ssh/id_rsa-<ENVIRONMENT>         — SSH key whose .pub is in the cloud-init template
+#   TAILSCALE_AUTHKEY                   — tailscale-up only; or exported by ~/.config/homelab/creds
 #
 # Optional:
 #   NUC00_HOST=nuc-00   also copy the outputs file to <host>:~/.config/homelab/
@@ -89,16 +90,20 @@ cmd_outputs() {
 }
 
 out() { tofu_ output -raw "$1"; }
+# Optional outputs (Tailscale router): empty when disabled or not applied yet
+out_opt() { tofu_ output -raw "$1" 2>/dev/null || true; }
 
-cmd_wait() {
-  need
-  local ip seconds="${WAIT_SECONDS:-600}"
-  ip="$(out rancher_public_ip)"
-  echo "==> Waiting for rancher-01 (${ip}) to accept SSH as sles (cloud-init done)"
+# Instance IDs that stop/start/status act on: rancher-01, plus tailscale-01 if built
+instance_ids() { echo "$(out rancher_instance_id) $(out_opt tailscale_router_instance_id)"; }
+
+wait_ssh() {
+  # wait_ssh <name> <ip>
+  local name="$1" ip="$2" seconds="${WAIT_SECONDS:-600}"
+  echo "==> Waiting for ${name} (${ip}) to accept SSH as sles (cloud-init done)"
   while (( seconds >= 0 )); do
     if (( seconds % 10 == 0 )) && ssh -i "${SSH_KEY}" -o BatchMode=yes -o ConnectTimeout=5 \
          -o StrictHostKeyChecking=accept-new sles@"${ip}" true 2>/dev/null; then
-      printf "\rrancher-01 (%s) is up \033[0K\n" "${ip}"
+      printf "\r%s (%s) is up \033[0K\n" "${name}" "${ip}"
       ssh -i "${SSH_KEY}" -o BatchMode=yes sles@"${ip}" \
         'echo "    hostname: $(hostname)"; . /etc/os-release; echo "    os:       ${PRETTY_NAME}"'
       return 0
@@ -111,6 +116,69 @@ cmd_wait() {
   echo "ERROR: no SSH as sles@${ip} after ${WAIT_SECONDS:-600}s." >&2
   echo "       Is your IP in admin_cidrs? Did cloud-init run (aws ec2 get-console-output)?" >&2
   return 1
+}
+
+cmd_wait() { need; wait_ssh rancher-01 "$(out rancher_public_ip)"; }
+
+router_ip() {
+  local ip
+  ip="$(out_opt tailscale_router_admin_ip)"
+  if [[ -z "${ip}" ]]; then
+    echo "ERROR: no tailscale-01 — set tailscale_router_enabled = true in ${TFVARS}, then: $(basename "$0") build" >&2
+    exit 1
+  fi
+  echo "${ip}"
+}
+
+cmd_tailscale_up() {
+  need
+  if [[ -z "${TAILSCALE_AUTHKEY:-}" && -f "${CREDS}" ]]; then
+    # shellcheck source=/dev/null
+    source "${CREDS}"
+  fi
+  if [[ -z "${TAILSCALE_AUTHKEY:-}" ]]; then
+    echo "ERROR: TAILSCALE_AUTHKEY not set (export it, or put it in ${CREDS})" >&2
+    exit 1
+  fi
+  local ip routes ts_host
+  ip="$(router_ip)"
+  routes="$(out vpc_cidr)"
+  ts_host="aws-${ENVIRONMENT}-router"
+  wait_ssh tailscale-01 "${ip}"
+
+  echo "==> Waiting for cloud-init to finish installing Tailscale"
+  if ! ssh -i "${SSH_KEY}" sles@"${ip}" \
+       'sudo cloud-init status --wait >/dev/null; test -x /opt/tailscale/bin/tailscale'; then
+    echo "ERROR: /opt/tailscale/bin/tailscale is missing. Look at /var/log/cloud-init-output.log on tailscale-01" >&2
+    echo "       ($(basename "$0") ssh-router), or rerun: sudo /opt/tailscale/install.sh" >&2
+    exit 1
+  fi
+
+  echo "==> tailscale up as ${ts_host}, advertising ${routes}"
+  # The key goes over SSH on stdin, never on a command line
+  printf '%s' "${TAILSCALE_AUTHKEY}" | ssh -i "${SSH_KEY}" sles@"${ip}" \
+    "sudo /opt/tailscale/bin/tailscale up --auth-key=file:/dev/stdin --hostname=${ts_host} \
+       --advertise-routes=${routes} --accept-routes --accept-dns=false"
+  ssh -i "${SSH_KEY}" sles@"${ip}" 'sudo /opt/tailscale/bin/tailscale status'
+  cat <<EOF
+
+========================================
+ ${ts_host} is on the tailnet
+ Next (see OpenTofu/aws/README.md, "Tailscale subnet router"):
+   1. Tailscale admin console: approve the ${routes} route for ${ts_host},
+      and disable key expiry for it
+   2. ts-onprem (10.10.12.14): tailscale up --hostname=ts-onprem --advertise-routes=10.10.12.0/22 --accept-routes;
+      approve that route, disable its key expiry
+   3. nuc-00: ip route add ${routes} via 10.10.12.14 (and make it persistent)
+========================================
+EOF
+}
+
+cmd_ssh_router() {
+  need
+  local ip
+  ip="$(router_ip)"
+  exec ssh -i "${SSH_KEY}" sles@"${ip}" "$@"
 }
 
 cmd_build() {
@@ -130,23 +198,27 @@ cmd_build() {
    2. nuc-00 DNS:     rancher-aws  IN  A  ${ip}   (db.${ENVIRONMENT}.kubernerdes.com; bump serial; rndc reload)
    3. On nuc-00:      outputs file in ~/.config/homelab/ $( [[ -n "${NUC00_HOST:-}" ]] && echo "(copied)" || echo "(copy it, or rerun with NUC00_HOST=nuc-00)" )
                       ENVIRONMENT=${ENVIRONMENT} RANCHER_LOCATION=aws: run 09, then 10
-========================================
 EOF
+  if [[ -n "$(out_opt tailscale_router_instance_id)" ]]; then
+    echo "   4. Tailscale:      ENVIRONMENT=${ENVIRONMENT} $(basename "$0") tailscale-up"
+  fi
+  echo "========================================"
 }
 
 cmd_ssh()    { need; exec ssh -i "${SSH_KEY}" sles@"$(out rancher_public_ip)" "$@"; }
 
 cmd_status() {
   need
-  local id
-  id="$(out rancher_instance_id)"
-  aws ec2 describe-instances --region "$(out aws_region)" --instance-ids "${id}" \
-    --query 'Reservations[0].Instances[0].[InstanceId,State.Name,InstanceType,PublicIpAddress,PrivateIpAddress]' \
+  # shellcheck disable=SC2046
+  aws ec2 describe-instances --region "$(out aws_region)" --instance-ids $(instance_ids) \
+    --query 'Reservations[].Instances[].[Tags[?Key==`Name`]|[0].Value,InstanceId,State.Name,InstanceType,PublicIpAddress,PrivateIpAddress]' \
     --output table
 }
 
-cmd_stop()  { need; aws ec2 stop-instances  --region "$(out aws_region)" --instance-ids "$(out rancher_instance_id)" --output table; }
-cmd_start() { need; aws ec2 start-instances --region "$(out aws_region)" --instance-ids "$(out rancher_instance_id)" --output table; }
+# shellcheck disable=SC2046
+cmd_stop()  { need; aws ec2 stop-instances  --region "$(out aws_region)" --instance-ids $(instance_ids) --output table; }
+# shellcheck disable=SC2046
+cmd_start() { need; aws ec2 start-instances --region "$(out aws_region)" --instance-ids $(instance_ids) --output table; }
 
 cmd_destroy() {
   cmd_init
@@ -167,10 +239,14 @@ Usage: ENVIRONMENT={prime|community} $(basename "$0") <command>
   outputs   write ${OUTPUTS_FILE} (and copy to \$NUC00_HOST if set)
   wait      count down until rancher-01 accepts SSH as sles
   ssh       ssh sles@rancher-01 (Elastic IP)
-  status    instance state
-  stop      stop rancher-01 (keeps EIP, disk and private IP; stops compute charges)
-  start     start rancher-01
+  status    instance state (rancher-01, and tailscale-01 if built)
+  stop      stop the instances (rancher-01 keeps its EIP, disk and private IP; stops compute charges)
+  start     start the instances
   destroy   tofu destroy
+
+  Tailscale subnet router (tailscale_router_enabled = true):
+  tailscale-up   join tailscale-01 to the tailnet, advertising the VPC (needs TAILSCALE_AUTHKEY)
+  ssh-router     ssh sles@tailscale-01
 EOF
 }
 
@@ -185,6 +261,8 @@ case "${1:-help}" in
   stop)    cmd_stop ;;
   start)   cmd_start ;;
   destroy) cmd_destroy ;;
+  tailscale-up) cmd_tailscale_up ;;
+  ssh-router)   shift; cmd_ssh_router "$@" ;;
   help|-h|--help) usage ;;
   *) usage; exit 1 ;;
 esac

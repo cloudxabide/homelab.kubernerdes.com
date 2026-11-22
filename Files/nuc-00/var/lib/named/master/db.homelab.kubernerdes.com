@@ -1,7 +1,7 @@
 $TTL 86400 
 $ORIGIN homelab.kubernerdes.com. 
 @	IN SOA      nuc-00.homelab.kubernerdes.com.  root.kubernerdes.com. ( 
-            2026110602 ; Serial
+            2026112101 ; Serial
             86400      ; Refresh
             7200       ; Retry
             2419200    ; Expire
@@ -24,6 +24,7 @@ nuc-00-02	IN	A	10.10.12.9
 nuc-00		IN	A	10.10.12.10
 truenas		IN	A	10.10.12.11
 litellm		IN	A	10.10.12.13
+ts-onprem	IN	A	10.10.12.14	; Tailscale subnet router (VM on nuc-00) to the AWS VPC
 glkvm		IN	A	10.10.12.20
 
 ; KVMs for NUCs (shared by all ENVIRONMENTs)
