@@ -135,13 +135,13 @@ Port 16 ↔ MikroTik port 16 and the empty SFP+ cages are from the photo.
 
 | Port | Hostname | Interface | VLAN | Speed |
 |:-----|:---------|:----------|:-----|:-----:|
-| 1 |  |  |  |  |
-| 2 |  |  |  |  |
-| 3 |  |  |  |  |
-| 4 |  |  |  |  |
-| 5 |  |  |  |  |
-| 6 |  |  |  |  |
-| 7 |  |  |  |  |
+| 1 | nuc-04 | enp86s0  |  |  |  |
+| 2 | nuc-05 | enp86s0  |  |  |  |
+| 3 | nuc-06 | enp86s0  |  |  |  |
+| 4 | nuc-04 | enp0s13f0u1  |  |  |  |
+| 5 | nuc-05 | enp0s13f0u1  |  |  |  |
+| 6 | nuc-06 | enp0s13f0u1  |  |  |  |
+| 7 | nuc-00 | eth0  |  |  |  |
 | 8 |  |  |  |  |
 | 9 |  |  |  |  |
 | 10 |  |  |  |  |
@@ -149,7 +149,7 @@ Port 16 ↔ MikroTik port 16 and the empty SFP+ cages are from the photo.
 | 12 |  |  |  |  |
 | 13 |  |  |  |  |
 | 14 |  |  |  |  |
-| 15 |  |  |  |  |
+| 15 | Cisco:GE1 |  |  |  |
 | 16 | MikroTik:16 | uplink | 12 + 128T | 1G |
 | 17 (SFP+) |  |  |  |  |
 | 18 (SFP+) |  |  |  |  |
@@ -166,17 +166,17 @@ Port 16 ↔ NICGIGA port 16 and the empty SFP+ cages are from the photo.
 
 | Port | Hostname | Interface | VLAN | Speed |
 |:-----|:---------|:----------|:-----|:-----:|
-| 1 |  |  |  |  |
-| 2 |  |  |  |  |
-| 3 |  |  |  |  |
-| 4 |  |  |  |  |
-| 5 |  |  |  |  |
-| 6 |  |  |  |  |
-| 7 |  |  |  |  |
-| 8 |  |  |  |  |
-| 9 |  |  |  |  |
-| 10 |  |  |  |  |
-| 11 |  |  |  |  |
+| 1 | nuc-01-kvm  |  |  |  |
+| 2 | nuc-02-kvm  |  |  |  |
+| 3 | nuc-03-kvm  |  |  |  |
+| 4 | nuc-04-kvm  |  |  |  |
+| 5 | nuc-05-kvm  |  |  |  |
+| 6 | nuc-06-kvm  |  |  |  |
+| 7 | nuc-99 |  |  |  |
+| 8 | nuc-01 |  |  |  |
+| 9 | nuc-02 |  |  |  |
+| 10 | nuc-03  |  |  |  |
+| 11 | nuc-04 |  |  |  |
 | 12 |  |  |  |  |
 | 13 |  |  |  |  |
 | 14 |  |  |  |  |
