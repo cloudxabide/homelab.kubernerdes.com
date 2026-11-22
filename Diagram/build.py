@@ -378,9 +378,10 @@ for i, v in enumerate(INV["vlans"]):
 CX = 1190
 cy0 = 172
 
-rw = INV["remote"]
-rx_, ry_ = 600, 150
-S.line([(rx_ + 300, ry_ + 42), (CX - 100, ry_ + 42)], C["ts"], 1.8, dash="2 5", r=0)
+# AWS (reached over Tailscale: tailscale-01 in the VPC <-> ts-onprem on nuc-00)
+aws = INV["aws"]
+ax, ay, aw, ah = 572, 140, 430, 268
+S.line([(ax + aw, ay + 40), (CX - 100, ay + 40)], C["ts"], 1.8, dash="2 5", r=0)
 
 blobs = [(-95, 18, 42), (-45, -8, 56), (25, -18, 62), (90, 6, 48), (130, 26, 30), (-130, 30, 28)]
 for dx, dy, r in blobs:
@@ -392,10 +393,26 @@ S.add(f'<rect x="{CX-147.5}" y="{cy0+14.5}" width="295" height="41" rx="20.5" fi
 S.text(CX, cy0 + 14, "Internet", 26, TEXT, 600, "middle")
 S.text(CX, cy0 + 40, INV["internet"]["public_ip"] + " public IPv4", 13, MUTED, 400, "middle")
 
-S.rect(rx_, ry_, 300, 84, rx=12, fill=PANEL, stroke=C["ts"] + "aa", sw=1.6)
-S.icon("tailscale", rx_ + 16, ry_ + 22, 38)
-S.text(rx_ + 66, ry_ + 38, rw["name"], 18, TEXT, 600)
-S.text(rx_ + 66, ry_ + 60, rw["note"], 13, MUTED, 400)
+S.rect(ax, ay, aw, ah, rx=14, fill=PANEL, stroke=C["aws"] + "aa", sw=1.6)
+S.add(f'<rect x="{ax+1}" y="{ay+14}" width="4" height="{ah-28}" rx="2" fill="{C["aws"]}"/>')
+S.icon("aws-l", ax + 16, ay + 14, 34)
+S.text(ax + 62, ay + 32, f"{aws['name']} · {aws['region']}", 18, TEXT, 600)
+S.text(ax + 62, ay + 52, f"VPC {aws['vpc']} · {aws['note']}", 12.5, MUTED, 400)
+iy = ay + 68
+for inst in aws["instances"]:
+    S.rect(ax + 14, iy, aw - 28, 64, rx=9, fill=CHIP, stroke=BORDER, sw=1)
+    S.icon(inst["icon"], ax + 24, iy + 11, 26)
+    S.text(ax + 60, iy + 22, inst["name"], 14, TEXT, 600)
+    S.text(ax + aw - 26, iy + 22, inst["ip"], 12, C["aws"], 500, "end", mono=True)
+    S.text(ax + 60, iy + 39, inst["note"], 11.5, MUTED, 400)
+    if inst.get("dns"):
+        S.text(ax + 60, iy + 55, f"{inst['dns']}.{SHOWN_DOMAIN}", 10.5, C["aws"], 400, mono=True, op=0.85)
+    iy += 72
+S.icon("tailscale", ax + 16, iy + 6, 18)
+for k, ln in enumerate(aws["tailnet"]):
+    S.text(ax + 42, iy + 14 + k * 16, ln, 11.5, C["ts"], 500)
+assert iy + 14 + len(aws["tailnet"]) * 16 <= ay + ah, f"AWS panel too short: {iy + 14 + len(aws['tailnet']) * 16 - ay}"
+assert vy + vh < 800 - TAB - 8, "networks table runs into the Cisco"
 
 # cloud services (right column), dotted = over the internet
 csx, csy = 1790, 146
@@ -711,7 +728,10 @@ HY = NY + NH + 40
 hv = INV["harvester"]
 CL_H = 250
 HH = 112 + CL_H + 20
-PB = HY + HH                     # bottom of the tall cards (nuc-00, NAS)
+# nuc-00's card lists services + VMs; the bottom row grows to fit it
+N0_NEED = NY + 138 + len(INV["nuc00"]["services"]) * 46 + 26 + len(INV["nuc00"]["vms"]) * 50 + 8
+PB = max(HY + HH, N0_NEED)       # bottom of the tall cards (nuc-00, NAS) and the Harvester panel
+HH = PB - HY
 
 for key, cx, cw in COLS_NIC[1:] + COLS_MT:
     S.line([(cx + cw / 2, NY + NH), (cx + cw / 2, HY)], MUTED, 1.6, dash="3 4", cap="butt")

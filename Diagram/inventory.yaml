@@ -23,7 +23,8 @@ vlans:   # order = table order; key = VLAN id (or wan / ts)
   - {key: "12",  tag: "VLAN 12",   name: LAB,     subnet: "10.10.12.0/22",     color: "#f0883e", note: "DMZ · Port3 · .12 homelab · .13 enclave · .14 community · .15 prime"}
   - {key: "10",  tag: "VLAN 10",   name: DMZ-2,   subnet: "10.0.0.0/22",       color: "#bc8cff", note: "DMZ · Port4 · vacant, NUCs move here at times"}
   - {key: "128", tag: "VLAN 128",  name: STORAGE, subnet: "192.168.128.0/24",  color: "#f778ba", note: "Longhorn replication · USB NICs · only on the NUC switches"}
-  - {key: "ts",  tag: "Tailscale", name: VPN,     subnet: "100.64.0.0/10",     color: "#39c5cf", note: "remote access · ts-onprem subnet router"}
+  - {key: "aws", tag: "AWS VPC",   name: AWS,     subnet: "172.18.0.0/16",     color: "#e3b341", note: "prime · us-east-1 · public subnet 172.18.0.0/20"}
+  - {key: "ts",  tag: "Tailscale", name: VPN,     subnet: "100.64.0.0/10",     color: "#39c5cf", note: "tailnet · ts-onprem (on-prem) ⇄ tailscale-01 (AWS)"}
 
 internet:
   speed: {down: "? Mbit/s", up: "? Mbit/s"}
@@ -31,11 +32,20 @@ internet:
   cloud_services:
     - {icon: suse,      name: "SUSE Prime registry", note: "registry.rancher.com · Rancher Prime charts + images"}
     - {icon: github-l,    name: "GitHub Pages",        note: "docs.{domain} · docusaurus guide"}
-    - {icon: letsencrypt, name: "Let's Encrypt",     note: "certs for Rancher + Observability"}
+    - {icon: letsencrypt, name: "Let's Encrypt",     note: "certs · DNS-01 via Route 53 for rancher-aws"}
 
-remote:
-  name: "Remote access"
-  note: "Tailscale · via ts-onprem"
+# AWS side (OpenTofu/aws, Scripts/awsctl): reached over Tailscale
+aws:
+  name: "AWS"
+  region: "us-east-1"
+  vpc: "172.18.0.0/16"
+  note: "prime · single AZ · OpenTofu"
+  instances:
+    - {icon: tailscale, name: "tailscale-01", ip: "172.18.0.10", note: "Tailscale subnet router · t3a.micro"}
+    - {icon: rancher,   name: "rancher-01",   ip: "172.18.0.30", note: "Rancher Manager · t3a.xlarge · SL Micro 6.1", dns: "rancher-aws.prime"}
+  tailnet:
+    - "tailscale-01 advertises 172.18.0.0/16"
+    - "ts-onprem (VM on nuc-00, 10.10.12.14) advertises 10.10.12.0/22"
 
 # ISP device: stub = not managed by me, WAN goes straight to the firewall
 isp:
@@ -128,12 +138,13 @@ nuc00:
     - {icon: glyph-dhcp,   name: "BIND + dhcpd", note: "*.kubernerdes.com zones · DHCP"}
     - {icon: glyph-nic,    name: "PXE / iPXE",   note: "TFTP + Apache · Harvester installs"}
     - {icon: vault,        name: "Vault PKI",    note: "homelab root CA"}
+    - {icon: harbor,       name: "Harbor",       note: "registry · Docker (172.19.0.0/16)"}
   vms:
     - {icon: suse, name: "nuc-00-01", ip: ".8",  note: "infra VM · ?"}
     - {icon: glyph-shield, name: "nuc-00-02", ip: ".9",  note: "bastion host · SLES"}
     - {icon: haproxy, name: "nuc-00-03", ip: ".93", note: "HAProxy + Keepalived · VIP .193"}
     - {icon: glyph-gpu, name: "litellm",   ip: ".13", note: "LiteLLM proxy · runs on ?"}
-    - {icon: tailscale, name: "ts-onprem", ip: "?",   note: "Tailscale subnet router · runs on ?"}
+    - {icon: tailscale, name: "ts-onprem", ip: ".14", note: "Tailscale subnet router ⇄ AWS"}
 
 # Harvester cluster "prime": all six NUCs. IPs: mgmt in 10.10.15.0/24, KVMs in 10.10.12.0/24
 harvester:

@@ -38,9 +38,10 @@ ICON_MAP = {
     "windows": "microsoft-windows", "wireguard": "wireguard", "zigbee2mqtt": "zigbee2mqtt",
     # kubernerdes lab
     "sophos": "sophos", "cisco": "cisco", "harvester": "harvester", "rancher": "rancher",
-    "tailscale": "tailscale", "github-l": "github-light", "letsencrypt": "lets-encrypt",
+    "tailscale": "tailscale-light", "github-l": "github-light", "letsencrypt": "lets-encrypt",
     "vault": "hashicorp-vault", "certmanager": "cert-manager", "longhorn": "longhorn",
     "haproxy": "haproxy", "sipeed": "sipeed", "kubernetes": "kubernetes",
+    "aws-l": "aws-light", "harbor": "harbor",
 }
 
 # brands missing from dashboard-icons: monochrome Simple Icons, filled with a color for the dark background
