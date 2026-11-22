@@ -111,6 +111,7 @@ core:
 # the two unmanaged NUC switches, chained: Cisco GE1 → NICGIGA → MikroTik
 # Port numbers on these two are assumed (grouped per host), the connections are real.
 # All six NanoKVMs (nuc-01 … nuc-06) plug into the MikroTik; the NICGIGA carries only mgmt + storage.
+# Counted 2026-11-22: 12 ports in use on the NICGIGA, 11 on the MikroTik. The drawing has 9 / 13; trace the cables (Network_Devices.md).
 lab_switches:
   nicgiga:
     name: "NICGIGA"

@@ -131,6 +131,8 @@ GE25–28 are combo ports (RJ45 or SFP). LAG membership: GE9+10, GE14+15 and GE1
 
 Port 16 ↔ MikroTik port 16 and the empty SFP+ cages are from the photo.
 
+**Ports in use: 12** (counted 2026-11-22, not traced yet). The diagram shows 9: nuc-00, nuc-04/05/06 mgmt + storage, the Cisco GE1 uplink and port 16. Three are unaccounted for.
+
 | Port | Hostname | Interface | VLAN | Speed |
 |:-----|:---------|:----------|:-----|:-----:|
 | 1 |  |  |  |  |
@@ -159,6 +161,8 @@ Port 16 ↔ MikroTik port 16 and the empty SFP+ cages are from the photo.
 16× 1G RJ45 + 2× 10G SFP+ · `10.10.12.3` · `mikrotik-switch.homelab.kubernerdes.com` · SwOS (used as a plain switch)
 
 Port 16 ↔ NICGIGA port 16 and the empty SFP+ cages are from the photo.
+
+**Ports in use: 11** (counted 2026-11-22, not traced yet). The diagram shows 13: all six NanoKVMs, nuc-01/02/03 mgmt + storage and port 16. Two fewer than drawn.
 
 | Port | Hostname | Interface | VLAN | Speed |
 |:-----|:---------|:----------|:-----|:-----:|
