@@ -594,7 +594,7 @@ def lport(x, pitch, i):
 
 def port_plan(sw):
     """Port index (0-based) -> (host, role) from inventory lab_switches.<sw>.ports.
-    role: mgmt | stor | kvm | idle | ?   (a third item "assumed" = not traced yet)"""
+    role: mgmt | stor | kvm | host | idle | ?   (a third item "assumed" = not traced yet)"""
     return {int(p) - 1: tuple(v) for p, v in LS[sw]["ports"].items()}
 
 
@@ -616,6 +616,8 @@ def role_style(role, key):
     """(color, width, untagged, tagged) of a lab link."""
     if role in ("?", "idle"):
         return UNKNOWN, SPEED_W["1G"], None, []
+    if role == "host":   # a host with no card in the drawing: port only, VLAN 12
+        return C[LAB], SPEED_W["1G"], LAB, []
     if role == "kvm":
         return C[LAB], SPEED_W["100M"], LAB, []
     if role == "stor":

@@ -131,7 +131,7 @@ GE25–28 are combo ports (RJ45 or SFP). LAG membership: GE9+10, GE14+15 and GE1
 
 Port 16 ↔ MikroTik port 16 and the empty SFP+ cages are from the photo.
 
-**Ports in use: 12** (counted 2026-11-22). Ports 1–7, 15 and 16 are traced. The other three are probably the gen10 storage NICs (nuc-01/02/03 `enp0s20f0u4`, 128T), which aren't on the MikroTik; the diagram assumes ports 8–10 until they are traced.
+**Ports in use: 12** (counted 2026-11-22). Ports 1–7 and 14–16 are traced (14 = NVIDIA DGX Spark). The other three are probably the gen10 storage NICs (nuc-01/02/03 `enp0s20f0u4`, 128T), which aren't on the MikroTik; the diagram assumes ports 8–10 until they are traced.
 
 | Port | Hostname | Interface | VLAN | Speed |
 |:-----|:---------|:----------|:-----|:-----:|
@@ -148,7 +148,7 @@ Port 16 ↔ MikroTik port 16 and the empty SFP+ cages are from the photo.
 | 11 |  |  |  |  |
 | 12 |  |  |  |  |
 | 13 |  |  |  |  |
-| 14 |  |  |  |  |
+| 14 | dgx-spark | | 12 | |
 | 15 | Cisco:GE1 | uplink | 12 | 1G |
 | 16 | MikroTik:16 | uplink | 12 + 128T | 1G |
 | 17 (SFP+) |  |  |  |  |

@@ -130,6 +130,7 @@ lab_switches:
       8: [nuc-01, stor, assumed]
       9: [nuc-02, stor, assumed]
       10: [nuc-03, stor, assumed]
+      14: [dgx-spark, host]   # NVIDIA DGX Spark (not drawn as a card yet)
   mikrotik:
     name: "mikrotik-switch"
     type: "switch"
