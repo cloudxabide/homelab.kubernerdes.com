@@ -21,7 +21,7 @@ vlans:   # order = table order; key = VLAN id (or wan / ts)
   - {key: "192", tag: "VLAN 192",  name: LAN,     subnet: "192.168.0.0/22",    color: "#58a6ff", note: "home network · Sophos Port1 (untagged)"}
   - {key: "172", tag: "VLAN 172",  name: IoT,     subnet: "172.16.0.0/23",     color: "#3fb950", note: "Hue & friends · tagged on Sophos Port1"}
   - {key: "12",  tag: "VLAN 12",   name: LAB,     subnet: "10.10.12.0/22",     color: "#f0883e", note: "DMZ · Port3 · .12 homelab · .13 enclave · .14 community · .15 prime"}
-  - {key: "10",  tag: "VLAN 10",   name: DMZ-2,   subnet: "10.0.0.0/22",       color: "#bc8cff", note: "DMZ · Port4 · vacant, NUCs move here at times"}
+  - {key: "10",  tag: "VLAN 10",   name: DMZ-2,   subnet: "10.0.0.0/22",       color: "#bc8cff", note: "DMZ · Port4 · vacant, NUCs here for enclave lab"}
   - {key: "128", tag: "VLAN 128",  name: STORAGE, subnet: "192.168.128.0/24",  color: "#f778ba", note: "Longhorn replication · USB NICs · only on the NUC switches"}
   - {key: "aws", tag: "AWS VPC",   name: AWS,     subnet: "172.18.0.0/16",     color: "#e3b341", note: "prime · us-east-1 · public subnet 172.18.0.0/20"}
   - {key: "ts",  tag: "Tailscale", name: VPN,     subnet: "100.64.0.0/10",     color: "#39c5cf", note: "tailnet · ts-onprem (on-prem) ⇄ tailscale-01 (AWS)"}
@@ -31,7 +31,7 @@ internet:
   public_ip: "static /29"
   cloud_services:
     - {icon: suse,      name: "SUSE Prime registry", note: "registry.rancher.com · Rancher Prime charts + images"}
-    - {icon: github-l,    name: "GitHub Pages",        note: "docs.{domain} · docusaurus guide"}
+    - {icon: github-l,    name: "GitHub Pages",        note: "docs.homelab.{domain} · docusaurus guide"}
     - {icon: letsencrypt, name: "Let's Encrypt",     note: "certs · DNS-01 via Route 53 for rancher-aws"}
 
 # AWS side (OpenTofu/aws, Scripts/awsctl): reached over Tailscale
@@ -42,7 +42,7 @@ aws:
   note: "prime · single AZ · OpenTofu"
   instances:
     - {icon: tailscale, name: "tailscale-01", ip: "172.18.0.10", note: "Tailscale subnet router · t3a.micro"}
-    - {icon: rancher,   name: "rancher-01",   ip: "172.18.0.30", note: "Rancher Manager · t3a.xlarge · SL Micro 6.1", dns: "rancher-aws.prime"}
+    - {icon: rancher,   name: "rancher-aws",   ip: "172.18.0.30", note: "Rancher Manager · t3a.xlarge · SL Micro 6.1", dns: "rancher-aws.prime"}
   tailnet:
     - "tailscale-01 advertises 172.18.0.0/16"
     - "ts-onprem (VM on nuc-00, 10.10.12.14) advertises 10.10.12.0/22"
@@ -110,6 +110,7 @@ core:
 
 # the two unmanaged NUC switches, chained: Cisco GE1 → NICGIGA → MikroTik
 # Port numbers on these two are assumed (grouped per host), the connections are real.
+# All six NanoKVMs (nuc-01 … nuc-06) plug into the MikroTik; the NICGIGA carries only mgmt + storage.
 lab_switches:
   nicgiga:
     name: "NICGIGA"
@@ -138,13 +139,13 @@ nuc00:
     - {icon: glyph-dhcp,   name: "BIND + dhcpd", note: "*.kubernerdes.com zones · DHCP"}
     - {icon: glyph-nic,    name: "PXE / iPXE",   note: "TFTP + Apache · Harvester installs"}
     - {icon: vault,        name: "Vault PKI",    note: "homelab root CA"}
-    - {icon: harbor,       name: "Harbor",       note: "registry · Docker (172.19.0.0/16)"}
   vms:
     - {icon: suse, name: "nuc-00-01", ip: ".8",  note: "infra VM · ?"}
     - {icon: glyph-shield, name: "nuc-00-02", ip: ".9",  note: "bastion host · SLES"}
-    - {icon: haproxy, name: "nuc-00-03", ip: ".93", note: "HAProxy + Keepalived · VIP .193"}
     - {icon: glyph-gpu, name: "litellm",   ip: ".13", note: "LiteLLM proxy · runs on ?"}
     - {icon: tailscale, name: "ts-onprem", ip: ".14", note: "Tailscale subnet router ⇄ AWS"}
+    - {icon: suse, name: "harbor", ip: ".15",  note: "infra VM · Harbor"}
+    - {icon: haproxy, name: "nuc-00-03", ip: ".93", note: "HAProxy + Keepalived · VIP .193"}
 
 # Harvester cluster "prime": all six NUCs. IPs: mgmt in 10.10.15.0/24, KVMs in 10.10.12.0/24
 harvester:
@@ -161,7 +162,7 @@ harvester:
     - {name: "nuc-04", gen: gen13, model: "NUC13ANHi7", cpu: "i7-1360P · 12C/16T", ram: "64 GB", disks: "2 TB SSD + 1 TB NVMe", ip: "10.10.15.104", mgmt: "2.5G", storage: "1G", kvm: "10.10.12.114"}
     - {name: "nuc-05", gen: gen13, model: "NUC13ANHi7", cpu: "i7-1360P · 12C/16T", ram: "64 GB", disks: "2 TB SSD + 1 TB NVMe", ip: "10.10.15.105", mgmt: "2.5G", storage: "1G", kvm: "10.10.12.115"}
     - {name: "nuc-06", gen: gen13, model: "NUC13ANHi7", cpu: "i7-1360P · 12C/16T", ram: "64 GB", disks: "2 TB SSD + 1 TB NVMe", ip: "10.10.15.106", mgmt: "2.5G", storage: "1G", kvm: "10.10.12.116"}
-  kvm_model: "Sipeed NanoKVM"
+  kvm_model: "Sipeed NanoKVM"   # all six on the MikroTik (build.py MT_PLAN)
   # RKE2 guest clusters (SL Micro 6.2 VMs on Harvester)
   clusters:
     - name: "rancher"

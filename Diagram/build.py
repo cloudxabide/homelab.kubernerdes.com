@@ -592,23 +592,23 @@ def lport(x, pitch, i):
     return x + 20 + 16 * pitch + 14 + (i - 16) * (sw_ + 8) + sw_ / 2
 
 
-def port_plan(cols):
-    """Ports per host group: kvm, mgmt, storage (nuc-00: mgmt only)."""
+def port_plan(cols, roles=("kvm", "mgmt", "stor"), start=0):
+    """Ports per host group, in column order (nuc-00: mgmt only)."""
     plan = {}
-    i = 0
+    i = start
     for key, _, _ in cols:
-        if key == "nuc-00":
-            plan[i] = (key, "mgmt"); i += 1
-        else:
-            for role in ("kvm", "mgmt", "stor"):
-                plan[i] = (key, role); i += 1
+        for role in (("mgmt",) if key == "nuc-00" else roles):
+            plan[i] = (key, role); i += 1
     return plan
 
 
-NIC_PLAN = port_plan(COLS_NIC)
+# every NanoKVM plugs into the MikroTik: the gen13 KVMs (nuc-04..06) take its first ports,
+# then the gen10 hosts (kvm, mgmt, storage each); the NICGIGA carries only mgmt + storage
+NIC_PLAN = port_plan(COLS_NIC, roles=("mgmt", "stor"))
 NIC_PLAN[14] = ("cisco", "up")
 NIC_PLAN[15] = ("mikrotik", "link")
-MT_PLAN = port_plan(COLS_MT)
+MT_PLAN = port_plan(COLS_NIC[1:], roles=("kvm",))
+MT_PLAN.update(port_plan(COLS_MT, start=len(MT_PLAN)))
 MT_PLAN[15] = ("nicgiga", "link")
 
 
@@ -702,24 +702,34 @@ lab_switch(LS["nicgiga"], NIC_X, NIC_W, NIC_P, NIC_PLAN)
 lab_switch(LS["mikrotik"], MT_X, MT_W, MT_P, MT_PLAN)
 
 
-def down_cables(x, pitch, plan, cols):
-    cab = []
-    ent = {key: entries(key, cx, cw) for key, cx, cw in cols}
-    for i, (key, role) in sorted(plan.items()):
-        if key not in ent:
-            continue
-        col, wdt, _, _ = role_style(role, key)
-        ty = KY if role == "kvm" else NY
-        cab.append({"sx": lport(x, pitch, i), "y": LY + LH, "tx": ent[key][role], "ty": ty,
-                    "draw": (lambda pts, c=col, w_=wdt: S.line(pts, c, w_))})
-    end = route(cab, LY + LH + 12, step=10)
+ENT = {key: entries(key, cx, cw) for key, cx, cw in COLS_NIC + COLS_MT}
+
+
+def lab_cable(x, pitch, i, key, role, halo=False):
+    col, wdt, _, _ = role_style(role, key)
+    ty = KY if role == "kvm" else NY
+
+    def draw(pts):
+        if halo:   # cross-switch cable: drawn over the cables it crosses
+            S.line(pts, BG, wdt + 5)
+        S.line(pts, col, wdt)
+    return {"sx": lport(x, pitch, i), "y": LY + LH, "tx": ENT[key][role], "ty": ty, "draw": draw}
+
+
+def down_cables(x, pitch, plan, cols, y0):
+    keys = {key for key, _, _ in cols}
+    cab = [lab_cable(x, pitch, i, key, role) for i, (key, role) in sorted(plan.items()) if key in keys]
+    end = route(cab, y0, step=10)
     assert end <= KY - 4, f"lab cables need more room: {end} > {KY - 4}"
-    return ent
 
 
-ENT = {}
-ENT.update(down_cables(NIC_X, NIC_P, NIC_PLAN, COLS_NIC))
-ENT.update(down_cables(MT_X, MT_P, MT_PLAN, COLS_MT))
+# MikroTik → gen13 NanoKVMs (under the NICGIGA): they turn first, the NICGIGA cables run below them
+nic_keys = {key for key, _, _ in COLS_NIC}
+xkvm = [lab_cable(MT_X, MT_P, i, key, role, halo=True) for i, (key, role) in sorted(MT_PLAN.items()) if key in nic_keys]
+y0 = LY + LH + 12
+down_cables(NIC_X, NIC_P, NIC_PLAN, COLS_NIC, y0 + len(xkvm) * 10)
+down_cables(MT_X, MT_P, MT_PLAN, COLS_MT, y0)
+route(xkvm, y0, step=10)
 
 # ---- Harvester panel geometry (NUC cards connect to it)
 HX = COLS_NIC[1][1]

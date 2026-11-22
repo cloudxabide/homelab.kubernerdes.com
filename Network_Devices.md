@@ -26,7 +26,7 @@ Example rows for a NUC switch after re-cabling:
 | 2 | nuc-00 | | 12 | 2.5G |
 | 3 | nuc-04 | enp86s0 | 12 | 2.5G |
 | 4 | nuc-04 | enp0s13f0u1 | 128T | 1G |
-| 5 | nuc-04-kvm | eth0 | 12 | 100M |
+| 5 | | | | |
 | 6 | | | | |
 
 Shorthand is fine too: send me lines like `NICGIGA 3 = nuc-04 enp86s0 vlan 12` and I'll fill in the tables.
@@ -51,7 +51,7 @@ Shorthand is fine too: send me lines like `NICGIGA 3 = nuc-04 enp86s0 vlan 12` a
 |:-------|:------|:-----|:------|:--------|:--------------|:--------------|:---------|:-------|:-------|
 | cisco-sg300-28 | Cisco SG300-28 | core | 24× 1G RJ45 + 4× 1G combo (RJ45/SFP) | yes (L2, VLANs, LAG) | 10.10.12.2 · cisco-sg300-28.homelab | | | Sophos Port1 / Port3 / Port4 (GE24 / GE28 / GE21) | in use |
 | NICGIGA | NICGIGA S25-1602 | NUC switch (gen13 today) | 16× 2.5G RJ45 + 2× 10G SFP+ | no | none | — | gen13 10" rack | Cisco GE1 (1G) | in use |
-| mikrotik-switch | MikroTik CSS318-16G-2S+in | NUC switch (gen10 today) | 16× 1G RJ45 + 2× 10G SFP+ | SwOS, used as a plain switch | 10.10.12.3 · mikrotik-switch.homelab | SwOS ___ | gen10 10" rack | NICGIGA port 16 (1G copper) | in use |
+| mikrotik-switch | MikroTik CSS318-16G-2S+in | NUC switch (gen10) + all six NanoKVMs | 16× 1G RJ45 + 2× 10G SFP+ | SwOS, used as a plain switch | 10.10.12.3 · mikrotik-switch.homelab | SwOS ___ | gen10 10" rack | NICGIGA port 16 (1G copper) | in use |
 | TL-SX1008 | TP-Link TL-SX1008 | spare (storage switch?) | 8× 10GBASE-T (100M–10G) | no | none | — | | | not in use |
 | office | | behind Cisco GE11 (VLAN 10) | | | | | office | Cisco GE11 | ? |
 | main floor | | behind Cisco GE25 (trunk 192U, 10T, 12T, 172T) | | | | | main floor | Cisco GE25 | ? |
@@ -231,7 +231,7 @@ Interface names for the Interface column, from `Scripts/env.d/*.sh` and `Foo/NIC
 | nuc-05-kvm | 10.10.12.115 | 48:da:35:6f:06:38 | nuc-05 |
 | nuc-06-kvm | 10.10.12.116 | 48:da:35:6f:9e:17 | nuc-06 |
 
-The MACs come from `Files/nuc-00/etc/dhcpd.d/dhcpd-kvms.conf`. Check that each KVM is still attached to the NUC its name says after re-racking.
+All six KVMs plug into the MikroTik (100M, VLAN 12), including the gen13 ones whose NUCs sit on the NICGIGA. The MACs come from `Files/nuc-00/etc/dhcpd.d/dhcpd-kvms.conf`. Check that each KVM is still attached to the NUC its name says after re-racking.
 
 ## Wireless
 
