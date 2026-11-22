@@ -63,6 +63,33 @@ wait_for() {
   echo "    ${desc} — ok"
 }
 
+# harvester_kubeconfig_use_le <kubeconfig>...
+# Once Harvester serves the Let's Encrypt certificate, a kubeconfig that points
+# at the VIP IP (no IP SANs in a public cert) or pins the old self-signed CA
+# fails with x509 errors. Point it at ${HARVESTER_HOSTNAME} and drop the CA
+# data so the system trust store is used (same as root's renewal kubeconfig).
+# Does nothing until https://${HARVESTER_HOSTNAME} is trusted; backs up first.
+harvester_kubeconfig_use_le() {
+  [[ "${HARVESTER_CERT:-}" == "letsencrypt" ]] || return 0
+  curl -sf -o /dev/null --max-time 10 "https://${HARVESTER_HOSTNAME}/ping" || return 0
+  local f json fixed
+  for f in "$@"; do
+    [[ -f "${f}" ]] || continue
+    json=$(kubectl config view --raw --kubeconfig "${f}" -o json)
+    fixed=$(jq --arg host "https://${HARVESTER_HOSTNAME}" \
+      '.clusters[].cluster |= (del(."certificate-authority-data", ."insecure-skip-tls-verify")
+                               | .server |= sub("^https://[^/]+"; $host))' <<< "${json}")
+    [[ "$(jq -S . <<< "${json}")" == "$(jq -S . <<< "${fixed}")" ]] && continue
+    cp -p "${f}" "${f}.bak-$(date +%Y%m%d%H%M%S)"
+    install -m 600 /dev/stdin "${f}" <<< "${fixed}"
+    echo "    ${f}: server -> https://${HARVESTER_HOSTNAME}, system CA store (backup kept)"
+  done
+}
+
+# Re-runs: if an earlier run already switched Harvester to Let's Encrypt, fix
+# the kubeconfig before anything below uses it
+harvester_kubeconfig_use_le "${KUBECONFIG:-}" "${KUBECONFIG_HARVESTER}"
+
 # ---------------------------------------------------------------------------
 # Node labels (hardware generation)
 # ---------------------------------------------------------------------------
@@ -445,8 +472,10 @@ if [[ "${HARVESTER_CERT:-}" == "letsencrypt" ]]; then
 
   wait_for "https://${HARVESTER_HOSTNAME} serving a trusted certificate" 300 \
     curl -sf -o /dev/null "https://${HARVESTER_HOSTNAME}/ping"
-  echo "    NOTE: remove certificate-authority-data from your own Harvester"
-  echo "          kubeconfig (and use ${HARVESTER_HOSTNAME}, not the VIP IP)."
+  # Your kubeconfig still has the VIP IP and the old self-signed CA: switch it
+  harvester_kubeconfig_use_le "${KUBECONFIG:-}" "${KUBECONFIG_HARVESTER}"
+  kubectl --kubeconfig "${KUBECONFIG_HARVESTER}" get nodes >/dev/null \
+    && echo "    ${KUBECONFIG_HARVESTER} works with the new certificate"
 fi
 
 echo
