@@ -154,10 +154,10 @@ harvester:
   dns: "harvester.prime"
   storage_note: "Longhorn · storage network VLAN 128 on the USB NICs · local-1r class for the RKE2 VMs"
   nodes:
-    # gen = switch it hangs off; mgmt = onboard NIC speed; storage = USB-C NIC
-    - {name: "nuc-01", gen: gen10, model: "NUC10i7FNH", cpu: "i7-10710U · 6C/12T", ram: "64 GB", disks: "2 TB SSD + 1 TB NVMe", ip: "10.10.15.101", mgmt: "1G", storage: "1G", kvm: "10.10.12.111"}
-    - {name: "nuc-02", gen: gen10, model: "NUC10i7FNH", cpu: "i7-10710U · 6C/12T", ram: "64 GB", disks: "2 TB SSD + 1 TB NVMe", ip: "10.10.15.102", mgmt: "1G", storage: "1G", kvm: "10.10.12.112"}
-    - {name: "nuc-03", gen: gen10, model: "NUC10i7FNH", cpu: "i7-10710U · 6C/12T", ram: "64 GB", disks: "2 TB SSD + 1 TB NVMe", ip: "10.10.15.103", mgmt: "1G", storage: "1G", kvm: "10.10.12.113"}
+    # gen = switch it hangs off; mgmt = onboard NIC speed; storage = negotiated USB-C NIC speed; storage_nic = adapter (if known)
+    - {name: "nuc-01", gen: gen10, model: "NUC10i7FNH", cpu: "i7-10710U · 6C/12T", ram: "64 GB", disks: "2 TB SSD + 1 TB NVMe", ip: "10.10.15.101", mgmt: "1G", storage: "1G", storage_nic: "Satechi 2.5G", kvm: "10.10.12.111"}
+    - {name: "nuc-02", gen: gen10, model: "NUC10i7FNH", cpu: "i7-10710U · 6C/12T", ram: "64 GB", disks: "2 TB SSD + 1 TB NVMe", ip: "10.10.15.102", mgmt: "1G", storage: "1G", storage_nic: "Satechi 2.5G", kvm: "10.10.12.112"}
+    - {name: "nuc-03", gen: gen10, model: "NUC10i7FNH", cpu: "i7-10710U · 6C/12T", ram: "64 GB", disks: "2 TB SSD + 1 TB NVMe", ip: "10.10.15.103", mgmt: "1G", storage: "1G", storage_nic: "Satechi 2.5G", kvm: "10.10.12.113"}
     - {name: "nuc-04", gen: gen13, model: "NUC13ANHi7", cpu: "i7-1360P · 12C/16T", ram: "64 GB", disks: "2 TB SSD + 1 TB NVMe", ip: "10.10.15.104", mgmt: "2.5G", storage: "1G", kvm: "10.10.12.114"}
     - {name: "nuc-05", gen: gen13, model: "NUC13ANHi7", cpu: "i7-1360P · 12C/16T", ram: "64 GB", disks: "2 TB SSD + 1 TB NVMe", ip: "10.10.15.105", mgmt: "2.5G", storage: "1G", kvm: "10.10.12.115"}
     - {name: "nuc-06", gen: gen13, model: "NUC13ANHi7", cpu: "i7-1360P · 12C/16T", ram: "64 GB", disks: "2 TB SSD + 1 TB NVMe", ip: "10.10.15.106", mgmt: "2.5G", storage: "1G", kvm: "10.10.12.116"}
@@ -207,3 +207,7 @@ nas:
 aps:
   - {name: "unifi-ap-east", port: GE23}
   - {name: "unifi-ap-west", port: "?"}
+
+# hardware on hand but not in use (not drawn; move it into the layout once it's cabled)
+spares:
+  - {name: "TP-Link TL-SX1008", type: "switch · unmanaged", model: "8× 10GBASE-T RJ45 (multi-gig: 100M … 10G)", note: "not in use"}

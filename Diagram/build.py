@@ -761,7 +761,8 @@ def nuc_card(key, x, w):
     S.text(x + 14, NY + 82, n["ip"], 12, C[LAB], 500, mono=True)
     S.text(x + 14, NY + 98, f"{key}.prime.{SHOWN_DOMAIN}", 10.5, C[LAB], 400, mono=True, op=0.85)
     S.text(x + 14, NY + 120, f"onboard {n['mgmt']} → mgmt", 11, FAINT, 500)
-    S.text(x + 14, NY + 136, f"USB-C {n['storage']} → storage", 11, FAINT, 500)
+    usb = f"USB-C {n['storage_nic']} @ {n['storage']}" if n.get("storage_nic") else f"USB-C {n['storage']}"
+    S.text(x + 14, NY + 136, f"{usb} → storage", 11, FAINT, 500)
     e = ENT[key]
     S.label(e["mgmt"], KY + 18, n["mgmt"], C[LAB], 10.5, mono=True)
     S.label(e["stor"], KY + 42, n["storage"], C[STOR], 10.5, mono=True)
