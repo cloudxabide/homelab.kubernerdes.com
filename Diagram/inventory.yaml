@@ -1,0 +1,198 @@
+# Inventory for the homelab diagram: everything the picture shows comes from this file.
+# build.py reads it; the positions of the boxes are hand-placed in build.py.
+# Sources: homelab.kubernerdes.com repo (BIND zones, dhcpd, env.d/prime.sh, Hardware.md),
+# Sophos interface list + Cisco SG300 VLAN/port screenshots (2026-11-21).
+# "?" = not known yet, fill in.
+
+meta:
+  title: "Kubernerdes Homelab"
+  title_redacted: "Kubernerdes Homelab"
+  date: "November 2026"
+  watermark: "u/goblinmine"          # credit to the original author of this diagram generator
+  domain: "kubernerdes.com"
+
+redact:
+  domain: false
+  domain_placeholder: "redacted.com"
+  ssid_names: false
+
+vlans:   # order = table order; key = VLAN id (or wan / ts)
+  - {key: "wan", tag: "WAN",       name: WAN,     subnet: "static /29",        color: "#f85149", note: "Comporium, bridged · Sophos Port2"}
+  - {key: "192", tag: "VLAN 192",  name: LAN,     subnet: "192.168.0.0/22",    color: "#58a6ff", note: "home network · Sophos Port1 (untagged)"}
+  - {key: "172", tag: "VLAN 172",  name: IoT,     subnet: "172.16.0.0/23",     color: "#3fb950", note: "Hue & friends · tagged on Sophos Port1"}
+  - {key: "12",  tag: "VLAN 12",   name: LAB,     subnet: "10.10.12.0/22",     color: "#f0883e", note: "DMZ · Port3 · .12 homelab · .13 enclave · .14 community · .15 prime"}
+  - {key: "10",  tag: "VLAN 10",   name: DMZ-2,   subnet: "10.0.0.0/22",       color: "#bc8cff", note: "DMZ · Port4 · vacant, NUCs move here at times"}
+  - {key: "128", tag: "VLAN 128",  name: STORAGE, subnet: "192.168.128.0/24",  color: "#f778ba", note: "Longhorn replication · USB NICs · only on the NUC switches"}
+  - {key: "ts",  tag: "Tailscale", name: VPN,     subnet: "100.64.0.0/10",     color: "#39c5cf", note: "remote access · ts-onprem subnet router"}
+
+internet:
+  speed: {down: "? Mbit/s", up: "? Mbit/s"}
+  public_ip: "static /29"
+  cloud_services:
+    - {icon: suse,      name: "SUSE Prime registry", note: "registry.rancher.com · Rancher Prime charts + images"}
+    - {icon: github-l,    name: "GitHub Pages",        note: "docs.{domain} · docusaurus guide"}
+    - {icon: letsencrypt, name: "Let's Encrypt",     note: "certs for Rancher + Observability"}
+
+remote:
+  name: "Remote access"
+  note: "Tailscale · via ts-onprem"
+
+# ISP device: stub = not managed by me, WAN goes straight to the firewall
+isp:
+  name: "Comporium"
+  type: "ISP"
+  model: "bridged · static /29"
+  stub: true
+
+firewall:
+  name: "sophos-xgs88"
+  type: "firewall"
+  model: "Sophos XGS 88"
+  ip: "10.10.12.1"
+  dns: "sophos-xgs88.homelab"     # shown as <dns>.<domain> (local BIND)
+  os: "SFOS ?"
+  config: "services: ?  (DHCP · DNS · IPS · VPN …)"
+  # port order = left to right on the card; to = Cisco port
+  ports:
+    - {name: Port1, zone: LAN, speed: "1G",   untagged: "192", tagged: ["172"], to: GE24, ip: "192.168.0.1"}
+    - {name: Port2, zone: WAN, speed: "2.5G", untagged: "wan", ip: "static /29"}
+    - {name: Port3, zone: DMZ, speed: "1G",   untagged: "12",  to: GE28, ip: "10.10.12.1"}
+    - {name: Port4, zone: DMZ, speed: "1G",   untagged: "10",  to: GE21, ip: "10.0.0.1"}
+  services: []                       # e.g. {icon: glyph-shield, name: "IPS", note: "..."}; unknown so far
+
+core:
+  name: "cisco-sg300-28"
+  type: "core switch"
+  model: "Cisco SG300-28 · 28× 1G, L2 managed"
+  ip: "10.10.12.2"
+  dns: "cisco-sg300-28.homelab"
+  os: "?"
+  # GE25-28 are the combo (RJ45/SFP) ports; lag = LAG members (VLANs on the LAG, not shown)
+  ports:
+    - {name: GE1,  to: "NICGIGA",          untagged: "12"}
+    - {name: GE2,  to: "truenas",          untagged: "192"}
+    - {name: GE3,  to: free}
+    - {name: GE4,  to: free}
+    - {name: GE5,  to: free}
+    - {name: GE6,  to: free}
+    - {name: GE7,  to: free}
+    - {name: GE8,  to: "?",                untagged: "12"}
+    - {name: GE9,  to: "truenas",          lag: true}
+    - {name: GE10, to: "truenas",          lag: true}
+    - {name: GE11, to: "office",           untagged: "10"}
+    - {name: GE12, to: free}
+    - {name: GE13, to: "asus-pc-02",       short: "asus-02", untagged: "12"}
+    - {name: GE14, to: "asus-pc-02",       short: "asus-02", lag: true}
+    - {name: GE15, to: "asus-pc-02",       short: "asus-02", lag: true}
+    - {name: GE16, to: free}
+    - {name: GE17, to: "asus-pc-03",       short: "asus-03", untagged: "12"}
+    - {name: GE18, to: "asus-pc-03",       short: "asus-03", lag: true}
+    - {name: GE19, to: "asus-pc-03",       short: "asus-03", lag: true}
+    - {name: GE20, to: "nexus",            untagged: "192"}
+    - {name: GE21, to: "Sophos P4",        untagged: "10"}
+    - {name: GE22, to: "Hue",              untagged: "172"}
+    - {name: GE23, to: "AP east", short: "AP east",          untagged: "192", tagged: ["10", "12", "172"]}
+    - {name: GE24, to: "Sophos P1",        untagged: "192", tagged: ["172"]}
+    - {name: GE25, to: "main floor",       untagged: "192", tagged: ["10", "12", "172"]}
+    - {name: GE26, to: "enclave",          untagged: "12"}
+    - {name: GE27, to: "nuc-farm (spare)", short: "nuc spare", untagged: "10"}
+    - {name: GE28, to: "Sophos P3",        untagged: "12"}
+
+# the two unmanaged NUC switches, chained: Cisco GE1 → NICGIGA → MikroTik
+# Port numbers on these two are assumed (grouped per host), the connections are real.
+lab_switches:
+  nicgiga:
+    name: "NICGIGA"
+    type: "switch · unmanaged"
+    model: "NICGIGA S25-1602 · 16× 2.5G + 2× SFP+"
+    uplink: {speed: "1G", to: GE1}
+  mikrotik:
+    name: "mikrotik-switch"
+    type: "switch"
+    model: "MikroTik CSS318-16G-2S+in · 16× 1G + 2× SFP+"
+    ip: "10.10.12.3"
+    dns: "mikrotik-switch.homelab"
+    os: "SwOS"
+    uplink: {speed: "1G", to: nicgiga, note: "copper, port 16 ↔ port 16 (SFP+ cages empty)"}
+
+# admin host (on the NICGIGA)
+nuc00:
+  name: "nuc-00"
+  type: "admin host"
+  model: "Intel NUC13ANHi3 · i3-1315U · 32 GB · 512 GB NVMe"
+  ip: "10.10.12.10"
+  dns: "nuc-00.homelab"
+  os: "SLES ? · libvirt/KVM"
+  speed: "2.5G"
+  services:
+    - {icon: glyph-dhcp,   name: "BIND + dhcpd", note: "*.kubernerdes.com zones · DHCP"}
+    - {icon: glyph-nic,    name: "PXE / iPXE",   note: "TFTP + Apache · Harvester installs"}
+    - {icon: vault,        name: "Vault PKI",    note: "homelab root CA"}
+  vms:
+    - {icon: suse, name: "nuc-00-01", ip: ".8",  note: "infra VM · ?"}
+    - {icon: glyph-shield, name: "nuc-00-02", ip: ".9",  note: "bastion host · SLES"}
+    - {icon: haproxy, name: "nuc-00-03", ip: ".93", note: "HAProxy + Keepalived · VIP .193"}
+    - {icon: glyph-gpu, name: "litellm",   ip: ".13", note: "LiteLLM proxy · runs on ?"}
+    - {icon: tailscale, name: "ts-onprem", ip: "?",   note: "Tailscale subnet router · runs on ?"}
+
+# Harvester cluster "prime": all six NUCs. IPs: mgmt in 10.10.15.0/24, KVMs in 10.10.12.0/24
+harvester:
+  name: "prime"
+  version: "Harvester v1.8.2"
+  vip: "10.10.15.100"
+  dns: "harvester.prime"
+  storage_note: "Longhorn · storage network VLAN 128 on the USB NICs · local-1r class for the RKE2 VMs"
+  nodes:
+    # gen = switch it hangs off; mgmt = onboard NIC speed; storage = USB-C NIC
+    - {name: "nuc-01", gen: gen10, model: "NUC10i7FNH", cpu: "i7-10710U · 6C/12T", ram: "64 GB", disks: "2 TB SSD + 1 TB NVMe", ip: "10.10.15.101", mgmt: "1G", storage: "1G", kvm: "10.10.12.111"}
+    - {name: "nuc-02", gen: gen10, model: "NUC10i7FNH", cpu: "i7-10710U · 6C/12T", ram: "64 GB", disks: "2 TB SSD + 1 TB NVMe", ip: "10.10.15.102", mgmt: "1G", storage: "1G", kvm: "10.10.12.112"}
+    - {name: "nuc-03", gen: gen10, model: "NUC10i7FNH", cpu: "i7-10710U · 6C/12T", ram: "64 GB", disks: "2 TB SSD + 1 TB NVMe", ip: "10.10.15.103", mgmt: "1G", storage: "1G", kvm: "10.10.12.113"}
+    - {name: "nuc-04", gen: gen13, model: "NUC13ANHi7", cpu: "i7-1360P · 12C/16T", ram: "64 GB", disks: "2 TB SSD + 1 TB NVMe", ip: "10.10.15.104", mgmt: "2.5G", storage: "1G", kvm: "10.10.12.114"}
+    - {name: "nuc-05", gen: gen13, model: "NUC13ANHi7", cpu: "i7-1360P · 12C/16T", ram: "64 GB", disks: "2 TB SSD + 1 TB NVMe", ip: "10.10.15.105", mgmt: "2.5G", storage: "1G", kvm: "10.10.12.115"}
+    - {name: "nuc-06", gen: gen13, model: "NUC13ANHi7", cpu: "i7-1360P · 12C/16T", ram: "64 GB", disks: "2 TB SSD + 1 TB NVMe", ip: "10.10.15.106", mgmt: "2.5G", storage: "1G", kvm: "10.10.12.116"}
+  kvm_model: "Sipeed NanoKVM"
+  # RKE2 guest clusters (SL Micro 6.2 VMs on Harvester)
+  clusters:
+    - name: "rancher"
+      icon: rancher
+      what: "Rancher Manager 2.13.3 (Prime)"
+      vip: "10.10.15.30"
+      dns: "rancher.prime"
+      k8s: "RKE2 v1.34.12"
+      vms: [{name: rancher-01, ip: ".31"}, {name: rancher-02, ip: ".32"}, {name: rancher-03, ip: ".33"}]
+      apps:
+        - {icon: rancher,     name: "Rancher Manager", note: "manages Harvester + RKE2"}
+        - {icon: certmanager, name: "cert-manager",    note: "v1.19.2 · Vault ClusterIssuer"}
+    - name: "observability"
+      icon: suse
+      what: "SUSE Observability (StackState)"
+      vip: "10.10.15.40"
+      dns: "observability.prime"
+      k8s: "RKE2 v1.34.12"
+      vms: [{name: observability-01, ip: ".41"}, {name: observability-02, ip: ".42"}, {name: observability-03, ip: ".43"}]
+      apps:
+        - {icon: suse, name: "SUSE Observability", note: "8 vCPU · 16 GB per node"}
+    - name: "apps"
+      icon: glyph-shield
+      what: "applications cluster"
+      vip: "10.10.15.50"
+      dns: "apps.prime"
+      k8s: "RKE2 v1.34.12"
+      vms: [{name: "apps-*", ip: "DHCP"}]
+      apps:
+        - {icon: glyph-shield, name: "NeuVector 5.4.9",  note: "SUSE Security"}
+        - {icon: glyph-nic, name: "*.apps.prime",     note: "sample workloads · ingress .51"}
+
+nas:
+  name: "truenas"
+  type: "NAS"
+  model: "ASUS X99-PRO · Xeon E5-2630 v3 · 94 GB"
+  ip: "10.10.12.11"
+  dns: "truenas.homelab"
+  os: "TrueNAS SCALE ?"
+  pool: {name: "?", layout: "3× 4 TB HDD · ?", note: "NFS / backups target · 1 TB SSD for the OS"}
+
+# Wi-Fi: UniFi APs (east on Cisco GE23; west: where?)
+aps:
+  - {name: "unifi-ap-east", port: GE23}
+  - {name: "unifi-ap-west", port: "?"}

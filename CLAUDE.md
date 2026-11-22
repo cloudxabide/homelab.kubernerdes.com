@@ -49,6 +49,7 @@ Product placement is a second axis, separate from ENVIRONMENT: `RANCHER_LOCATION
 # Folder Structure
 - /Foo :  random directory for test scripts, notes, etc...
 - /Images : contains graphical images for repo (architecture overview, branded imagery, etc..)
+- /Diagram : network/hardware diagram; update Diagram/inventory.yaml when IPs, hosts, versions or cabling change, then run Diagram/render.sh
 - /Scripts : directory to host scripts used to deploy software, typically specific to the "ENVIRONMENT" that is set
 - /OpenTofu/aws : AWS infrastructure (OpenTofu, not Terraform) for the hybrid placement (*_LOCATION=aws); no state or creds in repo
 - /Files : boilerplate or template with placeholders replaced by "ENVIRONMENT" that is set 

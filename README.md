@@ -105,6 +105,10 @@ Other cluster roles (rancher, observability, apps) follow a digit-prefix scheme:
 
 ![Environment Overview](Images/Environment_Overview.png)
 
+Network and hardware diagram (source and how to update it: [Diagram/](Diagram/README.md)):
+
+![Homelab diagram](Diagram/homelab.png)
+
 
 **Milestones:** Prime MVP → Enclave → Community
 
@@ -157,6 +161,7 @@ Other cluster roles (rancher, observability, apps) follow a digit-prefix scheme:
 │       └── enclave/         # e.g. Harvester registry mirror → local Harbor
 │       # Community has no overrides — it is the base layer
 │
+├── Diagram/                 # Network/hardware diagram: inventory.yaml → homelab.png
 ├── Ansible/                 # Configuration management
 ├── Docs/                    # Operational guides and reference
 ├── Images/                  # Architecture diagrams
