@@ -41,7 +41,7 @@ echo "==> Observability certificate: Let's Encrypt *.${BASE_DOMAIN}"
 # 1. Root's kubeconfig for renewals
 sudo install -D -m 600 "${KUBECONFIG}" "${ROOT_KUBECONFIG}"
 echo "    root kubeconfig: ${ROOT_KUBECONFIG}"
-sudo install -D -m 0755 "${SCRIPT_DIR}/../../nuc-00/cluster-cert-deploy" \
+sudo install -D -m 0755 "${SCRIPT_DIR}/nuc-00/cluster-cert-deploy" \
   /etc/letsencrypt/renewal-hooks/deploy/cluster-cert-deploy
 echo "    renewal hook: /etc/letsencrypt/renewal-hooks/deploy/cluster-cert-deploy"
 
