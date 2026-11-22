@@ -109,15 +109,27 @@ core:
     - {name: GE28, to: "Sophos P3",        untagged: "12"}
 
 # the two unmanaged NUC switches, chained: Cisco GE1 → NICGIGA → MikroTik
-# Port numbers on these two are assumed (grouped per host), the connections are real.
-# All six NanoKVMs (nuc-01 … nuc-06) plug into the MikroTik; the NICGIGA carries only mgmt + storage.
-# Counted 2026-11-22: 12 ports in use on the NICGIGA, 11 on the MikroTik. The drawing has 9 / 13; trace the cables (Network_Devices.md).
+# Port maps traced 2026-11-22 (Network_Devices.md): all six NanoKVMs and the gen10 mgmt NICs on the MikroTik,
+# gen13 mgmt + storage and nuc-00 on the NICGIGA. The gen10 storage NICs are untraced (assumed NICGIGA 8-10).
 lab_switches:
   nicgiga:
     name: "NICGIGA"
     type: "switch · unmanaged"
     model: "NICGIGA S25-1602 · 16× 2.5G + 2× SFP+"
-    uplink: {speed: "1G", to: GE1}
+    uplink: {speed: "1G", to: GE1}   # NICGIGA port 15
+    # traced 2026-11-22 (Network_Devices.md) · port: [host, role(, assumed)] · 15 = Cisco GE1, 16 = MikroTik
+    ports:
+      1: [nuc-04, mgmt]
+      2: [nuc-05, mgmt]
+      3: [nuc-06, mgmt]
+      4: [nuc-04, stor]
+      5: [nuc-05, stor]
+      6: [nuc-06, stor]
+      7: [nuc-00, mgmt]
+      # 12 ports counted, 9 traced: the 3 left are probably the gen10 storage NICs (port numbers made up)
+      8: [nuc-01, stor, assumed]
+      9: [nuc-02, stor, assumed]
+      10: [nuc-03, stor, assumed]
   mikrotik:
     name: "mikrotik-switch"
     type: "switch"
@@ -126,6 +138,18 @@ lab_switches:
     dns: "mikrotik-switch.homelab"
     os: "SwOS"
     uplink: {speed: "1G", to: nicgiga, note: "copper, port 16 ↔ port 16 (SFP+ cages empty)"}
+    # traced 2026-11-22 (Network_Devices.md) · 11 ports in use = 1-10 + 16
+    ports:
+      1: [nuc-01, kvm]
+      2: [nuc-02, kvm]
+      3: [nuc-03, kvm]
+      4: [nuc-04, kvm]
+      5: [nuc-05, kvm]
+      6: [nuc-06, kvm]
+      7: [nuc-99, idle]    # gen10 NUC, idle: admin host if the gen10s become their own Harvester cluster
+      8: [nuc-01, mgmt]
+      9: [nuc-02, mgmt]
+      10: [nuc-03, mgmt]
 
 # admin host (on the NICGIGA)
 nuc00:

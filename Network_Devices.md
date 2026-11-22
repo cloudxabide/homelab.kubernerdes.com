@@ -51,7 +51,7 @@ Shorthand is fine too: send me lines like `NICGIGA 3 = nuc-04 enp86s0 vlan 12` a
 |:-------|:------|:-----|:------|:--------|:--------------|:--------------|:---------|:-------|:-------|
 | cisco-sg300-28 | Cisco SG300-28 | core | 24× 1G RJ45 + 4× 1G combo (RJ45/SFP) | yes (L2, VLANs, LAG) | 10.10.12.2 · cisco-sg300-28.homelab | | | Sophos Port1 / Port3 / Port4 (GE24 / GE28 / GE21) | in use |
 | NICGIGA | NICGIGA S25-1602 | NUC switch (gen13 today) | 16× 2.5G RJ45 + 2× 10G SFP+ | no | none | — | gen13 10" rack | Cisco GE1 (1G) | in use |
-| mikrotik-switch | MikroTik CSS318-16G-2S+in | NUC switch (gen10) + all six NanoKVMs | 16× 1G RJ45 + 2× 10G SFP+ | SwOS, used as a plain switch | 10.10.12.3 · mikrotik-switch.homelab | SwOS ___ | gen10 10" rack | NICGIGA port 16 (1G copper) | in use |
+| mikrotik-switch | MikroTik CSS318-16G-2S+in | NUC switch (gen10 mgmt + nuc-99) + all six NanoKVMs | 16× 1G RJ45 + 2× 10G SFP+ | SwOS, used as a plain switch | 10.10.12.3 · mikrotik-switch.homelab | SwOS ___ | gen10 10" rack | NICGIGA port 16 (1G copper) | in use |
 | TL-SX1008 | TP-Link TL-SX1008 | spare (storage switch?) | 8× 10GBASE-T (100M–10G) | no | none | — | | | not in use |
 | office | | behind Cisco GE11 (VLAN 10) | | | | | office | Cisco GE11 | ? |
 | main floor | | behind Cisco GE25 (trunk 192U, 10T, 12T, 172T) | | | | | main floor | Cisco GE25 | ? |
@@ -131,17 +131,17 @@ GE25–28 are combo ports (RJ45 or SFP). LAG membership: GE9+10, GE14+15 and GE1
 
 Port 16 ↔ MikroTik port 16 and the empty SFP+ cages are from the photo.
 
-**Ports in use: 12** (counted 2026-11-22, not traced yet). The diagram shows 9: nuc-00, nuc-04/05/06 mgmt + storage, the Cisco GE1 uplink and port 16. Three are unaccounted for.
+**Ports in use: 12** (counted 2026-11-22). Ports 1–7, 15 and 16 are traced. The other three are probably the gen10 storage NICs (nuc-01/02/03 `enp0s20f0u4`, 128T), which aren't on the MikroTik; the diagram assumes ports 8–10 until they are traced.
 
 | Port | Hostname | Interface | VLAN | Speed |
 |:-----|:---------|:----------|:-----|:-----:|
-| 1 | nuc-04 | enp86s0  |  |  |  |
-| 2 | nuc-05 | enp86s0  |  |  |  |
-| 3 | nuc-06 | enp86s0  |  |  |  |
-| 4 | nuc-04 | enp0s13f0u1  |  |  |  |
-| 5 | nuc-05 | enp0s13f0u1  |  |  |  |
-| 6 | nuc-06 | enp0s13f0u1  |  |  |  |
-| 7 | nuc-00 | eth0  |  |  |  |
+| 1 | nuc-04 | enp86s0 | 12 | 2.5G |
+| 2 | nuc-05 | enp86s0 | 12 | 2.5G |
+| 3 | nuc-06 | enp86s0 | 12 | 2.5G |
+| 4 | nuc-04 | enp0s13f0u1 | 128T |  |
+| 5 | nuc-05 | enp0s13f0u1 | 128T |  |
+| 6 | nuc-06 | enp0s13f0u1 | 128T |  |
+| 7 | nuc-00 | eth0 | 12 | 2.5G |
 | 8 |  |  |  |  |
 | 9 |  |  |  |  |
 | 10 |  |  |  |  |
@@ -149,7 +149,7 @@ Port 16 ↔ MikroTik port 16 and the empty SFP+ cages are from the photo.
 | 12 |  |  |  |  |
 | 13 |  |  |  |  |
 | 14 |  |  |  |  |
-| 15 | Cisco:GE1 |  |  |  |
+| 15 | Cisco:GE1 | uplink | 12 | 1G |
 | 16 | MikroTik:16 | uplink | 12 + 128T | 1G |
 | 17 (SFP+) |  |  |  |  |
 | 18 (SFP+) |  |  |  |  |
@@ -162,21 +162,21 @@ Port 16 ↔ MikroTik port 16 and the empty SFP+ cages are from the photo.
 
 Port 16 ↔ NICGIGA port 16 and the empty SFP+ cages are from the photo.
 
-**Ports in use: 11** (counted 2026-11-22, not traced yet). The diagram shows 13: all six NanoKVMs, nuc-01/02/03 mgmt + storage and port 16. Two fewer than drawn.
+**Ports in use: 11** (counted 2026-11-22): ports 1–10 and 16, all traced. nuc-99 (port 7) is a gen10 NUC with no role yet: the admin host if the gen10 NUCs become their own Harvester cluster.
 
 | Port | Hostname | Interface | VLAN | Speed |
 |:-----|:---------|:----------|:-----|:-----:|
-| 1 | nuc-01-kvm  |  |  |  |
-| 2 | nuc-02-kvm  |  |  |  |
-| 3 | nuc-03-kvm  |  |  |  |
-| 4 | nuc-04-kvm  |  |  |  |
-| 5 | nuc-05-kvm  |  |  |  |
-| 6 | nuc-06-kvm  |  |  |  |
+| 1 | nuc-01-kvm | eth0 | 12 | 100M |
+| 2 | nuc-02-kvm | eth0 | 12 | 100M |
+| 3 | nuc-03-kvm | eth0 | 12 | 100M |
+| 4 | nuc-04-kvm | eth0 | 12 | 100M |
+| 5 | nuc-05-kvm | eth0 | 12 | 100M |
+| 6 | nuc-06-kvm | eth0 | 12 | 100M |
 | 7 | nuc-99 |  |  |  |
-| 8 | nuc-01 |  |  |  |
-| 9 | nuc-02 |  |  |  |
-| 10 | nuc-03  |  |  |  |
-| 11 | nuc-04 |  |  |  |
+| 8 | nuc-01 | eno1 | 12 | 1G |
+| 9 | nuc-02 | eno1 | 12 | 1G |
+| 10 | nuc-03 | eno1 | 12 | 1G |
+| 11 |  |  |  |  |
 | 12 |  |  |  |  |
 | 13 |  |  |  |  |
 | 14 |  |  |  |  |

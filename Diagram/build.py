@@ -571,8 +571,8 @@ assert port_x(len(core["ports"]) - 1) + 40 <= bx + bw, "core ports run past the 
 
 # ================================================================ lab switches + NUC columns
 LY, LH = 1050, 140          # lab switch body
-KY, KH = 1306, 44           # NanoKVM chips
-NY, NH = 1410, 150          # NUC cards (body)
+KY, KH = 1346, 44           # NanoKVM chips
+NY, NH = 1450, 150          # NUC cards (body)
 LS = INV["lab_switches"]
 nodes = {n["name"]: n for n in INV["harvester"]["nodes"]}
 
@@ -592,23 +592,16 @@ def lport(x, pitch, i):
     return x + 20 + 16 * pitch + 14 + (i - 16) * (sw_ + 8) + sw_ / 2
 
 
-def port_plan(cols, roles=("kvm", "mgmt", "stor"), start=0):
-    """Ports per host group, in column order (nuc-00: mgmt only)."""
-    plan = {}
-    i = start
-    for key, _, _ in cols:
-        for role in (("mgmt",) if key == "nuc-00" else roles):
-            plan[i] = (key, role); i += 1
-    return plan
+def port_plan(sw):
+    """Port index (0-based) -> (host, role) from inventory lab_switches.<sw>.ports.
+    role: mgmt | stor | kvm | idle | ?   (a third item "assumed" = not traced yet)"""
+    return {int(p) - 1: tuple(v) for p, v in LS[sw]["ports"].items()}
 
 
-# every NanoKVM plugs into the MikroTik: the gen13 KVMs (nuc-04..06) take its first ports,
-# then the gen10 hosts (kvm, mgmt, storage each); the NICGIGA carries only mgmt + storage
-NIC_PLAN = port_plan(COLS_NIC, roles=("mgmt", "stor"))
+NIC_PLAN = port_plan("nicgiga")
 NIC_PLAN[14] = ("cisco", "up")
 NIC_PLAN[15] = ("mikrotik", "link")
-MT_PLAN = port_plan(COLS_NIC[1:], roles=("kvm",))
-MT_PLAN.update(port_plan(COLS_MT, start=len(MT_PLAN)))
+MT_PLAN = port_plan("mikrotik")
 MT_PLAN[15] = ("nicgiga", "link")
 
 
@@ -621,6 +614,8 @@ def entries(key, x, w):
 
 def role_style(role, key):
     """(color, width, untagged, tagged) of a lab link."""
+    if role in ("?", "idle"):
+        return UNKNOWN, SPEED_W["1G"], None, []
     if role == "kvm":
         return C[LAB], SPEED_W["100M"], LAB, []
     if role == "stor":
@@ -651,14 +646,18 @@ def lab_switch(sw, x, w, pitch, plan):
         if not used:
             fill, stroke, unt, tg = "#1b222c", "#3a475a", None, []
         else:
-            key, role = used
-            if role in ("up",):
+            key, role = used[:2]
+            if role in ("?", "idle"):
+                unt, tg = None, []
+            elif role in ("up",):
                 unt, tg = LAB, []
             elif role == "link":
                 unt, tg = LAB, [STOR]
             else:
                 _, _, unt, tg = role_style(role, key)
-            if unt and not tg:
+            if role in ("?", "idle"):
+                fill, stroke = "#2a3443", UNKNOWN
+            elif unt and not tg:
                 fill, stroke = C[unt] + "55", C[unt]
             elif tg and not unt:
                 fill, stroke = C[tg[0]] + "33", C[tg[0]]
@@ -669,11 +668,10 @@ def lab_switch(sw, x, w, pitch, plan):
         S.text(cx_, jy - 5, str(i + 1), 10, FAINT, 500, "middle", mono=True)
         if used:
             ticks(cx_, jy + 37, unt, tg)
-            S.text(cx_, LY + LH - 24, used[1], 9.5, MUTED, 500, "middle")
-    for key, xs in groups.items():
-        if key in ("cisco", "mikrotik", "nicgiga"):
-            continue
-        S.text(sum(xs) / len(xs), LY + LH - 9, key, 10.5, TEXT, 600, "middle")
+            S.text(cx_, LY + LH - 24, used[1] + ("?" if "assumed" in used[2:] else ""), 9.5,
+                   "#f0883e" if "assumed" in used[2:] else MUTED, 500, "middle")
+            if used and used[0] not in ("cisco", "mikrotik", "nicgiga"):   # host per port: they interleave
+                S.text(cx_, LY + LH - 9, used[0], 9, TEXT, 600, "middle")
 
 
 # cables above the lab switches: Cisco → NICGIGA, Cisco → NAS, NICGIGA ↔ MikroTik
@@ -705,31 +703,22 @@ lab_switch(LS["mikrotik"], MT_X, MT_W, MT_P, MT_PLAN)
 ENT = {key: entries(key, cx, cw) for key, cx, cw in COLS_NIC + COLS_MT}
 
 
-def lab_cable(x, pitch, i, key, role, halo=False):
+def lab_cable(x, pitch, i, key, role):
     col, wdt, _, _ = role_style(role, key)
     ty = KY if role == "kvm" else NY
 
     def draw(pts):
-        if halo:   # cross-switch cable: drawn over the cables it crosses
-            S.line(pts, BG, wdt + 5)
+        S.line(pts, BG, wdt + 5)   # halo: crossings read as over/under
         S.line(pts, col, wdt)
     return {"sx": lport(x, pitch, i), "y": LY + LH, "tx": ENT[key][role], "ty": ty, "draw": draw}
 
 
-def down_cables(x, pitch, plan, cols, y0):
-    keys = {key for key, _, _ in cols}
-    cab = [lab_cable(x, pitch, i, key, role) for i, (key, role) in sorted(plan.items()) if key in keys]
-    end = route(cab, y0, step=10)
-    assert end <= KY - 4, f"lab cables need more room: {end} > {KY - 4}"
-
-
-# MikroTik → gen13 NanoKVMs (under the NICGIGA): they turn first, the NICGIGA cables run below them
-nic_keys = {key for key, _, _ in COLS_NIC}
-xkvm = [lab_cable(MT_X, MT_P, i, key, role, halo=True) for i, (key, role) in sorted(MT_PLAN.items()) if key in nic_keys]
-y0 = LY + LH + 12
-down_cables(NIC_X, NIC_P, NIC_PLAN, COLS_NIC, y0 + len(xkvm) * 10)
-down_cables(MT_X, MT_P, MT_PLAN, COLS_MT, y0)
-route(xkvm, y0, step=10)
+# both switches' cables in one routing pass: KVMs and storage cross between the switches
+cab = [lab_cable(x, pitch, i, used[0], used[1])
+       for x, pitch, plan in ((NIC_X, NIC_P, NIC_PLAN), (MT_X, MT_P, MT_PLAN))
+       for i, used in sorted(plan.items()) if used[0] in ENT and used[1] in ENT[used[0]]]
+end = route(cab, LY + LH + 12, step=9)
+assert end <= KY - 4, f"lab cables need more room: {end} > {KY - 4}"
 
 # ---- Harvester panel geometry (NUC cards connect to it)
 HX = COLS_NIC[1][1]
