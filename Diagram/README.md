@@ -31,7 +31,7 @@ The third-party icons are downloaded into `icons/` and are not committed. Only t
 | Storage network | `Scripts/env.d/*.sh` (`STORAGE_NETWORK_*`) | `vlans` (VLAN 128), `harvester.storage_note` |
 | Hardware | `Hardware.md` | `harvester.nodes`, `nuc00.model`, `nas.model` |
 | AWS VPC, instances, Tailscale routers | `OpenTofu/aws/` (`variables.tf`, `tailscale.tf`), `Scripts/env.sh` (`AWS_VPC_CIDR`) | `aws`, `vlans` (AWS VPC, Tailscale) |
-| Sophos zones, Cisco ports and VLANs | the Sophos and Cisco web UIs (not in the repo) | `vlans`, `firewall.ports`, `core.ports` |
+| Sophos zones, switch ports and cabling | `Network_Devices.md` (filled in from the Sophos/Cisco UIs and the switch LEDs) | `vlans`, `firewall.ports`, `core.ports` |
 
 `?` in the YAML (and in the picture) marks something that is not known yet.
 
