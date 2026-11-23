@@ -109,8 +109,8 @@ core:
     - {name: GE28, to: "Sophos P3",        untagged: "12"}
 
 # the two unmanaged NUC switches, chained: Cisco GE1 → NICGIGA → MikroTik
-# Port maps traced 2026-11-22 (Network_Devices.md): all six NanoKVMs and the gen10 mgmt NICs on the MikroTik,
-# gen13 mgmt + storage and nuc-00 on the NICGIGA. The gen10 storage NICs are untraced (assumed NICGIGA 8-10).
+# Port maps traced 2026-11-22 (Network_Devices.md), cabled by NIC speed: the 1G gen10 NUCs (mgmt + storage)
+# and all six NanoKVMs on the MikroTik; the 2.5G gen13 NUCs, nuc-00 and the DGX Spark on the NICGIGA.
 lab_switches:
   nicgiga:
     name: "NICGIGA"
@@ -126,10 +126,6 @@ lab_switches:
       5: [nuc-05, stor]
       6: [nuc-06, stor]
       7: [nuc-00, mgmt]
-      # 12 ports counted, 9 traced: the 3 left are probably the gen10 storage NICs (port numbers made up)
-      8: [nuc-01, stor, assumed]
-      9: [nuc-02, stor, assumed]
-      10: [nuc-03, stor, assumed]
       14: [dgx-spark, host]   # NVIDIA DGX Spark (not drawn as a card yet)
   mikrotik:
     name: "mikrotik-switch"
@@ -139,7 +135,7 @@ lab_switches:
     dns: "mikrotik-switch.homelab"
     os: "SwOS"
     uplink: {speed: "1G", to: nicgiga, note: "copper, port 16 ↔ port 16 (SFP+ cages empty)"}
-    # traced 2026-11-22 (Network_Devices.md) · 11 ports in use = 1-10 + 16
+    # traced 2026-11-22 (Network_Devices.md) · 1-13 + 16 in use
     ports:
       1: [nuc-01, kvm]
       2: [nuc-02, kvm]
@@ -151,6 +147,9 @@ lab_switches:
       8: [nuc-01, mgmt]
       9: [nuc-02, mgmt]
       10: [nuc-03, mgmt]
+      11: [nuc-01, stor]
+      12: [nuc-02, stor]
+      13: [nuc-03, stor]
 
 # admin host (on the NICGIGA)
 nuc00:

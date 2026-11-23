@@ -50,8 +50,8 @@ Shorthand is fine too: send me lines like `NICGIGA 3 = nuc-04 enp86s0 vlan 12` a
 | Switch | Model | Role | Ports | Managed | Mgmt IP / DNS | OS / firmware | Location | Uplink | Status |
 |:-------|:------|:-----|:------|:--------|:--------------|:--------------|:---------|:-------|:-------|
 | cisco-sg300-28 | Cisco SG300-28 | core | 24× 1G RJ45 + 4× 1G combo (RJ45/SFP) | yes (L2, VLANs, LAG) | 10.10.12.2 · cisco-sg300-28.homelab | | | Sophos Port1 / Port3 / Port4 (GE24 / GE28 / GE21) | in use |
-| NICGIGA | NICGIGA S25-1602 | NUC switch (gen13 today) | 16× 2.5G RJ45 + 2× 10G SFP+ | no | none | — | gen13 10" rack | Cisco GE1 (1G) | in use |
-| mikrotik-switch | MikroTik CSS318-16G-2S+in | NUC switch (gen10 mgmt + nuc-99) + all six NanoKVMs | 16× 1G RJ45 + 2× 10G SFP+ | SwOS, used as a plain switch | 10.10.12.3 · mikrotik-switch.homelab | SwOS ___ | gen10 10" rack | NICGIGA port 16 (1G copper) | in use |
+| NICGIGA | NICGIGA S25-1602 | 2.5G switch: gen13 NUCs, nuc-00, DGX Spark | 16× 2.5G RJ45 + 2× 10G SFP+ | no | none | — | gen13 10" rack | Cisco GE1 (1G) | in use |
+| mikrotik-switch | MikroTik CSS318-16G-2S+in | 1G switch: gen10 NUCs, nuc-99, all six NanoKVMs | 16× 1G RJ45 + 2× 10G SFP+ | SwOS, used as a plain switch | 10.10.12.3 · mikrotik-switch.homelab | SwOS ___ | gen10 10" rack | NICGIGA port 16 (1G copper) | in use |
 | TL-SX1008 | TP-Link TL-SX1008 | spare (storage switch?) | 8× 10GBASE-T (100M–10G) | no | none | — | | | not in use |
 | office | | behind Cisco GE11 (VLAN 10) | | | | | office | Cisco GE11 | ? |
 | main floor | | behind Cisco GE25 (trunk 192U, 10T, 12T, 172T) | | | | | main floor | Cisco GE25 | ? |
@@ -131,7 +131,7 @@ GE25–28 are combo ports (RJ45 or SFP). LAG membership: GE9+10, GE14+15 and GE1
 
 Port 16 ↔ MikroTik port 16 and the empty SFP+ cages are from the photo.
 
-**Ports in use: 12** (counted 2026-11-22). Ports 1–7 and 14–16 are traced (14 = NVIDIA DGX Spark). The other three are probably the gen10 storage NICs (nuc-01/02/03 `enp0s20f0u4`, 128T), which aren't on the MikroTik; the diagram assumes ports 8–10 until they are traced.
+**Ports in use: 10** (traced 2026-11-22): ports 1–7 and 14–16. The 2.5G hosts live here: gen13 NUCs, nuc-00, DGX Spark.
 
 | Port | Hostname | Interface | VLAN | Speed |
 |:-----|:---------|:----------|:-----|:-----:|
@@ -162,7 +162,7 @@ Port 16 ↔ MikroTik port 16 and the empty SFP+ cages are from the photo.
 
 Port 16 ↔ NICGIGA port 16 and the empty SFP+ cages are from the photo.
 
-**Ports in use: 11** (counted 2026-11-22): ports 1–10 and 16, all traced. nuc-99 (port 7) is a gen10 NUC with no role yet: the admin host if the gen10 NUCs become their own Harvester cluster.
+**Ports in use: 14** (traced 2026-11-22): ports 1–13 and 16. The 1G hosts live here: gen10 NUCs (mgmt + storage), nuc-99 and all six NanoKVMs. nuc-99 (port 7) is a gen10 NUC with no role yet: the admin host if the gen10 NUCs become their own Harvester cluster.
 
 | Port | Hostname | Interface | VLAN | Speed |
 |:-----|:---------|:----------|:-----|:-----:|
@@ -176,9 +176,9 @@ Port 16 ↔ NICGIGA port 16 and the empty SFP+ cages are from the photo.
 | 8 | nuc-01 | eno1 | 12 | 1G |
 | 9 | nuc-02 | eno1 | 12 | 1G |
 | 10 | nuc-03 | eno1 | 12 | 1G |
-| 11 | nuc-01 | enp0s20f0u4 |  |  |
-| 12 | nuc-02 | enp0s20f0u4 |  |  |
-| 13 | nuc-03 | enp0s20f0u4 |  |  |
+| 11 | nuc-01 | enp0s20f0u4 | 128T | 1G |
+| 12 | nuc-02 | enp0s20f0u4 | 128T | 1G |
+| 13 | nuc-03 | enp0s20f0u4 | 128T | 1G |
 | 14 |  |  |  |  |
 | 15 |  |  |  |  |
 | 16 | NICGIGA:16 | uplink | 12 + 128T | 1G |
