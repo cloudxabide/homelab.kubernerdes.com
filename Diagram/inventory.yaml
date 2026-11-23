@@ -76,7 +76,7 @@ core:
   model: "Cisco SG300-28 · 28× 1G, L2 managed"
   ip: "10.10.12.2"
   dns: "cisco-sg300-28.homelab"
-  os: "?"
+  os: "1.4.2.4"
   # GE25-28 are the combo (RJ45/SFP) ports; lag = LAG members (VLANs on the LAG, not shown)
   ports:
     - {name: GE1,  to: "NICGIGA",          untagged: "12"}
@@ -165,12 +165,12 @@ nuc00:
     - {icon: glyph-nic,    name: "PXE / iPXE",   note: "TFTP + Apache · Harvester installs"}
     - {icon: vault,        name: "Vault PKI",    note: "homelab root CA"}
   vms:
-    - {icon: suse, name: "nuc-00-01", ip: ".8",  note: "infra VM · ?"}
-    - {icon: glyph-shield, name: "nuc-00-02", ip: ".9",  note: "bastion host · SLES"}
-    - {icon: glyph-gpu, name: "litellm",   ip: ".13", note: "LiteLLM proxy · runs on ?"}
+    - {icon: suse, name: "nuc-00-01", ip: ".8",  note: "infra VM · SLES VM"}
+    - {icon: glyph-shield, name: "nuc-00-02", ip: ".9",  note: "bastion host · SLES VM"}
+    - {icon: glyph-gpu, name: "litellm",   ip: ".13", note: "LiteLLM proxy · SL-Micro VM "}
     - {icon: tailscale, name: "ts-onprem", ip: ".14", note: "Tailscale subnet router ⇄ AWS"}
-    - {icon: suse, name: "harbor", ip: ".15",  note: "infra VM · Harbor"}
-    - {icon: haproxy, name: "nuc-00-03", ip: ".93", note: "HAProxy + Keepalived · VIP .193"}
+    - {icon: suse, name: "harbor", ip: ".15",  note: "Harbor Registry · SL-Micro VM"}
+    - {icon: haproxy, name: "nuc-00-03", ip: ".93", note: "HAProxy + Keepalived · VIP .193 · SLES VM"}
 
 # Harvester cluster "prime": all six NUCs. IPs: mgmt in 10.10.15.0/24, KVMs in 10.10.12.0/24
 harvester:
@@ -209,6 +209,7 @@ harvester:
       vms: [{name: observability-01, ip: ".41"}, {name: observability-02, ip: ".42"}, {name: observability-03, ip: ".43"}]
       apps:
         - {icon: suse, name: "SUSE Observability", note: "8 vCPU · 16 GB per node"}
+        - {icon: certmanager, name: "cert-manager",    note: "v1.19.2 · Vault ClusterIssuer"}
     - name: "apps"
       icon: glyph-shield
       what: "applications cluster"
@@ -232,7 +233,7 @@ nas:
 # Wi-Fi: UniFi APs (east on Cisco GE23; west: where?)
 aps:
   - {name: "unifi-ap-east", port: GE23}
-  - {name: "unifi-ap-west", port: "?"}
+  - {name: "unifi-ap-west", port: GE11}
 
 # hardware on hand but not in use (not drawn; move it into the layout once it's cabled)
 spares:
