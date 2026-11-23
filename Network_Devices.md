@@ -176,9 +176,9 @@ Port 16 ↔ NICGIGA port 16 and the empty SFP+ cages are from the photo.
 | 8 | nuc-01 | eno1 | 12 | 1G |
 | 9 | nuc-02 | eno1 | 12 | 1G |
 | 10 | nuc-03 | eno1 | 12 | 1G |
-| 11 |  |  |  |  |
-| 12 |  |  |  |  |
-| 13 |  |  |  |  |
+| 11 | nuc-01 | enp0s20f0u4 |  |  |
+| 12 | nuc-02 | enp0s20f0u4 |  |  |
+| 13 | nuc-03 | enp0s20f0u4 |  |  |
 | 14 |  |  |  |  |
 | 15 |  |  |  |  |
 | 16 | NICGIGA:16 | uplink | 12 + 128T | 1G |
