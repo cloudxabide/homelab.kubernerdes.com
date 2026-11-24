@@ -291,6 +291,30 @@ if [[ -n "${STORAGE_NETWORK_VLAN:-}" ]]; then
   if [[ "${current_norm}" == "${desired}" ]]; then
     echo "    already set to ${desired} — skipping"
   else
+    # The ClusterNetwork can report ready while a node's VlanStatus is still
+    # settling, and Harvester rejects the setting ("vs <name> status is not
+    # Ready"). Wait for one Ready VlanStatus per labelled node first, before
+    # monitoring is touched.
+    gen_list=$(tr ' ' ',' <<< "${NODE_GENS}")
+    expected=$(kubectl get nodes -l "homelab.kubernerdes.com/nuc-gen in (${gen_list})" -o name | wc -l)
+    vs_ready_count() {
+      kubectl get vlanstatus -o json | jq --arg cn "${STORAGE_CLUSTER_NETWORK}" \
+        '[.items[] | select(.status.clusterNetwork == $cn)
+                   | select(any(.status.conditions[]?; .type == "ready" and .status == "True"))] | length'
+    }
+    export -f vs_ready_count; export STORAGE_CLUSTER_NETWORK
+    if ! wait_for "${expected} VlanStatus Ready on ${STORAGE_CLUSTER_NETWORK}" 300 \
+        bash -c "[ \"\$(vs_ready_count)\" -ge ${expected} ]"; then
+      echo "    VlanStatus on ${STORAGE_CLUSTER_NETWORK} (expected ${expected} Ready):" >&2
+      kubectl get vlanstatus -o json | jq -r --arg cn "${STORAGE_CLUSTER_NETWORK}" \
+        '.items[] | select(.status.clusterNetwork == $cn)
+         | [.status.node, .metadata.name,
+            ((.status.conditions[]? | select(.type == "ready") | "\(.status) \(.message // "")") // "no ready condition")]
+         | "      " + join("  ")' >&2
+      echo "    Fix the node(s) above (NIC name, link), then re-run. Monitoring was not changed." >&2
+      exit 1
+    fi
+
     echo "    disabling rancher-monitoring so its volumes detach"
     kubectl patch addon rancher-monitoring -n cattle-monitoring-system \
       --type merge -p '{"spec":{"enabled":false}}'
@@ -472,10 +496,28 @@ if [[ "${HARVESTER_CERT:-}" == "letsencrypt" ]]; then
 
   wait_for "https://${HARVESTER_HOSTNAME} serving a trusted certificate" 300 \
     curl -sf -o /dev/null "https://${HARVESTER_HOSTNAME}/ping"
-  # Your kubeconfig still has the VIP IP and the old self-signed CA: switch it
-  harvester_kubeconfig_use_le "${KUBECONFIG:-}" "${KUBECONFIG_HARVESTER}"
-  kubectl --kubeconfig "${KUBECONFIG_HARVESTER}" get nodes >/dev/null \
-    && echo "    ${KUBECONFIG_HARVESTER} works with the new certificate"
+  # Your kubeconfig still has the VIP IP and the old self-signed CA: switch it.
+  # The ingress rollout can still be flapping right after the wait above, and
+  # harvester_kubeconfig_use_le silently does nothing while /ping fails, so
+  # retry until every kubeconfig really works — and stop loudly if it doesn't
+  # (otherwise 08 hangs on x509 errors its wait loops hide).
+  kcs=("${KUBECONFIG_HARVESTER}")
+  [[ -n "${KUBECONFIG:-}" && "${KUBECONFIG}" != "${KUBECONFIG_HARVESTER}" ]] && kcs+=("${KUBECONFIG}")
+  kc_ok() { local f; for f in "${kcs[@]}"; do kubectl --kubeconfig "${f}" get nodes >/dev/null 2>&1 || return 1; done; }
+  for _ in $(seq 1 36); do
+    harvester_kubeconfig_use_le "${kcs[@]}"
+    kc_ok && break
+    sleep 5
+  done
+  if ! kc_ok; then
+    echo "ERROR: a kubeconfig still fails after the certificate switch (x509?):" >&2
+    for f in "${kcs[@]}"; do
+      echo "    ${f}: $(kubectl --kubeconfig "${f}" get nodes 2>&1 >/dev/null | tail -1)" >&2
+    done
+    echo "    Point server: at https://${HARVESTER_HOSTNAME} and remove certificate-authority-data, or re-run 07." >&2
+    exit 1
+  fi
+  echo "    ${kcs[*]} work with the new certificate"
 fi
 
 echo
