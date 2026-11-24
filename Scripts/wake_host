@@ -14,28 +14,28 @@ import sys
 import time
 
 # Per-environment hostname → MAC tables.
-# prime      → nuc-01/02/03 (Gen10 NUCs, 10.10.15.0/24) via Prime registry
-# enclave    → nuc-01/02/03 (10.10.13.0/24) air-gapped via Harbor
-# community  → nuc-01/02/03 (Gen13 NUCs, 10.10.14.0/24) public registries
+# community and prime run on the same six NUCs (rebuilt one environment at a
+# time), so they share one MAC table.
+# community  → 10.10.14.0/24, public registries
+# prime      → 10.10.15.0/24, Prime registry
+# enclave    → 10.10.13.0/24, air-gapped via Harbor
+SHARED_NUC_HOSTS = {
+    "nuc-01": "88:ae:dd:0b:90:70",
+    "nuc-02": "1c:69:7a:ab:23:50",
+    "nuc-03": "88:ae:dd:0b:af:9c",
+    "nuc-04": "48:21:0b:65:ce:e5",
+    "nuc-05": "48:21:0b:65:c2:c7",
+    "nuc-06": "48:21:0b:5d:7a:e6",
+}
+
 HOSTS_BY_ENV = {
-    "prime": {
-        "nuc-01": "MOVED:88:ae:dd:0b:90:70",
-        "nuc-02": "MOVED:1c:69:7a:ab:23:50",
-        "nuc-03": "MOVED:88:ae:dd:0b:af:9c",
-    },
+    "community": SHARED_NUC_HOSTS,
+    "prime": SHARED_NUC_HOSTS,
     "enclave": {
         # TODO: fill in MAC addresses once enclave hardware is provisioned
         "nuc-01": "TODO:enclave-nuc-01-mac",
         "nuc-02": "TODO:enclave-nuc-02-mac",
         "nuc-03": "TODO:enclave-nuc-03-mac",
-    },
-    "community": {
-        "nuc-01": "88:ae:dd:0b:90:70",
-        "nuc-02": "1c:69:7a:ab:23:50",
-        "nuc-03": "88:ae:dd:0b:af:9c",
-        "nuc-04": "48:21:0b:65:ce:e5",
-        "nuc-05": "48:21:0b:65:c2:c7",
-        "nuc-06": "48:21:0b:5d:7a:e6",
     },
 }
 
