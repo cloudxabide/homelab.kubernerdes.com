@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Render the diagram and copy the PNG next to this script (Diagram/homelab.png).
+# Render the diagrams and copy the PNGs next to this script (Diagram/homelab.png, Diagram/kubernetes.png).
 # Needs: uv, rsvg-convert (librsvg), Fira Sans + Fira Code fonts.
 set -euo pipefail
 cd "$(dirname "$0")"
@@ -9,4 +9,6 @@ if [[ ! -f icons/harvester.svg || "${1:-}" == "--icons" ]]; then
 fi
 uv run python build.py
 cp out/homelab.png homelab.png
-echo "updated $(pwd)/homelab.png"
+uv run python build_k8s.py
+cp out/kubernetes.png kubernetes.png
+echo "updated $(pwd)/homelab.png $(pwd)/kubernetes.png"

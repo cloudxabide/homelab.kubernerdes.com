@@ -4,6 +4,10 @@ Network and hardware diagram of the homelab, rendered from `inventory.yaml`.
 
 ![Homelab diagram](homelab.png)
 
+A second picture, `kubernetes.png`, shows only the Kubernetes layer in the same style: endpoints (DNS → VIP), TLS and registries, the RKE2 guest clusters (nodes, CNI, ingress, storage classes, workloads) and the Harvester host cluster (KubeVirt, Multus networks, load balancer IP pools, Longhorn, nodes on the mgmt and storage networks). It is rendered by `build_k8s.py` from the `kubernetes:` and `harvester:` sections of `inventory.yaml`. `build_k8s.py` takes the palette and drawing helpers from `build.py` (everything above its "background + header" marker), so a style change in `build.py` applies to both.
+
+![Kubernetes diagram](kubernetes.png)
+
 Based on [Goblinmine/homelab-diagram](https://github.com/Goblinmine/homelab-diagram) (MIT, see `LICENSE`), adapted to this lab. `inventory.yaml` holds the content. `build.py` holds the layout, with every box and cable placed by hand. Adding a node, switch or cluster usually means changing coordinates in `build.py` as well as the YAML.
 
 ## Render
@@ -29,6 +33,7 @@ The third-party icons are downloaded into `icons/` and are not committed. Only t
 | KVM IPs | `Files/nuc-00/etc/dhcpd.d/dhcpd-kvms.conf` | `harvester.nodes[].kvm` |
 | Versions (Harvester, RKE2, Rancher, NeuVector) | `Scripts/env.d/*.sh` | `harvester.version`, `clusters[].k8s`, `clusters[].apps` |
 | Storage network | `Scripts/env.d/*.sh` (`STORAGE_NETWORK_*`) | `vlans` (VLAN 128), `harvester.storage_note` |
+| Kubernetes layer (VIPs, storage classes, cluster networks, VM sizes, workloads) | `Scripts/env.d/*.sh`, `Scripts/07_*`, `08_*`, `install_RKE2.sh`, `20_*`/`21_*`/`30_*`, `db.<env>` zone | `kubernetes` |
 | Hardware | `Hardware.md` | `harvester.nodes`, `nuc00.model`, `nas.model` |
 | AWS VPC, instances, Tailscale routers | `OpenTofu/aws/` (`variables.tf`, `tailscale.tf`), `Scripts/env.sh` (`AWS_VPC_CIDR`) | `aws`, `vlans` (AWS VPC, Tailscale) |
 | Sophos zones, switch ports and cabling | `Network_Devices.md` (filled in from the Sophos/Cisco UIs and the switch LEDs) | `vlans`, `firewall.ports`, `core.ports` |
