@@ -8,7 +8,7 @@ meta:
   title: "Kubernerdes Homelab"
   title_redacted: "Kubernerdes Homelab"
   date: "November 2026"
-  watermark: "u/goblinmine"          # credit to the original author of this diagram generator
+  watermark: "u/cloudxabide"          
   domain: "kubernerdes.com"
 
 redact:
