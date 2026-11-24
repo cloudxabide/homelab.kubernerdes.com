@@ -66,46 +66,50 @@ If powered on, the spares would add about $20.95/mo at idle, $55.19/mo average a
 
 ## IP Assignments
 
-The supernet is `10.10.12.0/22`. Each environment occupies one `/24`; each reserves `.228-.254` as a dynamic DHCP pool.
+The supernet is `10.10.12.0/22`. `10.10.12.0/24` (homelab) holds the shared infrastructure, and each ENVIRONMENT has its own `/24`. All six NUCs are built as one 6-node Harvester cluster in whichever ENVIRONMENT is active. To switch, rebuild the cluster into another /24 by changing the dhcpd include on nuc-00. Only one environment runs at a time.
 
 | Subnet | Environment | Notes |
 |:-------|:------------|:------|
-| 10.10.12.0/24 | homelab | Shared infrastructure (DNS, DHCP, admin, NAS) |
-| 10.10.13.0/24 | enclave | nuc-01/02/03 Harvester cluster |
-| 10.10.14.0/24 | community | nuc-01/02/03 Harvester cluster |
-| 10.10.15.0/24 | prime | nuc-01/02/03 Harvester cluster |
+| 10.10.12.0/24 | homelab | Shared infrastructure (firewall, switches, nuc-00 and its VMs, NAS, NanoKVMs) and the DHCP pool |
+| 10.10.13.0/24 | enclave | 6-node Harvester cluster + guest clusters when ENVIRONMENT=enclave |
+| 10.10.14.0/24 | community | 6-node Harvester cluster + guest clusters when ENVIRONMENT=community |
+| 10.10.15.0/24 | prime | 6-node Harvester cluster + guest clusters when ENVIRONMENT=prime |
 
-Infrastructure IPs — homelab (10.10.12.x), shared across all environments:
+DHCP: one dynamic pool, `10.10.12.128-.254`, for the whole /22 (`Files/nuc-00/etc/dhcpd.conf`). The NUCs get fixed addresses in their environment's /24 from `dhcpd-<env>.conf`, the only per-environment include enabled. VMs without a reservation (rancher-0x today, apps-*) get pool addresses in 10.10.12.x.
+
+Infrastructure IPs (homelab, 10.10.12.x), the same for every environment:
 
 | IP | Hostname | Purpose |
 |:---|:---------|:--------|
-| 10.10.12.1 | gateway | Default gateway / router |
-| 10.10.12.8 | nuc-00-01 | DNS primary + DHCP + TFTP (infra VM on nuc-00) |
-| 10.10.12.9 | nuc-00-02 | DNS secondary (infra VM on nuc-00) |
-| 10.10.12.10 | nuc-00 | Admin host (Apache + KVM) |
-| 10.10.12.11 | nas | NAS / NFS storage (TrueNAS Scale) |
-| 10.10.12.12 | librenms | Network monitoring (VM, optional) |
-| 10.10.12.93 | nuc-00-03 | HAProxy load balancer (infra VM on nuc-00) |
-| 10.10.12.193 | nuc-00-03-vip | HAProxy Keepalived VIP |
+| 10.10.12.1 | sophos-xgs88 (gateway) | Firewall / default gateway |
+| 10.10.12.2 | cisco-sg300-28 | Core switch |
+| 10.10.12.3 | mikrotik-switch | 1G NUC switch |
+| 10.10.12.8 | nuc-00-01 | Infra VM on nuc-00 |
+| 10.10.12.9 | nuc-00-02 | Bastion / secondary DNS VM on nuc-00 |
+| 10.10.12.10 | nuc-00 | Admin host (BIND, dhcpd, PXE/Apache, Vault, libvirt) |
+| 10.10.12.11 | truenas | NAS / NFS (TrueNAS SCALE) |
+| 10.10.12.13 | litellm | LiteLLM proxy VM on nuc-00 |
+| 10.10.12.14 | ts-onprem | Tailscale subnet router VM on nuc-00 (⇄ AWS VPC) |
+| 10.10.12.20 | glkvm | GL.iNet KVM |
+| 10.10.12.93 | nuc-00-03 | HAProxy + Keepalived VM (retired) |
+| 10.10.12.111-.116 | nuc-01-kvm … nuc-06-kvm | NanoKVM consoles, fixed regardless of environment |
+| 10.10.12.251 | spark-e | NVIDIA DGX Spark |
 
-Per-environment IPs (last octet identical across all environments, prefix differs):
+Per-environment IPs: the last octet is the same in every environment, only the prefix (13 / 14 / 15) changes. Source: `Scripts/env.sh` and `Files/nuc-00/var/lib/named/master/db.<env>.kubernerdes.com`.
 
-| Last Octet | enclave (10.10.13.x) | community (10.10.14.x) | prime (10.10.15.x) | Purpose |
-|:----------:|:---------------------|:-----------------------|:---------------------|:--------|
-| .101 | nuc-01 | nuc-01 | nuc-01 | Harvester node 1 |
-| .102 | nuc-02 | nuc-02 | nuc-02 | Harvester node 2 |
-| .103 | nuc-03 | nuc-03 | nuc-03 | Harvester node 3 |
-| .111-.113 | nuc-0x-kvm | nuc-0x-kvm | nuc-0x-kvm | KVM / IPMI interfaces |
-| .210 | rancher-VIP | rancher-VIP | rancher-VIP | Rancher Manager cluster VIP |
-| .211-.213 | rancher-11/12/13 | rancher-21/22/23 | rancher-01/02/03 | Rancher Manager nodes |
-| .220 | observability-VIP | observability-VIP | observability-VIP | Observability cluster VIP |
-| .221-.223 | observability-11/12/13 | observability-21/22/23 | observability-01/02/03 | Observability nodes |
-| .230 | apps-VIP | apps-VIP | apps-VIP | Applications cluster VIP |
-| — | apps-* (DHCP) | apps-* (DHCP) | apps-* (DHCP) | Applications cluster nodes (Harvester DHCP, no fixed IPs) |
-| .251 | — | — | spark-e | Optional hardware |
-| .228-.254 | dynamic pool | dynamic pool | dynamic pool | DHCP dynamic range |
+| Last octet | Hostname | Purpose |
+|:----------:|:---------|:--------|
+| .30 | rancher | Rancher Manager VIP (Harvester load balancer) |
+| .31-.33 | rancher-01/02/03 | Rancher Manager nodes (DNS; see DHCP note above) |
+| .40 | observability | SUSE Observability VIP |
+| .41-.43 | observability-01/02/03 | Observability nodes |
+| .50 | apps | Applications cluster VIP (Kubernetes API) |
+| .51 | *.apps | Applications ingress (80/443), Harvester load balancer |
+| — | apps-* | Applications cluster nodes (DHCP, no fixed IPs) |
+| .100 | harvester | Harvester cluster VIP |
+| .101-.106 | nuc-01 … nuc-06 | Harvester nodes (gen10 .101-.103 control-plane, gen13 .104-.106 workers) |
 
-Wildcard DNS: `*.apps.${ENVIRONMENT}.kubernerdes.com` → `${IP_PREFIX}.230`
+Wildcard DNS: `*.apps.${ENVIRONMENT}.kubernerdes.com` → `${IP_PREFIX}.51`
 
 ## Bill of Materials
 
