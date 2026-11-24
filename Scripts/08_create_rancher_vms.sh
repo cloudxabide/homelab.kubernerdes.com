@@ -18,7 +18,8 @@ set -euo pipefail
 #   2. Creates namespace, SSH keypair, and per-VM cloud-init secrets
 #   3. Creates rancher-01/02/03, each pinned to its own node (RANCHER_VM_PLACEMENT)
 #      with the instance label the load balancer selects on
-#   4. Creates the IP pool + load balancer for RANCHER_VIP (80/443/6443/9345)
+#   4. Creates the IP pool + load balancer for RANCHER_VIP (80/443/6443/9345),
+#      with a TCP health check on RANCHER_LB_HEALTH_PORT (default 9345)
 #   5. Waits for the VMs, then checks node placement, instance label, disk
 #      replica count/locality, and load balancer backends
 #
@@ -30,6 +31,8 @@ set -euo pipefail
 #     carrying a random suffix
 #
 # Safe to re-run: existing VMs are left alone (delete a VM to recreate it).
+# The IP pool and load balancer are re-applied, so a re-run also updates the
+# health check on an existing load balancer.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
@@ -58,6 +61,7 @@ KEYPAIR_NAME="id-rsa"
 KEYPAIR_PUBKEY_FILE="${SSH_KEY}.pub"
 LB_NAME="lb-rancher"
 IPPOOL_NAME="ippool-rancher"
+RANCHER_LB_HEALTH_PORT="${RANCHER_LB_HEALTH_PORT:-9345}"
 
 # wait_for <description> <timeout-seconds> <command...>
 # Re-runs the command every 5s until it succeeds or the timeout expires.
@@ -301,7 +305,17 @@ spec:
   backendServerSelector:
     ${RANCHER_VM_LABEL_KEY}:
       - ${RANCHER_VM_LABEL_VALUE}
-  healthCheck: {}
+  # TCP probe on the RKE2 supervisor port. A backend gets traffic on every
+  # listener only once rke2-server listens there, so during 09 the joining
+  # servers (server: https://VIP:9345) reach a node that is up, not one that
+  # has no RKE2 yet. Ingress (80/443) is not probed separately: Harvester
+  # allows one health-check port per load balancer.
+  healthCheck:
+    port: ${RANCHER_LB_HEALTH_PORT}
+    periodSeconds: 5
+    timeoutSeconds: 3
+    successThreshold: 1
+    failureThreshold: 3
   listeners:
     - name: http
       port: 80
