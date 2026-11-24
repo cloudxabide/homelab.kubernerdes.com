@@ -291,6 +291,30 @@ if [[ -n "${STORAGE_NETWORK_VLAN:-}" ]]; then
   if [[ "${current_norm}" == "${desired}" ]]; then
     echo "    already set to ${desired} — skipping"
   else
+    # The ClusterNetwork can report ready while a node's VlanStatus is still
+    # settling, and Harvester rejects the setting ("vs <name> status is not
+    # Ready"). Wait for one Ready VlanStatus per labelled node first, before
+    # monitoring is touched.
+    gen_list=$(tr ' ' ',' <<< "${NODE_GENS}")
+    expected=$(kubectl get nodes -l "homelab.kubernerdes.com/nuc-gen in (${gen_list})" -o name | wc -l)
+    vs_ready_count() {
+      kubectl get vlanstatus -o json | jq --arg cn "${STORAGE_CLUSTER_NETWORK}" \
+        '[.items[] | select(.status.clusterNetwork == $cn)
+                   | select(any(.status.conditions[]?; .type == "ready" and .status == "True"))] | length'
+    }
+    export -f vs_ready_count; export STORAGE_CLUSTER_NETWORK
+    if ! wait_for "${expected} VlanStatus Ready on ${STORAGE_CLUSTER_NETWORK}" 300 \
+        bash -c "[ \"\$(vs_ready_count)\" -ge ${expected} ]"; then
+      echo "    VlanStatus on ${STORAGE_CLUSTER_NETWORK} (expected ${expected} Ready):" >&2
+      kubectl get vlanstatus -o json | jq -r --arg cn "${STORAGE_CLUSTER_NETWORK}" \
+        '.items[] | select(.status.clusterNetwork == $cn)
+         | [.status.node, .metadata.name,
+            ((.status.conditions[]? | select(.type == "ready") | "\(.status) \(.message // "")") // "no ready condition")]
+         | "      " + join("  ")' >&2
+      echo "    Fix the node(s) above (NIC name, link), then re-run. Monitoring was not changed." >&2
+      exit 1
+    fi
+
     echo "    disabling rancher-monitoring so its volumes detach"
     kubectl patch addon rancher-monitoring -n cattle-monitoring-system \
       --type merge -p '{"spec":{"enabled":false}}'
