@@ -11,6 +11,15 @@ set -euo pipefail
 #     (Scripts/10_install_rancher_manager.sh saves this automatically)
 #   - O11Y_LICENSE environment variable set (SUSE Observability license key)
 #     export O11Y_LICENSE=<your-license-key>
+#   - O11Y_ADMIN_PASSWORD (optional): password for the UI 'admin' user,
+#     plaintext or a bcrypt hash. Unset = the chart generates a random one
+#     (printed in baseConfig_values.yaml) and a NEW one on every re-run.
+#
+# Change the password after install (bcrypt hash, no values regeneration):
+#   HASH=$(htpasswd -nbBC 10 "" '<new-password>' | tr -d ':\n')
+#   helm upgrade suse-observability suse-observability/suse-observability \
+#     -n suse-observability --reuse-values \
+#     --set-literal stackstate.authentication.adminPassword="${HASH}"
 #
 # OBS_LOCATION does not change this script: the observability cluster is
 # provisioned by Rancher (Harvester node driver for onprem, Amazon EC2 node
@@ -96,7 +105,11 @@ mkdir -p "${WORK_DIR}" && cd "${WORK_DIR}"
 
 echo "==> Generating Observability values files..."
 export VALUES_DIR="${WORK_DIR}"
+# --set-literal: passwords may contain commas/equals that --set would split
+ADMIN_PW_ARGS=()
+[[ -n "${O11Y_ADMIN_PASSWORD:-}" ]] && ADMIN_PW_ARGS=(--set-literal adminPassword="${O11Y_ADMIN_PASSWORD}")
 helm template \
+  "${ADMIN_PW_ARGS[@]}" \
   --set license="${O11Y_LICENSE}" \
   --set rancherUrl="https://${RANCHER_HOSTNAME}" \
   --set baseUrl="https://${OBS_HOSTNAME}" \

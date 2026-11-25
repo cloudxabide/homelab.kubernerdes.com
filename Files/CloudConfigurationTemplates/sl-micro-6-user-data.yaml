@@ -17,6 +17,14 @@ users:
     ssh_authorized_keys:
       - ${MANSIBLE_SSH_KEY}
 
+# SL Micro 6.2 ships an ordering cycle (health-checker After=cloud-final,
+# cloud-final After=multi-user.target, multi-user.target After=health-checker).
+# systemd breaks it by dropping a job at random; when it drops cloud-final,
+# runcmd never runs (Rancher node-driver VMs never install their agent).
+# Re-queue cloud-final once multi-user.target is reached; no-op when it already ran.
+bootcmd:
+  - systemd-run --no-block --unit=cloud-final-kick --property=After=multi-user.target systemctl start --no-block cloud-final.service
+
 runcmd:
   - - systemctl
     - enable
