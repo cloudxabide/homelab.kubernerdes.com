@@ -15,7 +15,7 @@ os:
     - 2.suse.pool.ntp.org
   dns_nameservers:
     - 10.10.12.10
-    - 8.8.8.8
+    - 10.10.12.9
 install:
   skipchecks: true
   mode: join
@@ -30,4 +30,4 @@ install:
     gateway: 10.10.12.1
   device: /dev/sda
   data_disk: /dev/nvme0n1
-  iso_url: http://10.10.12.10/harvester/v1.8.2/harvester-v1.8.2-amd64.iso
+  iso_url: http://10.10.12.10/harvester/v1.9.1/harvester-v1.9.1-amd64.iso

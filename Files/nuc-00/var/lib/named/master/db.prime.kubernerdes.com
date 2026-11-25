@@ -1,7 +1,7 @@
 $TTL 86400 
 $ORIGIN prime.kubernerdes.com. 
 @	IN SOA      nuc-00.homelab.kubernerdes.com.  root.kubernerdes.com. ( 
-            2026112201 ; Serial
+            2026112401 ; Serial
             86400      ; Refresh
             7200       ; Retry
             2419200    ; Expire
@@ -11,16 +11,9 @@ $ORIGIN prime.kubernerdes.com.
              IN NS       nuc-00-02.homelab.kubernerdes.com.
 
 ; Rancher Cluster
+rancher-aws	IN	A	172.18.0.30
+;rancher-aws	IN	A	34.193.138.148
 rancher         IN      A       10.10.15.30
-rancher-01      IN      A       10.10.15.31
-rancher-02      IN      A       10.10.15.32
-rancher-03      IN      A       10.10.15.33
-; Rancher Manager in AWS (RANCHER_LOCATION=aws) — separate name so it never
-; collides with the on-prem VIP above. Uncomment after `tofu apply`:
-;   before Tailscale: the Elastic IP (tofu output rancher_public_ip)
-;   after Tailscale:  the pinned private IP 172.18.0.30 (keeps agent traffic in the tunnel)
-; Bump the serial and `rndc reload prime.kubernerdes.com` when changing it.
-rancher-aws     IN      A       172.18.0.30
 ; Observability Cluster
 observability           IN      A       10.10.15.40
 observability-01        IN      A       10.10.15.41
@@ -42,7 +35,7 @@ nuc-03		IN	A	10.10.15.103
 nuc-04		IN	A	10.10.15.104
 nuc-05		IN	A	10.10.15.105
 nuc-06		IN	A	10.10.15.106
-
+nuc-07		IN	A	10.10.15.107
 
 ; DHCP CIDR 10.10.15.0/24
 dhcp-128    IN      A       10.10.15.128

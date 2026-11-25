@@ -1,6 +1,6 @@
 $TTL 2D
 15.10.10.in-addr.arpa.   IN SOA nuc-00.homelab.kubernerdes.com. root.prime.kubernerdes.com. (
-                        2026110602	; serial
+                        2026112401	; serial
                         1D              ; refresh
                         2H              ; retry
                         1W              ; expiry
@@ -33,6 +33,7 @@ $TTL 2D
 104	IN	PTR	nuc-04.prime.kubernerdes.com.
 105	IN	PTR	nuc-05.prime.kubernerdes.com.
 106	IN	PTR	nuc-06.prime.kubernerdes.com.
+107	IN	PTR	nuc-07.prime.kubernerdes.com.
 
 ; DHCP Pool for this ENVIRONMENT 
 128    IN      PTR     dhcp-128.prime.kubernerdes.com.

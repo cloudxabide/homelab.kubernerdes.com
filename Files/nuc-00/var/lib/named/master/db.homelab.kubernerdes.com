@@ -1,7 +1,7 @@
 $TTL 86400 
 $ORIGIN homelab.kubernerdes.com. 
 @	IN SOA      nuc-00.homelab.kubernerdes.com.  root.kubernerdes.com. ( 
-            2026112101 ; Serial
+            2026112301 ; Serial
             86400      ; Refresh
             7200       ; Retry
             2419200    ; Expire
@@ -14,7 +14,7 @@ $ORIGIN homelab.kubernerdes.com.
 sophos-xgs88 	IN 	A	10.10.12.1
 firewall 	IN	CNAME	sophos-xgs88.homelab.kubernerdes.com.
 gateway		IN	CNAME	sophos-xgs88.homelab.kubernerdes.com.
-cisco-sg300-28	IN 	A	10.10.12.2
+;cisco-sg300-28	IN 	A	10.10.12.2 # Moved Internal to reduce risk
 mikrotik-switch	IN 	A	10.10.12.3
 truenas		 IN 	A	10.10.12.7
 
@@ -24,7 +24,7 @@ nuc-00-02	IN	A	10.10.12.9
 nuc-00		IN	A	10.10.12.10
 truenas		IN	A	10.10.12.11
 litellm		IN	A	10.10.12.13
-ts-onprem	IN	A	10.10.12.14	; Tailscale subnet router (VM on nuc-00) to the AWS VPC
+ts-onprem	IN	A	10.10.12.14
 glkvm		IN	A	10.10.12.20
 
 ; KVMs for NUCs (shared by all ENVIRONMENTs)

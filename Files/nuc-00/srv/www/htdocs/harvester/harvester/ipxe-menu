@@ -44,27 +44,33 @@ menu Harvester Deployment Menu
 item --gap --                   --------------------------------------------
 item --key l local                 Boot from local disk (default in 5s)
 item --gap --                   --------------Deployment Modes--------------
-item enclave_menu		Deploy Harvester for Enclave
-item prime_menu			Deploy Harvester for SUSE Prime 
+item prime_menu-v1.9.1		Deploy Harvester for SUSE Prime v1.9.1
+item prime_menu-v1.8.2		Deploy Harvester for SUSE Prime v1.8.2
 item community_menu		Deploy Harvester for Community 
+item enclave_menu		Deploy Harvester for Enclave
 item --gap --                   -------------------------------------------
 item --key r reboot             Reboot system
 item --key s shell              Drop to iPXE shell
 choose --timeout 5000 --default local target && goto ${target}
 
-# This references and executes the external Enclave submenu script
-:enclave_menu
-chain ${config_url}/enclave.ipxe || goto start
+# This references and executes the external Prime submenu script
+:prime_menu-v1.9.1
+chain ${config_url}/prime-v1.9.1.ipxe || goto start
 goto start
 
 # This references and executes the external Prime submenu script
-:prime_menu
-chain ${config_url}/prime.ipxe || goto start
+:prime_menu-v1.8.2
+chain ${config_url}/prime-v1.8.2.ipxe || goto start
 goto start
 
 # This references and executes the external Community submenu script
 :community_menu
 chain ${config_url}/community.ipxe || goto start
+goto start
+
+# This references and executes the external Enclave submenu script
+:enclave_menu
+chain ${config_url}/enclave.ipxe || goto start
 goto start
 
 ## 
