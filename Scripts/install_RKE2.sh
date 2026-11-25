@@ -37,7 +37,7 @@ DOMAIN="${DOMAIN:-kubernerdes.com}"
 BASE_DOMAIN="${BASE_DOMAIN:-${ENVIRONMENT}.${DOMAIN}}"
 
 case "${ENVIRONMENT}" in
-  prime)     IP_PREFIX="10.10.15"; RKE2_INSTALL_URL="https://get.rke2.io/install-rke2.sh";   RKE2_VERSION_DEFAULT="v1.34.12+rke2r1" ;;
+  prime)     IP_PREFIX="10.10.15"; RKE2_INSTALL_URL="https://get.rke2.io/install-rke2.sh";   RKE2_VERSION_DEFAULT="v1.36.6+rke2r1" ;;
   enclave)   IP_PREFIX="10.10.13"; RKE2_INSTALL_URL="http://10.10.12.10/rke2/install.sh"; RKE2_VERSION_DEFAULT="v1.34.12+rke2r1" ;;
   community) IP_PREFIX="10.10.14"; RKE2_INSTALL_URL="https://get.rke2.io/install-rke2.sh";   RKE2_VERSION_DEFAULT="v1.34.12+rke2r1" ;;
   *)

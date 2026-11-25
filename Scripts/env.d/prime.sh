@@ -20,9 +20,9 @@ export NUC03_HOST="nuc-03"
 # Software versions
 # ---------------------------------------------------------------------------
 export SL_MICRO_VERSION="6.2"
-export HARVESTER_VERSION="v1.8.2"   # matches prime.ipxe / config-*-prime-v1.8.2.yaml on nuc-00
-export RKE2_VERSION="v1.34.12+rke2r1"
-export RANCHER_VERSION="2.13.3"
+export HARVESTER_VERSION="v1.9.1"   # matches prime-v1.9.1.ipxe on nuc-00 (/srv/www/htdocs/harvester/harvester)
+export RKE2_VERSION="v1.36.6+rke2r1"   # RKE2 "stable" channel; same as Harvester v1.9.1
+export RANCHER_VERSION="2.15.3"   # rancher-stable; Harvester v1.9.x requires Rancher v2.15
 export CERTMGR_VERSION="v1.19.2"
 export NEUVECTOR_CHART_VERSION="2.8.11"
 export NEUVECTOR_VERSION="5.4.9"
