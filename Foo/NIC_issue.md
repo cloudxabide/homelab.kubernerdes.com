@@ -20,6 +20,21 @@ Confirmed driver: `e1000e` on eno1. The gen13 NUCs (enp86s0, igc) are not affect
   `kubectl debug node/...`), so no reboot is needed. EEE is left to the next
   boot because turning it off resets the adapter.
 
+## Fresh install gap (hit 2026-11-25, Harvester v1.9.1 prime rebuild)
+The CloudInit is created by 07, *after* the nodes are installed, so the boot
+file only protects a node from its next reboot. Until then only the live step
+protects it. That step used `kubectl debug --attach`, which returned no output
+(the command exits too fast), and empty output was read as "already off": every
+node was reported fixed while TSO/GSO/GRO were still on. nuc-02 and nuc-01 hung
+~1 h after install (etcd quorum lost until both were power-cycled); nuc-03 was
+still unprotected. The boot file itself works: after the reboot nuc-01/02 had
+offloads off and EEE disabled.
+
+07 now runs debug pods detached and reads their logs, reports "already off"
+only when ethtool shows all three offloads `off`, re-verifies after applying,
+warns when no node carries the nuc-gen label, and ends with a loud summary if
+any node could not be confirmed.
+
 ## Check
 ```
 kubectl get cloudinits.node.harvesterhci.io

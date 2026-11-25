@@ -154,29 +154,75 @@ EOF
   # Image already on every node, so this needs no registry access
   DEBUG_IMAGE=$(kubectl -n harvester-system get ds harvester-node-manager \
     -o jsonpath='{.spec.template.spec.containers[0].image}')
+
+  # Run a command on a node's host; print its output; fail if it didn't run.
+  # Not --attach: it misses the output of a command that exits in milliseconds,
+  # which made an empty "offloads on" check read as "already off" (2026-11-25:
+  # nuc-03 reported off with TSO/GSO/GRO on; nuc-01/02 then hung).
+  node_exec() {
+    local node=$1 cmd=$2 pod phase=""
+    pod=$(kubectl debug "node/${node}" --profile=sysadmin --image="${DEBUG_IMAGE}" -- \
+      chroot /host sh -c "${cmd}" 2>&1 | grep -o 'node-debugger-[a-z0-9-]*' | head -1) || true
+    [[ -n "${pod}" ]] || return 1
+    for _ in $(seq 1 60); do
+      phase=$(kubectl get pod "${pod}" -o jsonpath='{.status.phase}' 2>/dev/null || true)
+      [[ "${phase}" == Succeeded || "${phase}" == Failed ]] && break
+      sleep 2
+    done
+    kubectl logs "${pod}" 2>/dev/null || true
+    kubectl delete pod "${pod}" --wait=false >/dev/null 2>&1 || true
+    [[ "${phase}" == Succeeded ]]
+  }
+  # Prints NOT_E1000E, or the three offload lines for eno1
+  NIC_STATE_CMD='[ "$(basename "$(readlink /sys/class/net/eno1/device/driver)")" = e1000e ] || { echo NOT_E1000E; exit 0; }; ethtool -k eno1 | grep -E "^(tcp-segmentation|generic-segmentation|generic-receive)-offload:"'
+  offloads_off() { [[ $(grep -cE -- '-offload: off' <<<"$1") -eq 3 ]]; }
+
+  NIC_FIX_PROBLEMS=0
   for gen in ${E1000E_FIX_GENS}; do
     nodes_var="NODES_${gen}"
+    labeled=$(kubectl get nodes -l "homelab.kubernerdes.com/nuc-gen=${gen}" -o name | wc -l)
+    [[ "${labeled}" -gt 0 ]] || { echo "    WARN: no node labeled nuc-gen=${gen}; the CloudInit file matches nothing"; NIC_FIX_PROBLEMS=1; }
     for node in ${!nodes_var}; do
       if [[ "$(kubectl get node "${node}" -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}' 2>/dev/null)" != "True" ]]; then
         echo "    WARN: ${node} not Ready — skipped (the CloudInit file covers its next boot)"
+        NIC_FIX_PROBLEMS=1
         continue
       fi
-      offloads=$(kubectl debug "node/${node}" -q --profile=sysadmin --image="${DEBUG_IMAGE}" --attach -- \
-        chroot /host sh -c 'ethtool -k eno1 2>/dev/null | grep -E "^(tcp-segmentation|generic-segmentation|generic-receive)-offload: on" || true' 2>/dev/null)
-      kubectl get pods -o name | grep "^pod/node-debugger-${node}-" | xargs -r kubectl delete --wait=false >/dev/null
-      if [[ -z "${offloads}" ]]; then
-        echo "    ${node}: offloads already off"
+      if ! state=$(node_exec "${node}" "${NIC_STATE_CMD}"); then
+        echo "    WARN: ${node}: could not read NIC state — offloads NOT verified"
+        NIC_FIX_PROBLEMS=1
         continue
       fi
-      echo "    ${node}: applying"
-      kubectl debug "node/${node}" -q --profile=sysadmin --image="${DEBUG_IMAGE}" --attach -- \
-        chroot /host sh -c "${NIC_FIX_LIVE_CMD}" || true
-      kubectl get pods -o name | grep "^pod/node-debugger-${node}-" | xargs -r kubectl delete --wait=false >/dev/null
+      if [[ "${state}" == *NOT_E1000E* ]]; then
+        echo "    ${node}: eno1 is not e1000e — skipped"
+        continue
+      fi
+      if offloads_off "${state}"; then
+        echo "    ${node}: offloads already off (verified)"
+        continue
+      fi
+      if ! grep -q -- '-offload: on' <<<"${state}"; then
+        echo "    WARN: ${node}: unexpected ethtool output — offloads NOT verified:"; sed 's/^/      /' <<<"${state}"
+        NIC_FIX_PROBLEMS=1
+        continue
+      fi
+      echo "    ${node}: offloads on — applying"
+      node_exec "${node}" "${NIC_FIX_LIVE_CMD}" >/dev/null || true
       wait_for "${node} Ready after NIC change" 300 \
         sh -c "kubectl get node ${node} -o jsonpath='{.status.conditions[?(@.type==\"Ready\")].status}' | grep -qx True"
+      if state=$(node_exec "${node}" "${NIC_STATE_CMD}") && offloads_off "${state}"; then
+        echo "    ${node}: offloads off (verified)"
+      else
+        echo "    WARN: ${node}: offloads still NOT off after applying"
+        NIC_FIX_PROBLEMS=1
+      fi
       sleep 30   # let etcd settle before touching the next control-plane node
     done
   done
+  if [[ "${NIC_FIX_PROBLEMS}" -ne 0 ]]; then
+    echo "    !!! e1000e workaround NOT confirmed on every ${E1000E_FIX_GENS} node (see WARN above)."
+    echo "    !!! Those nodes can hang under load until fixed or rebooted (Foo/NIC_issue.md)."
+  fi
 fi
 
 # ---------------------------------------------------------------------------
