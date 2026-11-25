@@ -58,6 +58,64 @@ helm repo update
 
 kubectl create namespace cattle-neuvector-system 2>/dev/null || true
 
+# ---------------------------------------------------------------------------
+# Ingress class: RKE2 up to v1.35 ships ingress-nginx ("nginx"); v1.36 ships
+# Traefik ("traefik", the default class). Use APPS_INGRESS_CLASS if set, else
+# the cluster's default class, else its only class. Picked before the helm
+# install because Traefik needs annotations on the NeuVector webui Service.
+# ---------------------------------------------------------------------------
+if [[ -z "${APPS_INGRESS_CLASS:-}" ]]; then
+  APPS_INGRESS_CLASS=$(kubectl get ingressclass -o jsonpath='{range .items[?(@.metadata.annotations.ingressclass\.kubernetes\.io/is-default-class=="true")]}{.metadata.name}{"\n"}{end}' | head -1)
+fi
+if [[ -z "${APPS_INGRESS_CLASS}" ]]; then
+  mapfile -t _classes < <(kubectl get ingressclass -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}')
+  if [[ ${#_classes[@]} -eq 1 ]]; then
+    APPS_INGRESS_CLASS="${_classes[0]}"
+  else
+    echo "ERROR: can't pick an ingress class (none default; found: ${_classes[*]:-none})." >&2
+    echo "       Set APPS_INGRESS_CLASS and re-run." >&2
+    exit 1
+  fi
+fi
+echo "==> NeuVector UI ingress class: ${APPS_INGRESS_CLASS}"
+
+# The NeuVector manager only serves HTTPS (self-signed) on 8443, so the
+# ingress controller must speak HTTPS to it and skip verifying that cert.
+#   nginx:   backend-protocol annotation on the Ingress (nginx doesn't verify)
+#   traefik: Service annotations -> ServersTransport with insecureSkipVerify.
+#            Without the ServersTransport Traefik drops the route (404).
+#            The ingress.class annotation matches RKE2's
+#            providers.kubernetescrd.ingressClass=traefik; tested on RKE2
+#            v1.36.6 (Traefik v3.7) it works with or without it.
+NV_HELM_INGRESS_ARGS=()
+NV_INGRESS_ANNOTATIONS=""
+case "${APPS_INGRESS_CLASS}" in
+  nginx)
+    NV_INGRESS_ANNOTATIONS='    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"'
+    ;;
+  traefik)
+    NV_HELM_INGRESS_ARGS=(
+      --set-string 'manager.svc.annotations.traefik\.ingress\.kubernetes\.io/service\.serversscheme=https'
+      --set-string 'manager.svc.annotations.traefik\.ingress\.kubernetes\.io/service\.serverstransport=cattle-neuvector-system-neuvector-webui@kubernetescrd'
+    )
+    kubectl apply -f - <<EOF
+apiVersion: traefik.io/v1alpha1
+kind: ServersTransport
+metadata:
+  name: neuvector-webui
+  namespace: cattle-neuvector-system
+  annotations:
+    kubernetes.io/ingress.class: traefik
+spec:
+  insecureSkipVerify: true
+EOF
+    ;;
+  *)
+    echo "WARN: ingress class '${APPS_INGRESS_CLASS}' isn't nginx or traefik; the UI ingress" >&2
+    echo "      gets no HTTPS-backend settings and will likely fail against port 8443." >&2
+    ;;
+esac
+
 echo "==> Installing NeuVector ${NEUVECTOR_VERSION} (chart ${NEUVECTOR_CHART_VERSION})..."
 helm upgrade --install neuvector "${NEUVECTOR_CHART_NAME}" \
   --version "${NEUVECTOR_CHART_VERSION}" \
@@ -68,6 +126,7 @@ helm upgrade --install neuvector "${NEUVECTOR_CHART_NAME}" \
   --set controller.pvc.enabled=false \
   --set k3s.enabled=false \
   --set manager.ingress.enabled=false \
+  "${NV_HELM_INGRESS_ARGS[@]}" \
   --set global.cattle.url="https://${RANCHER_HOSTNAME}"
 
 kubectl -n cattle-neuvector-system rollout status deploy/neuvector-manager-pod --timeout=300s
@@ -83,9 +142,9 @@ metadata:
   name: neuvector-manager
   namespace: cattle-neuvector-system
   annotations:
-    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+${NV_INGRESS_ANNOTATIONS}
 spec:
-  ingressClassName: nginx
+  ingressClassName: ${APPS_INGRESS_CLASS}
   rules:
     - host: neuvector.${APPS_HOSTNAME}
       http:
