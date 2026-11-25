@@ -8,7 +8,7 @@ meta:
   title: "Kubernerdes Homelab"
   title_redacted: "Kubernerdes Homelab"
   date: "November 2026"
-  watermark: "u/goblinmine"          # credit to the original author of this diagram generator
+  watermark: "u/cloudxabide"          
   domain: "kubernerdes.com"
 
 redact:
@@ -238,3 +238,86 @@ aps:
 # hardware on hand but not in use (not drawn; move it into the layout once it's cabled)
 spares:
   - {name: "TP-Link TL-SX1008", type: "switch · unmanaged", model: "8× 10GBASE-T RJ45 (multi-gig: 100M … 10G)", note: "not in use"}
+
+# ---------------------------------------------------------------- Kubernetes view (build_k8s.py → kubernetes.png)
+# Reuses harvester.* (nodes, clusters, VIPs) above; this section only adds the Kubernetes layer.
+# Sources: Scripts/env.d/prime.sh, 07_post_configure_harvester.sh, 08_create_rancher_vms.sh,
+# install_RKE2.sh, 20/21/30_*.sh, db.prime zone, and live kubectl/helm reads of
+# prime-harvester + prime-rancher (2026-11-24). "?" = not known yet; status: planned = not deployed yet.
+kubernetes:
+  title: "Kubernerdes Homelab · Kubernetes"
+  env: "prime"
+  networks:   # key → color; vlan keys reuse the VLAN colors above
+    - {key: "12",  tag: "VLAN 12",  name: "node / VM net", subnet: "10.10.15.0/24",    note: "prime /24 · vmnet-vms on mgmt-br (untagged) · VIPs + DHCP"}
+    - {key: "128", tag: "VLAN 128", name: "storage",       subnet: "192.168.128.0/24", note: "Longhorn replication · cluster network 'storage' · USB NICs"}
+    - {key: "hpod", tag: "pods",    name: "Harvester",     subnet: "10.52.0.0/16",     color: "#2dd4bf", note: "Harvester default cluster-cidr"}
+    - {key: "hsvc", tag: "svcs",    name: "Harvester",     subnet: "10.53.0.0/16",     color: "#a5b4fc", note: "Harvester default service-cidr"}
+    - {key: "pod", tag: "pods",     name: "RKE2 guests",   subnet: "10.42.0.0/16",     color: "#2dd4bf", note: "Canal (RKE2 default CNI) · per guest cluster"}
+    - {key: "svc", tag: "svcs",     name: "RKE2 guests",   subnet: "10.43.0.0/16",     color: "#a5b4fc", note: "RKE2 default service-cidr · per guest cluster"}
+    - {key: "ts",  tag: "Tailscale", name: "hybrid",       subnet: "100.64.0.0/10",    note: "ts-onprem ⇄ tailscale-01 · rancher-aws manages on-prem"}
+  endpoints:   # DNS name → VIP, served by the Harvester load balancer
+    - {dns: "harvester.prime", ip: "10.10.15.100", ports: "443 · 6443", backend: "Harvester LB ingress-expose → Harvester nodes", icon: harvester}
+    - {dns: "rancher.prime",   ip: "10.10.15.30",  ports: "80 · 443 · 6443 · 9345", backend: "Harvester LB → rancher-0[1-3]", icon: rancher}
+    - {dns: "observability.prime", ip: "10.10.15.40", ports: "443 · 6443 · 9345", backend: "planned · Harvester LB ? → observability-0[1-3]", icon: suse}
+    - {dns: "apps.prime",      ip: "10.10.15.50",  ports: "6443 · 9345", backend: "planned · Harvester LB ? → apps-* (API)", icon: kubernetes}
+    - {dns: "*.apps.prime",    ip: "10.10.15.51",  ports: "80 · 443", backend: "planned · Harvester LB (by hand) ? → ingress-nginx", icon: glyph-nic}
+  trust:
+    - {icon: letsencrypt, name: "Let's Encrypt wildcard", note: "*.prime · certbot + Route 53 DNS-01 on nuc-00 · deploy hook → Harvester, Rancher, Obs"}
+    - {icon: vault,       name: "Vault PKI",              note: "homelab root CA · trusted by RKE2 nodes before install"}
+    - {icon: certmanager, name: "cert-manager v1.19.2",   note: "on rancher · no ClusterIssuer yet (Rancher uses the LE secret)"}
+  registries:
+    - {icon: suse,   name: "registry.rancher.com", note: "SUSE Prime registry · Rancher Prime charts + images"}
+    - {icon: harbor, name: "harbor.prime",         note: "Harbor on nuc-00 (CNAME)"}
+  guests:   # per cluster in harvester.clusters, by name
+    rancher:
+      status: deployed
+      provisioned: "VMs by 08_create_rancher_vms.sh · RKE2 by 09"
+      live_ips: {rancher-01: "10.10.12.239", rancher-02: "10.10.12.241", rancher-03: "10.10.12.240"}   # DHCP; zone has .31-.33
+      cni: "Canal v3.32.2"
+      vm_size: "4 vCPU · 8 GiB · 32 GiB"
+      placement: {rancher-01: nuc-01, rancher-02: nuc-02, rancher-03: nuc-03}
+      vm_sc: "harvester-longhorn-local-1r"
+      namespace: "vms-rancher"
+      ingress: "rke2-ingress-nginx 1.15.1 · TLS = LE wildcard secret"
+      pvc_sc: "none (no StorageClass)"
+      apps:
+        - {icon: rancher,     name: "Rancher Manager 2.13.3", note: "cattle-system · imports prime-harvester"}
+        - {icon: certmanager, name: "cert-manager v1.19.2",   note: "no ClusterIssuer yet"}
+        - {icon: suse,        name: "Fleet 0.14.3",           note: "GitOps · fleet-default / fleet-local"}
+        - {icon: suse,        name: "Rancher Turtles 0.25.10", note: "Cluster API · cattle-turtles-system"}
+    observability:
+      status: planned
+      provisioned: "by Rancher · Harvester node driver"
+      vm_size: "8 vCPU · 16 GiB · ?"
+      vm_sc: "harvester-longhorn ?"
+      namespace: "?"
+      ingress: "ingress-nginx · tls-observability-ingress"
+      pvc_sc: "harvester (CSI) ?"
+    apps:
+      status: planned
+      provisioned: "by Rancher · Harvester node driver"
+      vm_size: "?"
+      vm_sc: "harvester-longhorn ?"
+      namespace: "?"
+      ingress: "ingress-nginx · *.apps.prime"
+      pvc_sc: "harvester (CSI) ?"
+      extra_apps:
+        - {icon: kubernetes, name: "HexGL", note: "ns hexgl · ingress demo"}
+        - {icon: glyph-shield, name: "chell-test", note: "ns aperture-sci · NeuVector policy demo"}
+  harvester:
+    k8s: "RKE2 v1.35.7 · KubeVirt · Longhorn · Multus"
+    roles: {gen10: "control-plane", gen13: "worker"}
+    storage_nics: {gen10: "enp0s20f0u4", gen13: "enp0s13f0u1"}
+    storage_classes:
+      - {name: "harvester-longhorn", note: "default · 3 replicas · images + general VM disks"}
+      - {name: "harvester-longhorn-local-1r", note: "1 replica · best-effort locality · etcd VMs (rancher-0x)"}
+    storage_classes_other: "also: longhorn · longhorn-static · vmstate-persistence · 4× lh-* (one per image)"
+    images:   # display names, namespace default
+      - "SL-Micro 6.2 Base"
+      - "SL-Micro 6.2 local-1r"
+      - "SL-Micro 6.1 Base"
+      - "SLES15-SP7 Minimal"
+    networks:
+      - {key: "12",  name: "mgmt (built-in)", note: "mgmt-br · NAD vmnet-vms (bridge, untagged)"}
+      - {key: "128", name: "storage",         note: "VlanConfig per gen · active-backup · VLAN 128"}
+    backups: "backup-target not set · TrueNAS NFS ?"
