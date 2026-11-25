@@ -3,8 +3,8 @@
 # NOTE: NOTE: NOTE
 #   YOU NEED TO UPDATE stackstate.cluster.name to the value you entered when creating the stackpack
 ```
-CLUSTER_NAME=rancher
-ENVIRONMENT=community
+export CLUSTER_NAME=rancher
+export ENVIRONMENT=prime
 export KUBECONFIG=~/.kube/${ENVIRONMENT}-${CLUSTER_NAME}.kubeconfig
 kubectl get nodes
 
