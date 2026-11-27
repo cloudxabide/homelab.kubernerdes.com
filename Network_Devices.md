@@ -51,7 +51,7 @@ Shorthand is fine too: send me lines like `NICGIGA 3 = nuc-04 enp86s0 vlan 12` a
 |:-------|:------|:-----|:------|:--------|:--------------|:--------------|:---------|:-------|:-------|
 | cisco-sg300-28 | Cisco SG300-28 | core | 24× 1G RJ45 + 4× 1G combo (RJ45/SFP) | yes (L2, VLANs, LAG) | 10.10.12.2 · cisco-sg300-28.homelab | | | Sophos Port1 / Port3 / Port4 (GE24 / GE28 / GE21) | in use |
 | NICGIGA | NICGIGA S25-1602 | 2.5G switch: gen13 NUCs, nuc-00, DGX Spark | 16× 2.5G RJ45 + 2× 10G SFP+ | no | none | — | gen13 10" rack | Cisco GE1 (1G) | in use |
-| mikrotik-switch | MikroTik CSS318-16G-2S+in | 1G switch: gen10 NUCs, nuc-99, all six NanoKVMs | 16× 1G RJ45 + 2× 10G SFP+ | SwOS, used as a plain switch | 10.10.12.3 · mikrotik-switch.homelab | SwOS ___ | gen10 10" rack | NICGIGA port 16 (1G copper) | in use |
+| mikrotik-switch | MikroTik CSS318-16G-2S+in | 1G switch: gen10 NUCs, jarvis, all six NanoKVMs | 16× 1G RJ45 + 2× 10G SFP+ | SwOS, used as a plain switch | 10.10.12.3 · mikrotik-switch.homelab | SwOS ___ | gen10 10" rack | NICGIGA port 16 (1G copper) | in use |
 | TL-SX1008 | TP-Link TL-SX1008 | spare (storage switch?) | 8× 10GBASE-T (100M–10G) | no | none | — | | | not in use |
 | office | | behind Cisco GE11 (VLAN 10) | | | | | office | Cisco GE11 | ? |
 | main floor | | behind Cisco GE25 (trunk 192U, 10T, 12T, 172T) | | | | | main floor | Cisco GE25 | ? |
@@ -162,7 +162,7 @@ Port 16 ↔ MikroTik port 16 and the empty SFP+ cages are from the photo.
 
 Port 16 ↔ NICGIGA port 16 and the empty SFP+ cages are from the photo.
 
-**Ports in use: 14** (traced 2026-11-22): ports 1–13 and 16. The 1G hosts live here: gen10 NUCs (mgmt + storage), nuc-99 and all six NanoKVMs. nuc-99 (port 7) is a gen10 NUC with no role yet: the admin host if the gen10 NUCs become their own Harvester cluster.
+**Ports in use: 14** (traced 2026-11-22): ports 1–13 and 16. The 1G hosts live here: gen10 NUCs (mgmt + storage), jarvis and all six NanoKVMs. jarvis (port 7, formerly nuc-99 / nuc-07) is a gen10 NUC running the Hermes Agent harness.
 
 | Port | Hostname | Interface | VLAN | Speed |
 |:-----|:---------|:----------|:-----|:-----:|
@@ -172,7 +172,7 @@ Port 16 ↔ NICGIGA port 16 and the empty SFP+ cages are from the photo.
 | 4 | nuc-04-kvm | eth0 | 12 | 100M |
 | 5 | nuc-05-kvm | eth0 | 12 | 100M |
 | 6 | nuc-06-kvm | eth0 | 12 | 100M |
-| 7 | nuc-99 |  |  |  |
+| 7 | jarvis |  |  |  |
 | 8 | nuc-01 | eno1 | 12 | 1G |
 | 9 | nuc-02 | eno1 | 12 | 1G |
 | 10 | nuc-03 | eno1 | 12 | 1G |
