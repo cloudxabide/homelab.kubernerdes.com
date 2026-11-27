@@ -12,6 +12,7 @@ set -euo pipefail
 # What this does:
 #   1. Labels nodes by hardware generation (homelab.kubernerdes.com/nuc-gen)
 #      and gives Harvester worker nodes the node-role.kubernetes.io/worker label
+#      Adds HARVESTER_STATIC_ROUTES to every node (CloudInit + live)
 #      Applies the e1000e NIC workaround to gen10 nodes (CloudInit + live)
 #   2. Creates the storage ClusterNetwork + one VlanConfig per hardware gen
 #   3. Creates the untagged VM network on the built-in mgmt cluster network
@@ -118,6 +119,95 @@ kubectl label node -l node-role.harvesterhci.io/worker=true \
   node-role.kubernetes.io/worker=true --overwrite
 
 # ---------------------------------------------------------------------------
+# node_exec — used by the e1000e workaround and the static routes below
+# ---------------------------------------------------------------------------
+# Image already on every node, so this needs no registry access
+DEBUG_IMAGE=$(kubectl -n harvester-system get ds harvester-node-manager \
+  -o jsonpath='{.spec.template.spec.containers[0].image}')
+
+# Run a command on a node's host; print its output; fail if it didn't run.
+# Not --attach: it misses the output of a command that exits in milliseconds,
+# which made an empty "offloads on" check read as "already off" (2026-11-25:
+# nuc-03 reported off with TSO/GSO/GRO on; nuc-01/02 then hung).
+node_exec() {
+  local node=$1 cmd=$2 pod phase=""
+  pod=$(kubectl debug "node/${node}" --profile=sysadmin --image="${DEBUG_IMAGE}" -- \
+    chroot /host sh -c "${cmd}" 2>&1 | grep -o 'node-debugger-[a-z0-9-]*' | head -1) || true
+  [[ -n "${pod}" ]] || return 1
+  for _ in $(seq 1 60); do
+    phase=$(kubectl get pod "${pod}" -o jsonpath='{.status.phase}' 2>/dev/null || true)
+    [[ "${phase}" == Succeeded || "${phase}" == Failed ]] && break
+    sleep 2
+  done
+  kubectl logs "${pod}" 2>/dev/null || true
+  kubectl delete pod "${pod}" --wait=false >/dev/null 2>&1 || true
+  [[ "${phase}" == Succeeded ]]
+}
+
+# ---------------------------------------------------------------------------
+# Static routes (HARVESTER_STATIC_ROUTES="<cidr>=<gateway> ...")
+# The nodes have static IPs, so they don't get the classless static routes
+# (DHCP option 121) that DHCP hosts get — e.g. 172.18.0.0/16 via ts-onprem
+# (Tailscale subnet router to the AWS VPC), needed to reach rancher-aws.
+# Routing it via the default gateway (Sophos) instead does not work: replies
+# from ts-onprem come straight back on the LAN, the Sophos sees only half of
+# each TCP connection and drops it (ping works, TLS hangs).
+# The Harvester install config has no field for extra routes, so:
+#   - Persistent: a Harvester CloudInit writes /oem/99_static_routes.yaml to
+#     every node (survives reboots and upgrades, covers nodes that join later)
+#   - Now: the same routes on each Ready node (ip route replace — idempotent,
+#     no disruption)
+# ---------------------------------------------------------------------------
+if [[ -n "${HARVESTER_STATIC_ROUTES:-}" ]]; then
+  echo "==> Static routes on all nodes: ${HARVESTER_STATIC_ROUTES}"
+  ROUTE_CMDS=()
+  for r in ${HARVESTER_STATIC_ROUTES}; do
+    [[ "${r}" == */*=* ]] || { echo "ERROR: HARVESTER_STATIC_ROUTES entry '${r}' is not <cidr>=<gateway>" >&2; exit 1; }
+    ROUTE_CMDS+=("ip route replace ${r%%=*} via ${r#*=}")
+  done
+
+  kubectl apply -f - <<EOF
+apiVersion: node.harvesterhci.io/v1beta1
+kind: CloudInit
+metadata:
+  name: static-routes
+spec:
+  matchSelector:
+    kubernetes.io/os: linux
+  filename: 99_static_routes.yaml
+  contents: |
+    name: "Static routes (HARVESTER_STATIC_ROUTES)"
+    stages:
+      network.after:
+        - name: "add static routes"
+          commands:
+$(printf '            - %s\n' "${ROUTE_CMDS[@]}")
+EOF
+
+  ROUTE_LIVE_CMD=$(printf '%s && ' "${ROUTE_CMDS[@]}")
+  ROUTE_LIVE_CMD="${ROUTE_LIVE_CMD}ip route show"
+  for node in $(kubectl get nodes -o jsonpath='{.items[*].metadata.name}'); do
+    if [[ "$(kubectl get node "${node}" -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}')" != "True" ]]; then
+      echo "    WARN: ${node} not Ready — skipped (the CloudInit file covers its next boot)"
+      continue
+    fi
+    if routes=$(node_exec "${node}" "${ROUTE_LIVE_CMD}"); then
+      missing=""
+      for r in ${HARVESTER_STATIC_ROUTES}; do
+        grep -q "^${r%%=*} via ${r#*=} " <<<"${routes}" || missing+=" ${r}"
+      done
+      if [[ -z "${missing}" ]]; then
+        echo "    ${node}: routes present (verified)"
+      else
+        echo "    WARN: ${node}: missing after apply:${missing}"
+      fi
+    else
+      echo "    WARN: ${node}: could not apply routes — fix by hand or reboot it"
+    fi
+  done
+fi
+
+# ---------------------------------------------------------------------------
 # e1000e "Hardware Unit Hang" workaround (gen10 NUC onboard NIC, eno1)
 # The NIC drops off the network under load until the node is power-cycled
 # (see Foo/NIC_issue.md). Fix: turn off TSO/GSO/GRO and EEE.
@@ -151,32 +241,56 @@ spec:
 EOF
   done
 
-  # Image already on every node, so this needs no registry access
-  DEBUG_IMAGE=$(kubectl -n harvester-system get ds harvester-node-manager \
-    -o jsonpath='{.spec.template.spec.containers[0].image}')
+  # Prints NOT_E1000E, or the three offload lines for eno1
+  NIC_STATE_CMD='[ "$(basename "$(readlink /sys/class/net/eno1/device/driver)")" = e1000e ] || { echo NOT_E1000E; exit 0; }; ethtool -k eno1 | grep -E "^(tcp-segmentation|generic-segmentation|generic-receive)-offload:"'
+  offloads_off() { [[ $(grep -cE -- '-offload: off' <<<"$1") -eq 3 ]]; }
+
+  NIC_FIX_PROBLEMS=0
   for gen in ${E1000E_FIX_GENS}; do
     nodes_var="NODES_${gen}"
+    labeled=$(kubectl get nodes -l "homelab.kubernerdes.com/nuc-gen=${gen}" -o name | wc -l)
+    [[ "${labeled}" -gt 0 ]] || { echo "    WARN: no node labeled nuc-gen=${gen}; the CloudInit file matches nothing"; NIC_FIX_PROBLEMS=1; }
     for node in ${!nodes_var}; do
       if [[ "$(kubectl get node "${node}" -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}' 2>/dev/null)" != "True" ]]; then
         echo "    WARN: ${node} not Ready — skipped (the CloudInit file covers its next boot)"
+        NIC_FIX_PROBLEMS=1
         continue
       fi
-      offloads=$(kubectl debug "node/${node}" -q --profile=sysadmin --image="${DEBUG_IMAGE}" --attach -- \
-        chroot /host sh -c 'ethtool -k eno1 2>/dev/null | grep -E "^(tcp-segmentation|generic-segmentation|generic-receive)-offload: on" || true' 2>/dev/null)
-      kubectl get pods -o name | grep "^pod/node-debugger-${node}-" | xargs -r kubectl delete --wait=false >/dev/null
-      if [[ -z "${offloads}" ]]; then
-        echo "    ${node}: offloads already off"
+      if ! state=$(node_exec "${node}" "${NIC_STATE_CMD}"); then
+        echo "    WARN: ${node}: could not read NIC state — offloads NOT verified"
+        NIC_FIX_PROBLEMS=1
         continue
       fi
-      echo "    ${node}: applying"
-      kubectl debug "node/${node}" -q --profile=sysadmin --image="${DEBUG_IMAGE}" --attach -- \
-        chroot /host sh -c "${NIC_FIX_LIVE_CMD}" || true
-      kubectl get pods -o name | grep "^pod/node-debugger-${node}-" | xargs -r kubectl delete --wait=false >/dev/null
+      if [[ "${state}" == *NOT_E1000E* ]]; then
+        echo "    ${node}: eno1 is not e1000e — skipped"
+        continue
+      fi
+      if offloads_off "${state}"; then
+        echo "    ${node}: offloads already off (verified)"
+        continue
+      fi
+      if ! grep -q -- '-offload: on' <<<"${state}"; then
+        echo "    WARN: ${node}: unexpected ethtool output — offloads NOT verified:"; sed 's/^/      /' <<<"${state}"
+        NIC_FIX_PROBLEMS=1
+        continue
+      fi
+      echo "    ${node}: offloads on — applying"
+      node_exec "${node}" "${NIC_FIX_LIVE_CMD}" >/dev/null || true
       wait_for "${node} Ready after NIC change" 300 \
         sh -c "kubectl get node ${node} -o jsonpath='{.status.conditions[?(@.type==\"Ready\")].status}' | grep -qx True"
+      if state=$(node_exec "${node}" "${NIC_STATE_CMD}") && offloads_off "${state}"; then
+        echo "    ${node}: offloads off (verified)"
+      else
+        echo "    WARN: ${node}: offloads still NOT off after applying"
+        NIC_FIX_PROBLEMS=1
+      fi
       sleep 30   # let etcd settle before touching the next control-plane node
     done
   done
+  if [[ "${NIC_FIX_PROBLEMS}" -ne 0 ]]; then
+    echo "    !!! e1000e workaround NOT confirmed on every ${E1000E_FIX_GENS} node (see WARN above)."
+    echo "    !!! Those nodes can hang under load until fixed or rebooted (Foo/NIC_issue.md)."
+  fi
 fi
 
 # ---------------------------------------------------------------------------

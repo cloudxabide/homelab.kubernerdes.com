@@ -78,6 +78,12 @@ export STORAGE_CLUSTER_NETWORK="storage"
 export STORAGE_NETWORK_VLAN="128"
 export STORAGE_NETWORK_RANGE="192.168.128.0/24"   # avoids 172.16.0.0/12 (hybrid-cloud headroom)
 
+# Extra routes on every Harvester node ("<cidr>=<gateway>", space-separated).
+# Nodes have static IPs, so they miss the DHCP option-121 routes. AWS VPC
+# (rancher-aws) via ts-onprem, the Tailscale subnet router — not via the Sophos
+# (asymmetric path: ping works, TLS hangs).
+export HARVESTER_STATIC_ROUTES="172.18.0.0/16=10.10.12.14"
+
 # ---------------------------------------------------------------------------
 # Harvester VM network, storage class, and Rancher Manager VMs
 # (consumed by 07_post_configure_harvester.sh and 08_create_rancher_vms.sh)

@@ -136,8 +136,28 @@ fi
 # ---------------------------------------------------------------------------
 # Ingress
 # With OBS_CERT=letsencrypt it serves the nuc-00 wildcard from
-# ${OBS_TLS_SECRET}; otherwise ingress-nginx's default (self-signed) cert.
+# ${OBS_TLS_SECRET}; otherwise the ingress controller's default (self-signed) cert.
+#
+# Ingress class: RKE2 up to v1.35 ships ingress-nginx ("nginx"); v1.36 ships
+# Traefik ("traefik", the default class). Use OBS_INGRESS_CLASS if set, else
+# the cluster's default class, else its only class. A class with no
+# controller behind it gives a 404 from whichever controller answers.
 # ---------------------------------------------------------------------------
+if [[ -z "${OBS_INGRESS_CLASS:-}" ]]; then
+  OBS_INGRESS_CLASS=$(kubectl get ingressclass -o jsonpath='{range .items[?(@.metadata.annotations.ingressclass\.kubernetes\.io/is-default-class=="true")]}{.metadata.name}{"\n"}{end}' | head -1)
+fi
+if [[ -z "${OBS_INGRESS_CLASS}" ]]; then
+  mapfile -t _classes < <(kubectl get ingressclass -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}')
+  if [[ ${#_classes[@]} -eq 1 ]]; then
+    OBS_INGRESS_CLASS="${_classes[0]}"
+  else
+    echo "ERROR: can't pick an ingress class (none default; found: ${_classes[*]:-none})." >&2
+    echo "       Set OBS_INGRESS_CLASS and re-run." >&2
+    exit 1
+  fi
+fi
+echo "==> UI ingress class: ${OBS_INGRESS_CLASS}"
+
 OBS_TLS_SECRET_LINE=""
 if [[ "${OBS_CERT:-}" == "letsencrypt" ]]; then
   OBS_TLS_SECRET_LINE="    secretName: ${OBS_TLS_SECRET}"
@@ -151,7 +171,7 @@ metadata:
   name: suse-observability-ui
   namespace: suse-observability
 spec:
-  ingressClassName: nginx
+  ingressClassName: ${OBS_INGRESS_CLASS}
   rules:
   - host: ${OBS_HOSTNAME}
     http:
