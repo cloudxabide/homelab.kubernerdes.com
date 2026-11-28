@@ -4,6 +4,9 @@ Free, as-in beer, software to run infrastructure by SUSE. (*)
 
 (*) StackState (aka SUSE Observability) does require a license key.
 
+[!NOTE]
+> This was the last infrastructure project that I built before using AI assistants.  The DNS, PXE, etc.. was all my own experience - but... I brought Claude in to amplify.
+
 <table style="background-color: white;">
 <tr>
 <td style="background-color: white;">
